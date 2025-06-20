@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit } from '@angular/core';
+import { Component, NgZone, OnInit, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
@@ -7,6 +7,7 @@ import { AuthService } from '../services/auth.service';
 declare global {
   interface Window { handleCredentialResponse: (response: any) => void; }
 }
+declare const google: any;
 
 @Component({
   selector: 'app-login',
@@ -21,19 +22,7 @@ declare global {
           <p class="text-gray-300 mb-4">使用以下方式登入以開始你的冒險</p>
         </div>
         <div class="space-y-4">
-          <div id="g_id_onload"
-               data-client_id="950693364773-f8v3kpslccvtt645k13adlh661fpma6a.apps.googleusercontent.com"
-               data-callback="handleCredentialResponse"
-               data-auto_prompt="false">
-          </div>
-          <div class="g_id_signin"
-               data-type="standard"
-               data-shape="rectangular"
-               data-theme="outline"
-               data-text="signin_with"
-               data-size="large"
-               data-logo_alignment="left">
-          </div>
+          <div id="google-signin-btn"></div>
         </div>
         <div class="terms">
           <p>登入即表示您同意我們的</p>
@@ -48,7 +37,7 @@ declare global {
   `,
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit {
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -58,11 +47,9 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     window.handleCredentialResponse = (response: any) => {
-      console.log('Google response:', response);
       const id_token = response.credential;
       this.auth.socialLogin('google', id_token).subscribe({
         next: (res) => {
-          console.log('Login success:', res);
           this.ngZone.run(() => this.router.navigate(['/profile']));
         },
         error: (error) => {
@@ -75,5 +62,20 @@ export class LoginComponent implements OnInit {
         }
       });
     };
+  }
+
+  ngAfterViewInit(): void {
+    const g = (window as any).google;
+    if (g && g.accounts && g.accounts.id) {
+      g.accounts.id.initialize({
+        client_id: '950693364773-f8v3kpslccvtt645k13adlh661fpma6a.apps.googleusercontent.com',
+        callback: window.handleCredentialResponse,
+        auto_select: false
+      });
+      g.accounts.id.renderButton(
+        document.getElementById('google-signin-btn'),
+        { theme: 'outline', size: 'large' }
+      );
+    }
   }
 } 
