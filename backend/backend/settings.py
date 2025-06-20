@@ -32,6 +32,21 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
+# Get the production origin from the .env file.
+# e.g., 'https://api.promptfighters.app'
+prod_origin = os.getenv('CSRF_TRUSTED_ORIGINS')
+
+# Create a list of trusted origins for CSRF protection.
+CSRF_TRUSTED_ORIGINS = [
+    prod_origin,
+    'http://localhost:4200',  # For Angular local dev server
+    'http://localhost:8000',  # For local Django admin
+    'http://127.0.0.1:4200',
+    'http://127.0.0.1:8000',
+]
+
+# Filter out any None or empty values from the list, just in case.
+CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]
 
 # Application definition
 
