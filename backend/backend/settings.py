@@ -186,3 +186,5 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'user': '1000/day',
     'ai_generation': '10/day',  # AI 生成限制
 }
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
