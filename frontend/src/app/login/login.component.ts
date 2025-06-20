@@ -65,17 +65,29 @@ export class LoginComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    const g = (window as any).google;
-    if (g && g.accounts && g.accounts.id) {
-      g.accounts.id.initialize({
-        client_id: '950693364773-f8v3kpslccvtt645k13adlh661fpma6a.apps.googleusercontent.com',
-        callback: window.handleCredentialResponse,
-        auto_select: false
-      });
-      g.accounts.id.renderButton(
-        document.getElementById('google-signin-btn'),
-        { theme: 'outline', size: 'large' }
-      );
-    }
+    const tryRenderGoogleButton = (retryCount = 5) => {
+      const g = (window as any).google;
+      if (g && g.accounts && g.accounts.id) {
+        // --- Google's GSI script is ready ---
+        g.accounts.id.initialize({
+          client_id: '950693364773-f8v3kpslccvtt645k13adlh661fpma6a.apps.googleusercontent.com',
+          callback: window.handleCredentialResponse,
+          auto_select: false
+        });
+        g.accounts.id.renderButton(
+          document.getElementById('google-signin-btn'),
+          { theme: 'outline', size: 'large' }
+        );
+      } else if (retryCount > 0) {
+        // --- Script not ready, try again in 300ms ---
+        setTimeout(() => tryRenderGoogleButton(retryCount - 1), 300);
+      } else {
+        // --- Failed after multiple retries ---
+        console.error('Google Sign-In script failed to load after multiple retries.');
+      }
+    };
+
+    // Start the rendering attempt
+    tryRenderGoogleButton();
   }
 } 
