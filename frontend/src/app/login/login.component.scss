@@ -1,0 +1,83 @@
+.login-container {
+  @apply min-h-screen flex items-center justify-center;
+  background-size: cover;
+  background-position: center;
+}
+
+// .login-card {
+//   @apply rpg-card p-10 max-w-sm w-full text-center;
+
+//   .card-title {
+//     @apply text-3xl font-bold text-rpg-gold mb-2;
+//   }
+
+//   .card-subtitle {
+//     @apply text-xl text-white mb-4;
+//   }
+
+//   .social-login-buttons {
+//     @apply flex flex-col gap-4 mt-6;
+//   }
+// }
+
+.title {
+  @apply text-4xl font-pixel text-center text-rpg-gold mb-8;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.subtitle {
+  @apply text-xl font-fantasy text-white mb-4;
+}
+
+.oauth-button {
+  @apply w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-lg 
+         transition-all duration-200 font-semibold;
+  
+  &.google {
+    @apply bg-white text-gray-700 hover:bg-gray-100;
+    
+    img {
+      @apply w-5 h-5;
+    }
+  }
+  
+  &.github {
+    @apply bg-gray-800 text-white hover:bg-gray-700;
+    
+    img {
+      @apply w-5 h-5;
+    }
+  }
+  
+  &.discord {
+    @apply bg-[#7289da] text-white hover:bg-[#6277c0];
+    
+    img {
+      @apply w-5 h-5;
+    }
+  }
+}
+
+.terms {
+  @apply mt-8 text-center text-sm text-gray-400;
+  
+  a {
+    @apply text-rpg-gold hover:underline;
+  }
+}
+
+// 動畫效果
+.login-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

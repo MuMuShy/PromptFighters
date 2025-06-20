@@ -1,0 +1,36 @@
+<div class="character-card">
+  <div class="card-image-wrapper">
+    <img *ngIf="!character.image_url.includes('placeholder')" [src]="getFullImageUrl(character.image_url)" [alt]="character.name" class="card-image" />
+    <div *ngIf="character.image_url.includes('placeholder')" class="image-loading">
+      <div class="spinner"></div>
+      <div class="loading-text">圖片產生中...</div>
+    </div>
+    <div class="info-bar">
+      <div class="name">{{ character.name }}</div>
+      <div class="stats">
+        <span class="stat strength">💪 {{ character.strength }}</span>
+        <span class="stat agility">⚡ {{ character.agility }}</span>
+        <span class="stat luck">🍀 {{ character.luck }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="skill-bar">
+      <span>{{ character.skill_description }}</span>
+    </div>
+    <div class="stats-row">
+      <div class="footer-item">
+        <div class="footer-value win">{{character.win_count}}</div>
+        <div class="footer-label">Wins</div>
+      </div>
+      <div class="footer-item">
+        <div class="footer-value loss">{{character.loss_count}}</div>
+        <div class="footer-label">Losses</div>
+      </div>
+      <div class="footer-item">
+        <div class="footer-value rate">{{winRate}}%</div>
+        <div class="footer-label">Win Rate</div>
+      </div>
+    </div>
+  </div>
+</div> 

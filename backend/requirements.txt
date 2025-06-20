@@ -1,0 +1,17 @@
+Django==5.0.2
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+social-auth-app-django==5.4.0
+python-dotenv==1.0.1
+requests==2.31.0
+psycopg2-binary==2.9.9
+djangorestframework-simplejwt==5.3.1
+Pillow==10.2.0
+python-jose==3.3.0
+openai==1.12.0
+google-generativeai
+celery
+redis 
+google
+google-genai
+gunicorn==22.0.0

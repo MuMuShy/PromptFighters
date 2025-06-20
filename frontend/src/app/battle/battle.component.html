@@ -1,0 +1,137 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- 無角色時的提示 -->
+  <div *ngIf="!playerCharacter" class="text-center">
+    <div class="rpg-card p-8 max-w-md mx-auto">
+      <div class="text-6xl mb-4">🎭</div>
+      <h2 class="text-2xl font-bold text-white mb-4">尚未選擇角色</h2>
+      <p class="text-gray-300 mb-6">你需要一個角色才能進入戰鬥！</p>
+      <a routerLink="/create" class="rpg-button inline-block">
+        創建角色
+      </a>
+    </div>
+  </div>
+
+  <!-- 戰鬥場景 -->
+  <div *ngIf="playerCharacter && opponent" class="battle-scene">
+    <!-- 血量條 -->
+    <div class="health-bars">
+      <div class="health-bar player" *ngIf="playerCharacter">
+        <div class="name">{{ playerCharacter.name }}</div>
+        <div class="bar-container">
+          <div class="bar" [style.width.%]="playerHealth">
+            <div class="health-text">HP: {{playerHealth}}%</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="health-bar opponent" *ngIf="opponent">
+        <div class="name">{{ opponent.name }}</div>
+        <div class="bar-container">
+          <div class="bar" [style.width.%]="opponentHealth">
+            <div class="health-text">HP: {{opponentHealth}}%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 角色顯示 -->
+    <div class="characters-display">
+      <div class="character player">
+        <img [src]="playerCharacter.image_url | mediaUrl" 
+             [alt]="playerCharacter.name"
+             [class.shake-animation]="isPlayerBeingAttacked">
+      </div>
+      <div class="character opponent">
+        <img [src]="opponent.image_url | mediaUrl" 
+             [alt]="opponent.name"
+             [class.shake-animation]="isOpponentBeingAttacked">
+      </div>
+    </div>
+
+    <!-- 戰鬥控制 -->
+    <div class="battle-controls" *ngIf="!battleStarted">
+      <button (click)="startBattle()" class="rpg-button text-xl px-8 py-4" [disabled]="isLoading">
+        <mat-icon>sports_kabaddi</mat-icon>
+        開始戰鬥
+      </button>
+      <button (click)="findNewOpponent()" class="rpg-button text-xl px-8 py-4" [disabled]="isLoading">
+        <mat-icon>refresh</mat-icon>
+        更換對手
+      </button>
+    </div>
+
+    <!-- 戰鬥結束後的控制按鈕 -->
+    <div class="battle-controls" *ngIf="battleResult && !showResultOverlay">
+      <button (click)="resetBattle()" class="rpg-button text-xl px-8 py-4">
+          <mat-icon>replay</mat-icon>
+          再來一場
+      </button>
+    </div>
+  </div>
+
+  <!-- 尋找對手介面 -->
+  <div *ngIf="playerCharacter && !opponent && !battleResult" class="text-center">
+    <div class="rpg-card p-8 max-w-md mx-auto">
+      <div class="text-6xl mb-4 animate-bounce-slow">⚔️</div>
+      <h2 class="text-2xl font-bold text-white mb-4">準備好戰鬥了嗎？</h2>
+      <p class="text-gray-300 mb-6">
+        進入競技場，尋找一個值得一戰的對手。
+        勝利帶來榮耀，失敗帶來智慧！
+      </p>
+      <button (click)="findNewOpponent()" class="rpg-button" [disabled]="isLoading">
+        <mat-icon>search</mat-icon>
+        尋找對手
+      </button>
+    </div>
+  </div>
+
+  <!-- 載入中動畫 -->
+  <div *ngIf="isLoading" class="text-center mb-8">
+    <div class="text-4xl animate-spin">⚔️</div>
+  </div>
+
+  <!-- 戰鬥進行中介面 -->
+  <div *ngIf="battleStarted && !battleResult" class="battle-in-progress-overlay">
+    <div class="content">
+      <div class="spinner">⚔️</div>
+      <p>AI 正在主導戰鬥...</p>
+    </div>
+  </div>
+
+  <!-- 戰鬥記錄 -->
+  <app-battle-log *ngIf="battleResult" [battleResult]="battleResult" [currentRound]="currentRound"></app-battle-log>
+
+  <!-- 戰鬥結果彈窗 -->
+  <div class="battle-result-overlay" *ngIf="battleResult && showResultOverlay" [@fadeInOut]>
+    <div class="battle-result-container beautiful-overlay">
+      <div class="rpg-card result-card" 
+           [class.victory]="battleResult.winner.id === playerCharacter?.id"
+           [class.defeat]="battleResult.winner.id !== playerCharacter?.id">
+        <div class="result-icon big-icon" 
+             [class.animate-bounce]="battleResult.winner.id === playerCharacter?.id">
+          <mat-icon class="result-emoji">
+            {{battleResult.winner.id === playerCharacter?.id ? 'emoji_events' : 'sentiment_very_dissatisfied'}}
+          </mat-icon>
+        </div>
+        <h2 class="result-title">
+          {{battleResult.winner.id === playerCharacter?.id ? '勝利！' : '失敗！'}}
+        </h2>
+        <p class="result-message">
+          {{battleResult.winner.id === playerCharacter?.id ? 
+            '你的英雄獲得了光榮的勝利！' : 
+            '你的英雄奮戰到底，但還是落敗了。'}}
+        </p>
+        <div class="action-buttons">
+          <button mat-raised-button color="accent" (click)="resetBattle()">
+            <mat-icon>replay</mat-icon>
+            再來一場
+          </button>
+          <button mat-raised-button color="primary" (click)="showResultOverlay = false">
+            <mat-icon>visibility</mat-icon>
+            查看戰報
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

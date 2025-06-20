@@ -1,0 +1,126 @@
+.battle-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.battle-overview {
+  margin-bottom: 30px;
+  text-align: center;
+  
+  h2 {
+    color: #333;
+    margin-bottom: 15px;
+  }
+  
+  p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #666;
+  }
+}
+
+.battle-rounds {
+  h3 {
+    color: #ffffff;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+}
+
+.battle-summary {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+  color: #e0e0e0;
+  border-left: 4px solid #ffd700;
+  line-height: 1.6;
+}
+
+.battle-round {
+  margin-bottom: 15px;
+  background-color: #2c2c2e;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  mat-card-header {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 16px;
+    border-radius: 8px 8px 0 0;
+    
+    img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+  
+  mat-card-content {
+    padding: 16px;
+    
+    .action {
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+    
+    .description {
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+    
+    .damage-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.02);
+      padding: 10px;
+      border-radius: 4px;
+      
+      .damage, .hp {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+      
+      .damage {
+        color: #f44336;
+      }
+      
+      .hp {
+        color: #2196f3;
+      }
+    }
+  }
+}
+
+.battle-result {
+  margin-top: 30px;
+  text-align: center;
+  
+  mat-card {
+    display: inline-block;
+    padding: 16px 32px;
+    
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #ffc107;
+      
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+} 

@@ -1,0 +1,44 @@
+<div class="battle-container" #logContainer>
+  <div class="battle-rounds">
+    <h3>戰鬥過程</h3>
+    <p class="battle-summary">{{battleResult.battle_log.battle_description}}</p>
+    <mat-card *ngFor="let log of battleResult.battle_log.battle_log | slice:0:currentRound; let i = index" class="battle-round" [id]="'round-' + i">
+      <mat-card-header>
+        <img mat-card-avatar [src]="(log.attacker === battleResult.character1.name ? battleResult.character1.image_url : battleResult.character2.image_url) | mediaUrl" [alt]="log.attacker">
+        <mat-card-title>
+          {{ log.attacker }}
+          <mat-icon *ngIf="isWinner(log.attacker)" class="material-icons" color="accent">military_tech</mat-icon>
+        </mat-card-title>
+        <mat-card-subtitle>攻擊 → {{ log.defender }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action">
+          <strong>{{ log.action }}</strong>
+        </div>
+        <div class="description">
+          {{ log.description }}
+        </div>
+        <div class="damage-info">
+          <span class="damage">
+            <mat-icon class="material-icons" color="warn">local_fire_department</mat-icon>
+            傷害: {{ log.damage }}
+          </span>
+          <span class="hp">
+            <mat-icon class="material-icons" color="primary">favorite</mat-icon>
+            剩餘生命: {{ animatedHp[i] !== undefined ? animatedHp[i] : log.remaining_hp }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <div class="battle-result" *ngIf="battleResult.winner">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="material-icons" color="accent">emoji_events</mat-icon>
+          勝利者：{{ battleResult.winner.name }}
+        </mat-card-title>
+      </mat-card-header>
+    </mat-card>
+  </div>
+</div> 

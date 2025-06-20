@@ -1,0 +1,26 @@
+# General
+.DS_Store
+.vscode/
+.idea/
+
+# Backend (Python/Django/Docker)
+backend/__pycache__/
+backend/*.pyc
+backend/db.sqlite3
+backend/.env
+backend/static/
+backend/media/
+backend/celerybeat-schedule
+
+# Frontend (Angular/Node)
+frontend/node_modules/
+frontend/dist/
+frontend/npm-debug.log*
+frontend/yarn-error.log
+frontend/yarn.lock
+frontend/.angular/
+frontend/.nx/
+
+# Docker
+postgres_data/ 
+.venv/
