@@ -13,7 +13,7 @@ services:
       - "5432:5432"
   web:
     build: .
-    command: sh -c "python manage.py migrate && gunicorn backend.wsgi:application --bind 0.0.0.0:8000"
+    command: sh -c "echo 'Waiting for database...' && echo 'Database started.' && echo 'Starting migrations...' && python manage.py migrate && echo 'Collecting static files...' && python manage.py collectstatic --noinput && if [ \"$$USE_GUNICORN\" = \"True\" ]; then echo 'Starting Gunicorn...' && gunicorn backend.wsgi:application --bind 0.0.0.0:8000; else echo 'Starting Django development server...' && python manage.py runserver 0.0.0.0:8000; fi"
     volumes:
       - .:/code
     ports:

@@ -1,16 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CharacterService } from '../services/character.service';
-import { BattleService } from '../services/battle.service';
+import { BattleService, BattleStartResponse } from '../services/battle.service';
 import { Character } from '../interfaces/character.interface';
 import { Battle } from '../interfaces/battle.interface';
 import { CharacterCardComponent } from '../shared/character-card.component';
 import { BattleLogComponent } from '../components/battle-log/battle-log.component';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MediaUrlPipe } from '../pipes/media-url.pipe';
+import { Subscription, timer } from 'rxjs';
+import { switchMap, takeWhile, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-battle',
@@ -38,7 +40,7 @@ import { MediaUrlPipe } from '../pipes/media-url.pipe';
     ])
   ]
 })
-export class BattleComponent implements OnInit {
+export class BattleComponent implements OnInit, OnDestroy {
   playerCharacter: Character | null = null;
   opponent: Character | null = null;
   battleResult: Battle | null = null;
@@ -51,17 +53,28 @@ export class BattleComponent implements OnInit {
   isPlayerBeingAttacked = false;
   isOpponentBeingAttacked = false;
 
+  private pollingSubscription: Subscription | null = null;
+  private characterSubscription: Subscription | null = null;
+
   constructor(
     private characterService: CharacterService,
     private battleService: BattleService
   ) {}
 
   ngOnInit(): void {
-    this.characterService.currentCharacter$.subscribe(character => {
+    this.characterSubscription = this.characterService.currentCharacter$.subscribe(character => {
       if (character) {
         this.playerCharacter = character;
+        if (!this.opponent) {
+            this.findNewOpponent();
+        }
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.characterSubscription?.unsubscribe();
+    this.stopPolling();
   }
 
   findNewOpponent(): void {
@@ -70,6 +83,7 @@ export class BattleComponent implements OnInit {
     this.battleStarted = false;
     this.opponent = null;
     this.resetHealth();
+    this.showResultOverlay = false;
     
     this.battleService.getRandomOpponent().subscribe({
       next: (opponent) => {
@@ -86,61 +100,85 @@ export class BattleComponent implements OnInit {
   startBattle(): void {
     if (!this.playerCharacter || !this.opponent) return;
 
-    this.isLoading = true;
     this.battleStarted = true;
     this.showResultOverlay = false;
     this.currentRound = 0;
     this.resetHealth();
 
-    this.battleService.startBattle(this.playerCharacter, this.opponent).subscribe({
-      next: (result) => {
-        this.battleResult = result;
-        this.isLoading = false;
-
-        // 逐回合顯示 log 和更新血量
-        this.currentRound = 0;
-        const battleLog = result.battle_log.battle_log;
-        const totalRounds = battleLog.length;
-        const roundInterval = 1000; // 1秒一回合
-
-        const showNextRound = () => {
-          if (this.currentRound < totalRounds) {
-            const log = battleLog[this.currentRound];
-            this.updateHealth(log);
-            this.currentRound++;
-            setTimeout(showNextRound, roundInterval);
-          } else {
-            setTimeout(() => {
-              this.showResultOverlay = true;
-            }, 800);
-          }
-        };
-        showNextRound();
+    this.battleService.startBattle(this.playerCharacter.id, this.opponent.id).subscribe({
+      next: (response: BattleStartResponse) => {
+        this.pollForBattleResult(response.battle_id);
       },
       error: (error) => {
-        console.error('戰鬥發生錯誤:', error);
-        this.isLoading = false;
+        console.error('啟動戰鬥失敗:', error);
         this.battleStarted = false;
       }
     });
   }
 
+  private pollForBattleResult(battleId: string): void {
+    this.stopPolling();
+
+    this.pollingSubscription = timer(0, 1500)
+      .pipe(
+        switchMap(() => this.battleService.getBattleResult(battleId)),
+        takeWhile(battle => battle.status === 'PENDING', true) 
+      )
+      .subscribe({
+        next: (battle) => {
+          if (battle.status !== 'PENDING') {
+            this.stopPolling();
+            console.log('battle', battle);
+            this.battleResult = battle;
+            
+            if (battle.battle_log) {
+                const battleLog = battle.battle_log.battle_log;
+                const totalRounds = battleLog.length;
+                const roundInterval = 1000;
+
+                const showNextRound = () => {
+                if (this.currentRound < totalRounds) {
+                    const log = battleLog[this.currentRound];
+                    this.updateHealth(log);
+                    this.currentRound++;
+                    setTimeout(showNextRound, roundInterval);
+                } else {
+                    setTimeout(() => {
+                    this.showResultOverlay = true;
+                    }, 800);
+                }
+                };
+                showNextRound();
+            } else {
+                console.error("Battle completed but battle_log is null", battle);
+                this.battleStarted = false;
+            }
+          }
+        },
+        error: (error) => {
+          console.error('輪詢戰鬥結果失敗:', error);
+          this.battleStarted = false;
+          this.stopPolling();
+        }
+      });
+  }
+
+  private stopPolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = null;
+    }
+  }
+
   private updateHealth(log: any): void {
-    console.log(log);
     if (log.attacker === this.playerCharacter?.name) {
-      // 玩家攻擊對手
       this.isOpponentBeingAttacked = true;
       this.opponentHealth = log.remaining_hp <= 0 ? 0 : log.remaining_hp;
-      setTimeout(() => {
-        this.isOpponentBeingAttacked = false;
-      }, 500);
+      setTimeout(() => { this.isOpponentBeingAttacked = false; }, 500);
     } else {
-      // 對手攻擊玩家
       this.isPlayerBeingAttacked = true;
       this.playerHealth = log.remaining_hp <= 0 ? 0 : log.remaining_hp;
-      setTimeout(() => {
-        this.isPlayerBeingAttacked = false;
-      }, 500);
+      setTimeout(() => { this.isPlayerBeingAttacked = false; }, 500);
     }
   }
 

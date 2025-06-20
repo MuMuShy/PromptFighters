@@ -14,6 +14,9 @@ class PlayerSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'created_at', 'last_login']
 
 class CharacterSerializer(serializers.ModelSerializer):
+    win_rate = serializers.SerializerMethodField()
+    player_name = serializers.CharField(source='player.user.username', read_only=True)
+
     class Meta:
         model = Character
         fields = '__all__'
@@ -21,11 +24,18 @@ class CharacterSerializer(serializers.ModelSerializer):
             'id', 'player', 'name', 'image_url', 'strength', 'agility', 'luck',
             'skill_description', 'win_count', 'loss_count', 'created_at'
         ]
+    
+    def get_win_rate(self, obj):
+        total_battles = obj.win_count + obj.loss_count
+        if total_battles == 0:
+            return 0
+        return round((obj.win_count / total_battles) * 100)
 
 class BattleSerializer(serializers.ModelSerializer):
-    character1 = CharacterSerializer()
-    character2 = CharacterSerializer()
-    winner = CharacterSerializer()
+    character1 = CharacterSerializer(read_only=True)
+    character2 = CharacterSerializer(read_only=True)
+    winner = CharacterSerializer(read_only=True)
+    
     class Meta:
         model = Battle
-        fields = ['id', 'character1', 'character2', 'winner', 'battle_log', 'created_at'] 
+        fields = '__all__' 

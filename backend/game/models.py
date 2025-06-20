@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Player(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -29,15 +30,22 @@ class Character(models.Model):
         return self.name
 
 class Battle(models.Model):
+    BATTLE_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('COMPLETED', 'Completed'),
+        ('ERROR', 'Error'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     character1 = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='battles_as_char1')
     character2 = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='battles_as_char2')
-    winner = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='battles_won')
+    winner = models.ForeignKey(Character, on_delete=models.SET_NULL, null=True, blank=True, related_name='battles_won')
     battle_log = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=BATTLE_STATUS_CHOICES, default='PENDING')
 
     def __str__(self):
-        return f"{self.character1} vs {self.character2}"
+        return f"Battle between {self.character1.name} and {self.character2.name} at {self.created_at}"
 
     class Meta:
         ordering = ['-created_at']

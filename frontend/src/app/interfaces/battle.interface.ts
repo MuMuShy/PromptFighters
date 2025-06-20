@@ -33,4 +33,5 @@ export interface Battle {
         battle_description: string;
     };
     created_at: string;
+    status: 'PENDING' | 'COMPLETED' | 'ERROR';
 } 

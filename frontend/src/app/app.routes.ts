@@ -28,6 +28,11 @@ export const routes: Routes = [
     loadComponent: () => import('./history/history.component').then(m => m.HistoryComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'leaderboard',
+    loadComponent: () => import('./pages/leaderboard/leaderboard.component').then(m => m.LeaderboardComponent),
+    canActivate: [authGuard]
+  },
   { path: '', redirectTo: '/profile', pathMatch: 'full' },
-  { path: '**', redirectTo: '/profile' }
+  { path: '**', redirectTo: '/profile' },
 ];

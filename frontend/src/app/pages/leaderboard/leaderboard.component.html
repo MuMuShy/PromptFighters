@@ -1,0 +1,47 @@
+<div class="leaderboard-container">
+  <h1 class="title">🏆 玩家排行榜 🏆</h1>
+  <p class="subtitle">基於勝率排名，見證最強的AI英雄！</p>
+
+  <div *ngIf="isLoading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>正在載入排行榜...</p>
+  </div>
+
+  <div *ngIf="!isLoading && leaderboard.length === 0" class="no-data">
+    <p>目前還沒有足夠的對戰資料來產生排行榜，快去對戰吧！</p>
+  </div>
+
+  <div *ngIf="!isLoading && leaderboard.length > 0" class="leaderboard-table-wrapper">
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th class="character">角色</th>
+          <th class="player">玩家</th>
+          <th class="record">戰績</th>
+          <th class="win-rate">勝率</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let char of leaderboard; let i = index">
+          <td class="rank">
+            <span *ngIf="i < 3" class="medal">{{ i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉' }}</span>
+            <span *ngIf="i >= 3">{{ i + 1 }}</span>
+          </td>
+          <td class="character">
+            <img [src]="char.image_url | mediaUrl" alt="{{ char.name }}" class="character-avatar">
+            <span>{{ char.name }}</span>
+          </td>
+          <td class="player">{{ char.name }}</td>
+          <td class="record">{{ char.win_count }} 勝 / {{ char.loss_count }} 敗</td>
+          <td class="win-rate">
+            <div class="win-rate-bar-container">
+              <div class="win-rate-bar" [style.width.%]="char.win_rate"></div>
+            </div>
+            <span>{{ char.win_rate }}%</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div> 

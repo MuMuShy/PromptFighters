@@ -10,4 +10,5 @@ export interface Character {
     win_count: number;
     loss_count: number;
     created_at: string;
+    win_rate: number;
 } 

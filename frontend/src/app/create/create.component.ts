@@ -2,9 +2,10 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CharacterService, Character } from '../services/character.service';
+import { CharacterService } from '../services/character.service';
 import { CharacterCardComponent } from '../shared/character-card.component';
 import { AuthService } from '../services/auth.service';
+import { Character } from '../interfaces/character.interface';
 
 @Component({
   selector: 'app-create',
@@ -57,7 +58,7 @@ import { AuthService } from '../services/auth.service';
                 <button 
                   (click)="saveCharacter()"
                   class="rpg-button flex-1">
-                  💾 Save & Continue
+                  查看角色
                 </button>
                 <!-- <button 
                   (click)="generateCharacter()"

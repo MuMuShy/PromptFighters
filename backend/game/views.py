@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from google import genai
 import os
 import json
-from .tasks import generate_character_image
+from .tasks import generate_character_image, run_battle_task
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from django.contrib.auth import get_user_model
@@ -21,6 +21,7 @@ from rest_framework.decorators import action
 import openai
 from django.conf import settings
 from django.db import models
+from django.db.models import F, ExpressionWrapper, FloatField
 import re
 
 # Create your views here.
@@ -117,6 +118,24 @@ class SocialLoginView(APIView):
             })
         return Response({'error': 'Unsupported provider'}, status=400)
 
+class BattleViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    提供戰鬥結果的查詢功能。
+    只讀，不允許創建、修改、刪除。
+    """
+    queryset = Battle.objects.all()
+    serializer_class = BattleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        確保使用者只能查詢與自己角色相關的戰鬥。
+        """
+        user_characters = Character.objects.filter(player=self.request.user.player)
+        return Battle.objects.filter(
+            models.Q(character1__in=user_characters) | models.Q(character2__in=user_characters)
+        ).distinct()
+
 class CharacterViewSet(viewsets.ModelViewSet):
     serializer_class = CharacterSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -209,7 +228,9 @@ class CharacterViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def battle(self, request):
-        """進行戰鬥"""
+        """
+        異步啟動一場戰鬥。
+        """
         player_id = request.data.get('player_character')
         opponent_id = request.data.get('opponent_character')
 
@@ -218,116 +239,52 @@ class CharacterViewSet(viewsets.ModelViewSet):
             opponent = Character.objects.get(id=opponent_id)
         except Character.DoesNotExist:
             return Response(
-                {"error": "Character not found"}, 
+                {"error": "Character not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 準備戰鬥場景描述
-        battle_prompt = f"""
-                    一場史詩般的對決即將展開！
+        # 1. 立即創建一個 PENDING 狀態的 Battle 實例
+        battle = Battle.objects.create(
+            character1=player,
+            character2=opponent,
+            status='PENDING'
+        )
 
-                    **你的任務是創造一場獨一無二的戰鬥。**
+        # 2. 觸發背景任務
+        run_battle_task.delay(battle.id)
 
-                    第一步：請你自行想像一個極具創意、天馬行空的戰鬥地點。
+        # 3. 立即返回 battle_id，讓前端可以開始輪詢
+        return Response(
+            {"battle_id": battle.id, "status": battle.status},
+            status=status.HTTP_202_ACCEPTED
+        )
 
-                    第二步：基於這個你想像出來的地點，生成一場精彩的戰鬥過程，並以JSON格式回傳。
+class LeaderboardView(generics.ListAPIView):
+    """
+    提供基於勝率的角色排行榜。
+    - 只包含至少戰鬥過一次的角色。
+    - 按勝率降序排序，勝率相同則按勝場數降序。
+    - 最多返回前 100 名。
+    """
+    serializer_class = CharacterSerializer
+    permission_classes = [AllowAny]
 
-                    **戰鬥員資料：**
+    def get_queryset(self):
+        # Annotate the queryset with the total number of battles first
+        queryset = Character.objects.annotate(
+            total_battles=F('win_count') + F('loss_count')
+        )
 
-                    玩家角色：
-                    名稱：{player.name}
-                    描述：{player.prompt}
-                    力量：{player.strength}
-                    敏捷：{player.agility}
-                    幸運：{player.luck}
-                    特殊能力：{player.skill_description}
+        # Now filter based on the annotated field
+        queryset = queryset.filter(total_battles__gt=0)
 
-                    對手角色：
-                    名稱：{opponent.name}
-                    描述：{opponent.prompt}
-                    力量：{opponent.strength}
-                    敏捷：{opponent.agility}
-                    幸運：{opponent.luck}
-                    特殊能力：{opponent.skill_description}
-
-                    **生成規則：**
-                    1. 3-5個回合的戰鬥。
-                    2. **你想像出的戰鬥地點必須對戰局產生決定性或意想不到的影響。** 這個地點可能會給其中一方帶來優勢或劣勢，甚至導致看似弱小的一方反敗為勝。
-                    3. 每個回合要有具體的動作和傷害值。
-                    4. 要運用到角色的特殊能力。
-                    5. **不要單純根據角色的名字或描述來決定勝負（例如，不要讓「關羽」因為他是關羽就一定贏）。勝負應該是基於你所創造的、受場地影響的戰鬥過程的創意結果。**
-                    6. 血量先歸零者輸。
-
-                    回傳格式一定要是以下JSON格式：
-                    {{
-                        "winner": "{player.id}或{opponent.id}",
-                        "battle_log": [
-                            {{
-                                "attacker": "攻擊者名稱",
-                                "defender": "防守者名稱",
-                                "action": "動作描述",
-                                "damage": 50,
-                                "description": "詳細描述",
-                                "remaining_hp": 100
-                            }}
-                        ],
-                        "battle_description": "整體戰鬥描述"
-                    }}
-
-                    注意：
-                    1. damage 和 remaining_hp 必須是數字
-                    2. winner 必須是兩個角色 ID 其中之一 血量先歸零者輸
-                    3. battle_log 至少要有 3 個回合
-                    """
-
-        try:
-            # 使用 Gemini API 生成戰鬥結果
-            genai_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-            response = genai_client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=battle_prompt
+        # Annotate with the win rate
+        queryset = queryset.annotate(
+            win_rate_calculated=ExpressionWrapper(
+                (F('win_count') * 100.0) / F('total_battles'),
+                output_field=FloatField()
             )
+        )
 
-            # 處理 markdown 標記，確保能正確解析 JSON
-            raw_text = getattr(response, "text", "")
-            print(raw_text)
-
-            # 使用正規表達式提取 JSON 區塊
-            json_match = re.search(r'```json\n({.*?})\n```', raw_text, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                # 如果沒有找到符合的格式，嘗試直接解析
-                json_str = raw_text
-
-            # 解析 AI 返回的戰鬥結果
-            battle_result = json.loads(json_str)
-
-            # 創建戰鬥記錄
-            battle = Battle.objects.create(
-                character1=player,
-                character2=opponent,
-                winner=player if str(battle_result['winner']) == str(player.id) else opponent,
-                battle_log=battle_result  # 直接存儲完整的戰鬥結果
-            )
-
-            # 更新角色戰績
-            winner_id = battle_result['winner']
-            if str(winner_id) == str(player.id):
-                player.win_count += 1
-                opponent.loss_count += 1
-            else:
-                player.loss_count += 1
-                opponent.win_count += 1
-
-            player.save()
-            opponent.save()
-
-            return Response(battle_result)
-
-        except Exception as e:
-            print(f"Battle error: {str(e)}")
-            return Response(
-                {"error": str(e)}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        # Order by the calculated win rate and win count
+        return queryset.order_by('-win_rate_calculated', '-win_count')[:100]

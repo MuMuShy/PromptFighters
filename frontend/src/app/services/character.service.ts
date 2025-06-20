@@ -2,20 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, timer, switchMap, takeWhile, BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
-
-export interface Character {
-  id: string;
-  name: string;
-  prompt: string;
-  image_url: string;
-  strength: number;
-  agility: number;
-  luck: number;
-  skill_description: string;
-  win_count: number;
-  loss_count: number;
-  created_at: string;
-}
+import { Character } from '../interfaces/character.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -76,5 +63,9 @@ export class CharacterService {
       switchMap(() => this.getCharacter(id, token)),
       takeWhile(char => char.image_url.includes('placeholder'), true)
     );
+  }
+
+  getLeaderboard(): Observable<Character[]> {
+    return this.http.get<Character[]>(`${environment.backendBaseUrl}/api/leaderboard/`);
   }
 }

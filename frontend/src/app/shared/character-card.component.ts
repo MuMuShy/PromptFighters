@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Character } from '../models/character.model';
+import { Character } from '../interfaces/character.interface';
 import { CharacterService } from '../services/character.service';
 import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
