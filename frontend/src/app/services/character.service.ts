@@ -21,7 +21,7 @@ export interface Character {
   providedIn: 'root'
 })
 export class CharacterService {
-  private apiUrl = 'http://localhost:8000/api/characters/';
+  private apiUrl = environment.backendBaseUrl + '/api/characters/';
   private currentCharacterSubject = new BehaviorSubject<Character | null>(null);
   public currentCharacter$ = this.currentCharacterSubject.asObservable();
 
