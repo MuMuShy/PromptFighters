@@ -1,6 +1,10 @@
-# AI Hero Battle ⚔️
+# Prompt Fighters ⚔️
 
 一場由 AI 驅動的文字角色扮演戰鬥遊戲。在這裡，你可以創建你獨一無二的英雄，並讓他們在 AI 導演的史詩級戰鬥中一決高下！
+
+<p align="center">
+  <img src="frontend/src/assets/og_image.png" alt="AI Hero Battle" style="max-width: 400px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);" />
+</p>
 
 ## ✨ 主要功能
 
