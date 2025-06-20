@@ -48,6 +48,7 @@ import { CommonModule } from '@angular/common';
             <a routerLink="/profile" (click)="closeMenu()" class="text-white hover:text-rpg-gold block px-3 py-2 rounded-md text-base font-medium">Profile</a>
             <a routerLink="/create" (click)="closeMenu()" class="text-white hover:text-rpg-gold block px-3 py-2 rounded-md text-base font-medium">Create</a>
             <a routerLink="/battle" (click)="closeMenu()" class="text-white hover:text-rpg-gold block px-3 py-2 rounded-md text-base font-medium">Battle</a>
+            <a routerLink="/leaderboard" (click)="closeMenu()" class="text-white hover:text-rpg-gold block px-3 py-2 rounded-md text-base font-medium">Leaderboard</a>
             <button *ngIf="isLoggedIn" (click)="logout(); closeMenu();" class="w-full text-left text-white hover:text-rpg-gold block px-3 py-2 rounded-md text-base font-medium">登出</button>
           </div>
         </div>
