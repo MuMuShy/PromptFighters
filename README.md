@@ -6,6 +6,14 @@
   <img src="frontend/src/assets/og_image.png" alt="AI Hero Battle" style="max-width: 400px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);" />
 </p>
 
+## 🎮 遊戲截圖
+
+<p align="center">
+  <img src="snapshot/1.jpg" alt="遊戲截圖 1 - 角色創建" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+  <img src="snapshot/2.jpg" alt="遊戲截圖 2 - 戰鬥場景" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+  <img src="snapshot/3.jpg" alt="遊戲截圖 3 - 戰鬥結果" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+</p>
+
 ## ✨ 主要功能
 
 - **Google 帳號快速登入**：使用您的 Google 帳號，一鍵進入遊戲世界。
