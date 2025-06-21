@@ -50,9 +50,47 @@
 git clone https://github.com/your-username/ai-hero-battle.git
 ```
 
-### 2. 後端設定與啟動
+### 2. Google Identity Services 設定
 
-後端所有服務皆由 Docker Compose 管理，啟動非常簡單。
+本專案使用 Google Identity Services 進行用戶登入。
+
+#### a. 建立 Google Cloud 專案
+
+1. 前往 [Google Cloud Console](https://console.cloud.google.com/)
+2. 建立新專案或選擇現有專案
+3. 啟用 Google Identity API
+
+#### b. 建立 OAuth 2.0 憑證
+
+1. 在 Google Cloud Console 中，前往「API 和服務」→「憑證」
+2. 點擊「建立憑證」→「OAuth 2.0 用戶端 ID」
+3. 選擇應用程式類型：「網頁應用程式」
+4. 設定授權重新導向 URI：
+   - 開發環境：`http://localhost:4200`
+   - 生產環境：`https://your-domain.com`
+5. 記錄下 `Client ID`
+
+#### c. 設定授權網域
+
+在 OAuth 2.0 用戶端設定中，添加授權的 JavaScript 來源：
+- 開發環境：`http://localhost:4200`
+- 生產環境：`https://your-domain.com`
+
+### 3. 前端設定
+
+**修改 Client ID**
+
+在 `frontend/src/app/login/login.component.ts` 第 85 行，將 `client_id` 替換為你的：
+
+```typescript
+g.accounts.id.initialize({
+  client_id: 'YOUR_GOOGLE_CLIENT_ID_HERE', // 替換這裡
+  callback: window.handleCredentialResponse,
+  auto_select: false
+});
+```
+
+### 4. 後端設定與啟動
 
 **a. 設定環境變數**
 
@@ -61,21 +99,36 @@ git clone https://github.com/your-username/ai-hero-battle.git
 cd backend
 cp .env.example .env
 ```
+
 然後，編輯 `.env` 檔案，填入您的個人金鑰：
-- `SECRET_KEY`: Django 的密鑰，可以隨意設定一個長的隨機字串。
-- `OPENAI_API_KEY`: 您的 OpenAI API 金鑰。
-- `GOOGLE_CLIENT_ID`: 您的 Google OAuth Client ID。
-- `GOOGLE_CLIENT_SECRET`: 您的 Google OAuth Client Secret。
+```bash
+# Django 設定
+SECRET_KEY=your-django-secret-key-here
+
+# OpenAI API 設定
+OPENAI_API_KEY=your-openai-api-key-here
+```
+
+**重要提醒**：
+- `SECRET_KEY`：可以使用 Django 的 `python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` 生成
+- `OPENAI_API_KEY`：從 [OpenAI Platform](https://platform.openai.com/api-keys) 取得
 
 **b. 啟動 Docker 容器**
 
-在 `backend` 資料夾中，執行以下指令來建置並啟動所有後端服務（web, db, redis, celery）：
+在 `backend` 資料夾中，執行以下指令來建置並啟動所有後端服務：
 ```bash
 docker-compose up --build -d
 ```
+
+這會啟動：
+- **PostgreSQL 資料庫** (port 5432)
+- **Redis** (port 6380)
+- **Django Web 服務** (port 8000)
+- **Celery Worker** (背景任務處理)
+
 後端服務將會在 `http://localhost:8000` 啟動。
 
-### 3. 前端設定與啟動
+### 5. 前端設定與啟動
 
 **a. 安裝依賴**
 
@@ -92,5 +145,56 @@ npm install
 ng serve
 ```
 前端應用程式將會在 `http://localhost:4200` 啟動，並會自動代理 API 請求到後端的 `8000` 連接埠。
+
+### 6. 驗證設定
+
+1. 打開瀏覽器訪問 `http://localhost:4200`
+2. 點擊「使用 Google 登入」按鈕
+3. 如果設定正確，應該會跳轉到 Google 登入頁面
+4. 登入成功後會回到遊戲主頁面
+
+## 故障排除
+
+### Google 登入問題
+
+**問題**：點擊登入按鈕沒有反應
+- 檢查前端的 `client_id` 是否正確設定
+- 確認授權重新導向 URI 是否包含 `http://localhost:4200`
+- 檢查瀏覽器控制台是否有錯誤訊息
+
+**問題**：登入後出現 401 錯誤
+- 檢查後端服務是否正常運行
+- 檢查 Django 日誌中的錯誤訊息
+- 確認網路連接正常
+
+**問題**：生產環境登入失敗
+- 確認生產環境的網域已添加到 Google OAuth2 的授權網域
+- 檢查 HTTPS 設定是否正確
+- 確認前端的 `client_id` 設定正確
+
+### 其他常見問題
+
+**問題**：Docker 容器無法啟動
+```bash
+# 檢查容器狀態
+docker-compose ps
+
+# 查看容器日誌
+docker-compose logs web
+
+# 重新建置容器
+docker-compose down
+docker-compose up --build -d
+```
+
+**問題**：前端無法連接到後端
+- 確認後端服務在 `http://localhost:8000` 運行
+- 檢查 Angular 的代理設定
+- 確認 CORS 設定是否正確
+
+## 相關資源
+
+- [Google Identity Services 官方文件](https://developers.google.com/identity/gsi/web)
+- [Angular Google Sign-In 整合](https://developers.google.com/identity/sign-in/web/sign-in)
 
 現在，您可以打開瀏覽器訪問 `http://localhost:4200` 開始遊戲！ 
