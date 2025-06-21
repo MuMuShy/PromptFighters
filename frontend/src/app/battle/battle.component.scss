@@ -1,3 +1,181 @@
+:host {
+  display: flex;
+  flex-grow: 1;
+  width: 100%;
+  overflow: hidden;
+}
+
+.battle-container {
+  @apply w-full h-full relative flex items-center justify-center;
+  overflow: hidden;
+}
+
+.battle-background {
+  @apply absolute inset-0 bg-cover bg-center transition-all duration-500;
+  /* A dark, thematic gradient more suitable for a battle scene */
+  background-image: radial-gradient(ellipse at bottom, #4a148c 0%, #1a1a2e 100%);
+  filter: blur(2px) brightness(0.6);
+  transform: scale(1.1);
+}
+
+// --- Message Cards (No character / Find opponent) ---
+.message-card-container {
+  @apply relative z-10;
+}
+.message-card {
+  @apply bg-slate-900/70 backdrop-blur-md text-center p-8 rounded-2xl;
+  @apply border border-slate-700 max-w-md mx-auto;
+  .message-icon { @apply text-6xl mb-4; }
+  .message-title { @apply text-2xl font-bold text-white mb-2; }
+  .message-text { @apply text-slate-400 mb-6; }
+}
+
+// --- Main Battle Scene ---
+.battle-scene-grid {
+  @apply relative z-10 w-full h-full p-4 md:p-6 lg:p-8 grid gap-4 md:gap-6 lg:gap-8;
+  grid-template-areas: "player center opponent";
+  grid-template-columns: 3fr 2.5fr 3fr;
+  grid-template-rows: 1fr;
+
+  // --- Mobile Layout ---
+  @media (max-width: 768px) {
+    grid-template-areas:
+      "opponent"
+      "center"
+      "player";
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    padding: 1rem;
+    gap: 1rem;
+  }
+}
+
+.arena-side {
+  @apply flex items-center justify-center;
+  min-width: 0;
+  &.player-side { grid-area: player; }
+  &.opponent-side { grid-area: opponent; }
+}
+
+// --- Hero Card ---
+.hero-card {
+  @apply w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl bg-slate-900/60 backdrop-blur-sm rounded-2xl;
+  @apply border border-slate-700 p-2 sm:p-4 transition-all duration-300;
+  position: relative;
+  overflow: hidden;
+  
+  &.is-hit { animation: hit-shake 0.4s ease-in-out; }
+}
+
+.hero-image-container {
+  @apply w-full aspect-square rounded-lg overflow-hidden mb-4;
+  .hero-image { @apply w-full h-full object-cover; }
+}
+.opponent-side .hero-image { transform: scaleX(-1); }
+
+// Responsive hero name and HP bar
+.hero-name { @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-white mb-3 text-center truncate; }
+.hp-bar-container { @apply w-full bg-black/50 rounded-full p-1 relative h-5 sm:h-6 lg:h-8; }
+
+.hp-bar {
+  @apply h-full rounded-full transition-all duration-500;
+  background: linear-gradient(90deg, #d32f2f, #f44336);
+}
+.player-side .hp-bar { background: linear-gradient(90deg, #2e7d32, #4caf50); }
+.hp-text {
+  @apply absolute inset-0 text-white font-bold text-xs sm:text-sm lg:text-base flex items-center justify-center;
+  text-shadow: 1px 1px 2px #000;
+}
+
+// --- Center Arena (Log & Controls) ---
+.arena-center {
+  grid-area: center;
+  @apply flex flex-col justify-between;
+  min-height: 0;
+}
+
+.battle-log-container {
+  @apply flex-grow bg-black/50 rounded-lg p-2 sm:p-4 overflow-y-auto;
+  @apply border border-slate-800;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.5); border-radius: 2px; }
+}
+.pre-battle-status {
+  @apply flex flex-col items-center justify-center h-full text-slate-400;
+  .vs-text { @apply text-4xl sm:text-5xl font-pixel text-rpg-gold mb-4; }
+}
+.battle-log { @apply space-y-2; }
+
+// Rich Log Entry Styles
+.log-entry {
+  @apply flex items-start gap-3 p-2 rounded-md text-sm lg:text-base transition-all duration-500;
+  @apply opacity-0 translate-y-2;
+  &.visible { @apply opacity-100 translate-y-0; }
+
+  .log-icon { @apply flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-xs; }
+  .log-text { @apply text-slate-200 leading-snug; }
+
+  &.attack {
+    background-color: rgba(200, 160, 50, 0.1);
+    .log-icon { background-color: #c8a032; color: #fff; }
+  }
+  &.defense {
+    background-color: rgba(50, 150, 200, 0.1);
+    .log-icon { background-color: #3296c8; color: #fff; }
+  }
+  &.critical {
+    background-color: rgba(220, 50, 50, 0.15);
+    border: 1px solid rgba(220, 50, 50, 0.3);
+    .log-icon { background-color: #dc3232; color: #fff; animation: pulse 1s infinite; }
+    .log-text { @apply font-bold text-white; }
+  }
+  &.info {
+    background-color: rgba(128, 128, 128, 0.1);
+    .log-text { @apply text-slate-400 italic; }
+    .log-icon { background-color: #808080; color: #fff; }
+  }
+}
+
+.battle-controls { @apply flex-shrink-0 text-center pt-4 flex gap-4 justify-center; }
+
+// --- Action Buttons ---
+.action-button {
+  @apply px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base font-bold rounded-lg transition-all duration-300;
+  &.primary { @apply bg-rpg-gold text-black hover:bg-yellow-400; }
+  &.secondary { @apply bg-slate-700 text-white hover:bg-slate-600; }
+}
+
+// --- Overlays ---
+.battle-in-progress-overlay, .result-overlay {
+  @apply absolute inset-0 z-20 bg-black/70 backdrop-blur-sm flex items-center justify-center flex-col p-4;
+}
+.spinner { @apply text-5xl animate-spin mb-4; }
+
+.result-card {
+  @apply bg-slate-900/80 p-6 sm:p-8 rounded-2xl text-center border-2 w-full max-w-md;
+  &.victory { @apply border-yellow-400; }
+  &.defeat { @apply border-red-500; }
+  .result-icon { @apply text-7xl mb-4; }
+  .result-title { @apply text-3xl sm:text-4xl font-bold mb-2; }
+  .victory .result-title { @apply text-yellow-300; }
+  .defeat .result-title { @apply text-red-400; }
+  .result-message { @apply text-slate-300 mb-6; }
+  .result-actions { @apply flex gap-4 justify-center; }
+}
+
+// --- Animations ---
+@keyframes hit-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
 .container {
   position: relative;
   min-height: 100vh;
@@ -101,12 +279,6 @@
   }
 }
 
-// 戰鬥控制樣式
-.battle-controls {
-  text-align: center;
-  margin-top: 20px;
-}
-
 // RPG 卡片基本樣式
 .rpg-card {
   background: rgba(30, 30, 30, 0.95);
@@ -149,87 +321,6 @@
 
   mat-icon {
     margin-right: 8px;
-  }
-}
-
-// 戰鬥結果彈窗樣式
-.battle-result-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(8px);
-}
-
-.battle-result-container {
-  padding: 20px;
-  max-width: 500px;
-  width: 90%;
-}
-
-.result-card {
-  background: rgba(30, 30, 30, 0.95);
-  border-radius: 16px;
-  padding: 2rem;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border: 2px solid;
-  transition: all 0.3s ease;
-
-  &.victory {
-    border-color: #4CAF50;
-    .result-title { color: #4CAF50; }
-    .result-icon { color: #FFD700; }
-  }
-
-  &.defeat {
-    border-color: #f44336;
-    .result-title { color: #f44336; }
-    .result-icon { color: #f44336; }
-  }
-}
-
-.result-icon {
-  margin-bottom: 1.5rem;
-
-  .result-emoji {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-  }
-}
-
-.result-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-}
-
-.result-message {
-  font-size: 1.1rem;
-  color: #e0e0e0;
-  margin-bottom: 2rem;
-  line-height: 1.5;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-
-  button {
-    min-width: 140px;
-    
-    mat-icon {
-      margin-right: 8px;
-    }
   }
 }
 
@@ -429,4 +520,27 @@
       justify-content: center;
     }
   }
+}
+
+/* New Defeat Overlay Styles */
+.defeat-overlay {
+  @apply absolute inset-0 bg-black/70 backdrop-blur-sm;
+  @apply flex flex-col items-center justify-center text-white z-10;
+  animation: fadeIn 0.5s ease-out;
+
+  .defeat-icon {
+    @apply text-5xl sm:text-7xl mb-2;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+  }
+
+  .defeat-text {
+    @apply text-2xl sm:text-3xl font-bold tracking-widest uppercase;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+}
+
+/* New FadeIn Animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 } 

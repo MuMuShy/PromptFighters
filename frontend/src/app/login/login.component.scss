@@ -1,24 +1,41 @@
 .login-container {
-  @apply min-h-screen flex items-center justify-center;
+  @apply flex items-center justify-center;
+  height: calc(100vh - 64px);
+  width: 100vw;
+  background-image: url('/assets/og_image.png');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  
+  // 添加一個半透明的遮罩層，讓文字更容易閱讀
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+  }
 }
 
-// .login-card {
-//   @apply rpg-card p-10 max-w-sm w-full text-center;
-
-//   .card-title {
-//     @apply text-3xl font-bold text-rpg-gold mb-2;
-//   }
-
-//   .card-subtitle {
-//     @apply text-xl text-white mb-4;
-//   }
-
-//   .social-login-buttons {
-//     @apply flex flex-col gap-4 mt-6;
-//   }
-// }
+// 確保登入卡片在遮罩層之上
+.rpg-card {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  max-height: calc(90vh - 64px);
+  overflow-y: auto;
+}
 
 .title {
   @apply text-4xl font-pixel text-center text-rpg-gold mb-8;

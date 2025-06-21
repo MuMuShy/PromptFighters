@@ -3,117 +3,84 @@
   <p class="loading-text">正在從異次元讀取您的英雄檔案...</p>
 </div>
 
-<div *ngIf="!isLoading" class="profile-container">
-  <button class="logout-btn absolute top-4 right-4" (click)="logout()">登出</button>
-  <div class="header">
-    <div class="player-stats" *ngIf="allCharacters.length > 0">
-      <div class="stat-card">
-        <div class="stat-value">{{totalCharacters}}</div>
-        <div class="stat-label">英雄數量</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{{totalBattles}}</div>
-        <div class="stat-label">戰鬥場次</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{{overallWinRate}}%</div>
-        <div class="stat-label">勝率</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 無角色時的提示 -->
+<div *ngIf="!isLoading" class="profile-page-container">
+  <!-- Case: No characters exist -->
   <div *ngIf="allCharacters.length === 0" class="empty-state">
-    <div class="rpg-card">
-      <div class="empty-icon">🎭</div>
-      <h2>尚未擁有角色</h2>
-      <p>創建你的第一個角色，開始你的冒險！</p>
-      <a routerLink="/create" class="rpg-button">
-        創建角色
-      </a>
-    </div>
+    <div class="empty-icon">🎭</div>
+    <h2 class="empty-title">你的冒險尚未開始</h2>
+    <p class="empty-text">每段偉大的傳奇都始於第一步。創建你的首位英雄，讓他/她的名字響徹雲霄！</p>
+    <a routerLink="/create" class="action-button primary">✨ 創建我的第一位英雄</a>
   </div>
 
-  <!-- 主要內容區 -->
-  <div *ngIf="allCharacters.length > 0 && currentCharacter" class="main-content">
-    <!-- 當前角色 -->
-    <div class="current-character-section">
-      <!-- <h2 class="section-title">🌟 當前角色</h2> -->
-      <app-character-card [character]="currentCharacter" class="mb-6"></app-character-card>
-      <div class="action-buttons">
-        <a routerLink="/battle" class="rpg-button">
-          ⚔️ 進入戰鬥
-        </a>
-        <a routerLink="/create" class="rpg-button-secondary">
-          🎨 創建新角色
-        </a>
+  <!-- Case: Characters exist -->
+  <div *ngIf="allCharacters.length > 0" class="profile-grid">
+    <!-- Left Column: User Info & Character Details -->
+    <aside class="left-sidebar">
+      <!-- Player Info Card -->
+      <div class="info-card player-info-card">
+        <div class="player-avatar">👤</div>
+        <h2 class="player-name">冒險者檔案</h2>
+        <p class="player-email">總覽</p>
+        <div class="player-stats-summary">
+          <div class="summary-item">
+            <span class="value">{{ totalCharacters }}</span>
+            <span class="label">英雄</span>
+          </div>
+          <div class="summary-item">
+            <span class="value">{{ totalBattles }}</span>
+            <span class="label">總戰鬥</span>
+          </div>
+          <div class="summary-item">
+            <span class="value">{{ overallWinRate }}%</span>
+            <span class="label">總勝率</span>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- 戰鬥統計 -->
-    <div class="battle-stats-section">
-      <div class="rpg-card">
-        <h2 class="section-title">📊 戰鬥統計</h2>
-        
+      <!-- Selected Character Stats -->
+      <div *ngIf="currentCharacter" class="info-card character-stats-card">
+        <h3 class="card-title">數據面板: {{ currentCharacter.name }}</h3>
         <div class="stats-grid">
-          <div class="stat-box victory">
-            <div class="value">{{currentCharacter?.win_count || 0}}</div>
-            <div class="label">勝利</div>
-          </div>
-          <div class="stat-box defeat">
-            <div class="value">{{currentCharacter?.loss_count || 0}}</div>
-            <div class="label">失敗</div>
-          </div>
-          <div class="stat-box winrate">
-            <div class="value">{{winRate}}%</div>
-            <div class="label">勝率</div>
-          </div>
+            <div class="stat-box victory">
+              <div class="value">{{ currentCharacter.win_count || 0 }}</div>
+              <div class="label">勝利</div>
+            </div>
+            <div class="stat-box defeat">
+              <div class="value">{{ currentCharacter.loss_count || 0 }}</div>
+              <div class="label">失敗</div>
+            </div>
+            <div class="stat-box winrate">
+              <div class="value">{{ winRate }}%</div>
+              <label class="label">勝率</label>
+            </div>
         </div>
 
-        <div class="recent-battles">
-          <h3>📜 最近戰鬥</h3>
-          <div class="battle-list">
-            <div *ngFor="let battle of recentBattles" 
-                 class="battle-item"
-                 [class.victory]="battle.winner.id === currentCharacter?.id"
-                 [class.defeat]="battle.winner.id !== currentCharacter?.id">
-              <div class="battle-info">
-                <div class="opponent">vs {{ battle.character1.id === currentCharacter?.id ? battle.character2.name : battle.character1.name }}</div>
-                <div class="battle-time">{{battle.created_at | date:'short'}}</div>
-              </div>
-              <div class="battle-result">
-                <div class="result-text">
-                  {{battle.winner.id === currentCharacter?.id ? '勝利' : '失敗'}}
-                </div>
-              </div>
-            </div>
-            
-            <div *ngIf="recentBattles.length === 0" class="no-battles">
-              還沒有戰鬥記錄。
-              <a routerLink="/battle" class="start-battle-link">開始你的第一場戰鬥！</a>
-            </div>
-          </div>
+        <!-- "Go to Battle" button, shown only when a character is selected -->
+        <a routerLink="/battle" class="action-button primary w-full mt-6 animate-pulse">
+          ⚔️ 前往戰鬥
+        </a>
+      </div>
+    </aside>
+
+    <!-- Right Column: Character Roster -->
+    <main class="main-content">
+      <h1 class="main-title">英雄庫</h1>
+      <div class="character-roster-grid">
+        <!-- Loop through characters -->
+        <div *ngFor="let character of allCharacters" class="roster-card-wrapper">
+          <app-character-card
+            [character]="character"
+            (click)="selectCharacter(character)"
+            [class.selected]="character.id === currentCharacter?.id">
+          </app-character-card>
         </div>
 
-        <!-- <div class="view-history">
-          <a routerLink="/history" class="rpg-button-secondary">
-            查看完整戰鬥歷史
-          </a>
-        </div> -->
+        <!-- Create New Character Card -->
+        <a routerLink="/create" class="create-new-card">
+          <div class="create-icon">+</div>
+          <p class="create-text">召喚新英雄</p>
+        </a>
       </div>
-    </div>
-  </div>
-
-  <!-- 角色列表 -->
-  <div *ngIf="allCharacters.length > 0" class="character-collection mt-8">
-    <h2 class="text-2xl font-bold text-white mb-6">🎭 角色列表</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let character of allCharacters" 
-           class="character-item"
-           [class.active]="character.id === currentCharacter?.id"
-           (click)="selectCharacter(character)">
-        <app-character-card [character]="character"></app-character-card>
-      </div>
-    </div>
+    </main>
   </div>
 </div> 

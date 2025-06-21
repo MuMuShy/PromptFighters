@@ -16,7 +16,14 @@ def generate_character_image(character_id):
     try:
         response = client.models.generate_content(
             model="gemini-2.0-flash-preview-image-generation",
-            contents=f"請畫出一個中二風格的{char.prompt}角色，動漫風格，彩色插畫。必殺技描述：{char.skill_description}。請注意：圖片中絕對不要出現任何文字、標語、說明、標籤，只產生純角色圖像，不要有任何中文字或英文在圖片裡。",
+            contents=f"""請畫出一個具有中二風格、動畫電影等級的{char.prompt}角色，風格偏向精緻成熟的日系動漫或遊戲角色設計，具備飽滿色彩、專業渲染、角色比例自然、眼神有戲。請避免任何可愛風、低齡化、卡通化或Q版風格。
+
+            角色需具備立體光影效果與細膩服裝設計，整體構圖參考日系 RPG 遊戲封面或角色卡面，例如《Final Fantasy》、《Genshin Impact》風格。若有背景請柔焦處理，主體突出。
+
+            必殺技描述：{char.skill_description}。
+
+            ⚠️ 絕對禁止：圖片中出現任何文字、標語、說明、標籤、中英文等，只能是純角色圖像。
+            """,
             config=types.GenerateContentConfig(
                 response_modalities=['TEXT', 'IMAGE']
             )

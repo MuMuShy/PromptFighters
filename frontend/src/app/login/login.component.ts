@@ -16,7 +16,7 @@ declare const google: any;
   template: `
     <div class="login-container">
       <div class="rpg-card p-10 max-w-sm w-full text-center">
-        <h1 class="title">🎮 AI Hero Battle</h1>
+        <h1 class="title">Prompt Fighters</h1>
         <div class="text-center mb-8">
           <h2 class="subtitle">歡迎來到英雄對戰</h2>
           <p class="text-gray-300 mb-4">使用以下方式登入以開始你的冒險</p>
@@ -46,6 +46,12 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    //如果是登入狀態，則跳轉到profile頁面
+    if (this.auth.isLoggedIn()) {
+      this.router.navigate(['/profile']);
+      return;
+    }
+
     window.handleCredentialResponse = (response: any) => {
       const id_token = response.credential;
       this.auth.socialLogin('google', id_token).subscribe({

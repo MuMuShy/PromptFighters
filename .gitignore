@@ -9,7 +9,8 @@ backend/*.pyc
 backend/db.sqlite3
 backend/.env
 backend/static/
-backend/media/
+backend/media/*
+!backend/media/.gitkeep
 backend/celerybeat-schedule
 
 # Frontend (Angular/Node)

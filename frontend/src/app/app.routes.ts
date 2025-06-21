@@ -4,6 +4,7 @@ import { ProfileComponent } from './profile/profile.component';
 import { CreateComponent } from './create/create.component';
 import { OAuthCallbackComponent } from './auth/oauth-callback.component';
 import { authGuard } from './guards/auth.guard';
+import { LandingComponent } from './pages/landing/landing.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -33,6 +34,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/leaderboard/leaderboard.component').then(m => m.LeaderboardComponent),
     canActivate: [authGuard]
   },
-  { path: '', redirectTo: '/profile', pathMatch: 'full' },
-  { path: '**', redirectTo: '/profile' },
+  { path: '', component: LandingComponent },
+  { path: '**', redirectTo: '/' },
 ];

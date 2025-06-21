@@ -14,6 +14,14 @@ import { MediaUrlPipe } from '../pipes/media-url.pipe';
 import { Subscription, timer } from 'rxjs';
 import { switchMap, takeWhile, tap } from 'rxjs/operators';
 
+// Add this interface for clarity
+interface BattleLogEntry {
+  description: string;
+  type: 'attack' | 'damage' | 'defense' | 'info' | 'critical';
+  // Add other properties from your actual log structure
+  [key: string]: any; 
+}
+
 @Component({
   selector: 'app-battle',
   standalone: true,
@@ -43,7 +51,7 @@ import { switchMap, takeWhile, tap } from 'rxjs/operators';
 export class BattleComponent implements OnInit, OnDestroy {
   playerCharacter: Character | null = null;
   opponent: Character | null = null;
-  battleResult: Battle | null = null;
+  battleResult: Battle & { battle_log: { battle_log: BattleLogEntry[] } } | null = null;
   isLoading = false;
   battleStarted = false;
   showResultOverlay = false;
@@ -52,6 +60,7 @@ export class BattleComponent implements OnInit, OnDestroy {
   opponentHealth = 100;
   isPlayerBeingAttacked = false;
   isOpponentBeingAttacked = false;
+  isBattleLogComplete = false;
 
   private pollingSubscription: Subscription | null = null;
   private characterSubscription: Subscription | null = null;
@@ -103,6 +112,7 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.battleStarted = true;
     this.showResultOverlay = false;
     this.currentRound = 0;
+    this.isBattleLogComplete = false;
     this.resetHealth();
 
     this.battleService.startBattle(this.playerCharacter.id, this.opponent.id).subscribe({
@@ -122,31 +132,41 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.pollingSubscription = timer(0, 1500)
       .pipe(
         switchMap(() => this.battleService.getBattleResult(battleId)),
-        takeWhile(battle => battle.status === 'PENDING', true) 
+        takeWhile(battle => battle.status === 'PENDING', true)
       )
       .subscribe({
         next: (battle) => {
           if (battle.status !== 'PENDING') {
             this.stopPolling();
             console.log('battle', battle);
-            this.battleResult = battle;
+
+            // Process battle log to add types
+            if (battle.battle_log && battle.battle_log.battle_log) {
+              battle.battle_log.battle_log = battle.battle_log.battle_log.map(log => ({
+                ...log,
+                type: this.getLogEntryType(log.description)
+              }));
+            }
+            this.battleResult = battle as any;
             
-            if (battle.battle_log) {
-                const battleLog = battle.battle_log.battle_log;
+            if (this.battleResult?.battle_log) {
+                const battleLog = this.battleResult.battle_log.battle_log;
                 const totalRounds = battleLog.length;
                 const roundInterval = 1000;
 
                 const showNextRound = () => {
-                if (this.currentRound < totalRounds) {
-                    const log = battleLog[this.currentRound];
-                    this.updateHealth(log);
-                    this.currentRound++;
-                    setTimeout(showNextRound, roundInterval);
-                } else {
-                    setTimeout(() => {
-                    this.showResultOverlay = true;
-                    }, 800);
-                }
+                  if (this.currentRound < totalRounds) {
+                      const log = battleLog[this.currentRound];
+                      this.updateHealth(log);
+                      this.currentRound++;
+                      setTimeout(showNextRound, roundInterval);
+                  } else {
+                      // All logs are finished, now we can show overlays
+                      this.isBattleLogComplete = true; 
+                      setTimeout(() => {
+                        this.showResultOverlay = true;
+                      }, 800);
+                  }
                 };
                 showNextRound();
             } else {
@@ -194,6 +214,7 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.battleStarted = false;
     this.showResultOverlay = false;
     this.currentRound = 0;
+    this.isBattleLogComplete = false;
     this.resetHealth();
     this.findNewOpponent();
   }
@@ -239,5 +260,14 @@ export class BattleComponent implements OnInit, OnDestroy {
     }
 
     return log;
+  }
+
+  // Helper function to determine log type for styling
+  private getLogEntryType(description: string): BattleLogEntry['type'] {
+    const desc = description.toLowerCase();
+    if (desc.includes('爆擊') || desc.includes('致命一擊')) return 'critical';
+    if (desc.includes('攻擊') || desc.includes('造成傷害') || desc.includes('揮舞')) return 'attack';
+    if (desc.includes('格擋') || desc.includes('閃避') || desc.includes('防禦')) return 'defense';
+    return 'info';
   }
 }
