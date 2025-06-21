@@ -27,7 +27,7 @@
   </div>
 
   <!-- Main Battle Scene -->
-  <div *ngIf="playerCharacter && opponent" class="battle-scene-grid">
+  <div *ngIf="playerCharacter && opponent" class="battle-scene-grid flex flex-col">
     <!-- Player Arena -->
     <div class="arena-side player-side">
       <div class="hero-card" [class.is-hit]="isPlayerBeingAttacked">
@@ -53,6 +53,11 @@
     <div class="arena-center">
       <div class="battle-log-container">
         <div *ngIf="battleResult; else preBattle" class="battle-log">
+          <!-- 顯示戰鬥描述（AI生成的背景與總結） -->
+          <div *ngIf="battleResult.battle_log.battle_description" class="battle-description mb-4 p-2 bg-gray-800/60 rounded text-gray-200">
+            <span class="font-bold text-rpg-gold">戰鬥背景：</span>
+            {{ battleResult.battle_log.battle_description }}
+          </div>
           <div *ngFor="let log of battleResult.battle_log.battle_log; let i = index"
                class="log-entry"
                [ngClass]="log.type"

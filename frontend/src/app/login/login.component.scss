@@ -97,4 +97,33 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.google-loading {
+  @apply flex flex-col items-center justify-center py-4;
+  
+  .loading-spinner {
+    @apply w-6 h-6 border-2 border-gray-300 border-t-rpg-gold rounded-full animate-spin mb-2;
+  }
+  
+  p {
+    @apply text-sm text-gray-400;
+  }
+}
+
+.fallback-button {
+  @apply w-full py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg 
+         transition-all duration-200 font-semibold flex items-center justify-center space-x-2;
+  
+  &:hover {
+    @apply transform scale-105;
+  }
+}
+
+// 確保 Google 按鈕容器有最小高度
+#google-signin-btn {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 } 

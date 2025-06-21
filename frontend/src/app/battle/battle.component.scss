@@ -40,9 +40,9 @@
   // --- Mobile Layout ---
   @media (max-width: 768px) {
     grid-template-areas:
-      "opponent"
+      "player"
       "center"
-      "player";
+      "opponent";
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
     padding: 1rem;
@@ -97,9 +97,17 @@
 .battle-log-container {
   @apply flex-grow bg-black/50 rounded-lg p-2 sm:p-4 overflow-y-auto;
   @apply border border-slate-800;
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #fcd34d #222;
   &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-track { background: transparent; }
   &::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.5); border-radius: 2px; }
+
+  @media (max-width: 768px) {
+    max-height: 300px;
+  }
 }
 .pre-battle-status {
   @apply flex flex-col items-center justify-center h-full text-slate-400;

@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script>
+      // 添加載入狀態追蹤
+      window.googleSignInLoaded = false;
+      window.addEventListener('load', function() {
+        // 檢查 Google Sign-In 是否載入完成
+        const checkGoogleSignIn = () => {
+          if (window.google && window.google.accounts && window.google.accounts.id) {
+            window.googleSignInLoaded = true;
+            console.log('Google Sign-In script loaded successfully');
+          } else {
+            setTimeout(checkGoogleSignIn, 100);
+          }
+        };
+        checkGoogleSignIn();
+      });
+    </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <title>Prompt Fighters</title>
     <meta charset="UTF-8" />

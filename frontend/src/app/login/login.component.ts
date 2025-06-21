@@ -1,8 +1,10 @@
-import { Component, NgZone, OnInit, AfterViewInit } from '@angular/core';
+import { Component, NgZone, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
+import { Subject, timer } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 declare global {
   interface Window { handleCredentialResponse: (response: any) => void; }
@@ -22,7 +24,16 @@ declare const google: any;
           <p class="text-gray-300 mb-4">使用以下方式登入以開始你的冒險</p>
         </div>
         <div class="space-y-4">
+          <div *ngIf="isLoadingGoogle" class="google-loading">
+            <div class="loading-spinner"></div>
+            <p>正在載入登入按鈕...</p>
+          </div>
           <div id="google-signin-btn"></div>
+          <button *ngIf="showFallbackButton" 
+                  (click)="retryGoogleButton()" 
+                  class="fallback-button">
+            重新載入登入按鈕
+          </button>
         </div>
         <div class="terms">
           <p>登入即表示您同意我們的</p>
@@ -37,7 +48,13 @@ declare const google: any;
   `,
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent implements OnInit, AfterViewInit {
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
+  isLoadingGoogle = true;
+  showFallbackButton = false;
+  private destroy$ = new Subject<void>();
+  private renderAttempts = 0;
+  private maxRenderAttempts = 10;
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -46,7 +63,6 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    //如果是登入狀態，則跳轉到profile頁面
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/profile']);
       return;
@@ -71,29 +87,68 @@ export class LoginComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    const tryRenderGoogleButton = (retryCount = 5) => {
-      const g = (window as any).google;
-      if (g && g.accounts && g.accounts.id) {
-        // --- Google's GSI script is ready ---
+    timer(100).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.tryRenderGoogleButton();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private tryRenderGoogleButton(): void {
+    this.renderAttempts++;
+    this.isLoadingGoogle = true;
+    this.showFallbackButton = false;
+
+    const g = (window as any).google;
+    const buttonElement = document.getElementById('google-signin-btn');
+
+    if (g && g.accounts && g.accounts.id && buttonElement) {
+      try {
+        buttonElement.innerHTML = '';
+        
         g.accounts.id.initialize({
           client_id: '950693364773-f8v3kpslccvtt645k13adlh661fpma6a.apps.googleusercontent.com',
           callback: window.handleCredentialResponse,
           auto_select: false
         });
-        g.accounts.id.renderButton(
-          document.getElementById('google-signin-btn'),
-          { theme: 'outline', size: 'large' }
-        );
-      } else if (retryCount > 0) {
-        // --- Script not ready, try again in 300ms ---
-        setTimeout(() => tryRenderGoogleButton(retryCount - 1), 300);
-      } else {
-        // --- Failed after multiple retries ---
-        console.error('Google Sign-In script failed to load after multiple retries.');
-      }
-    };
 
-    // Start the rendering attempt
-    tryRenderGoogleButton();
+        g.accounts.id.renderButton(buttonElement, { 
+          theme: 'outline', 
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular'
+        });
+
+        this.isLoadingGoogle = false;
+        console.log('Google Sign-In button rendered successfully');
+        
+      } catch (error) {
+        console.error('Error rendering Google button:', error);
+        this.handleRenderFailure();
+      }
+    } else if (this.renderAttempts < this.maxRenderAttempts) {
+      const delay = Math.min(300 * this.renderAttempts, 2000);
+      console.log(`Google Sign-In not ready, retrying in ${delay}ms (attempt ${this.renderAttempts}/${this.maxRenderAttempts})`);
+      
+      timer(delay).pipe(takeUntil(this.destroy$)).subscribe(() => {
+        this.tryRenderGoogleButton();
+      });
+    } else {
+      this.handleRenderFailure();
+    }
+  }
+
+  private handleRenderFailure(): void {
+    this.isLoadingGoogle = false;
+    this.showFallbackButton = true;
+    console.error('Google Sign-In button failed to render after multiple attempts');
+  }
+
+  retryGoogleButton(): void {
+    this.renderAttempts = 0;
+    this.tryRenderGoogleButton();
   }
 } 

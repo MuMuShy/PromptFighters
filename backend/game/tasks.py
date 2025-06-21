@@ -22,7 +22,7 @@ def generate_character_image(character_id):
 
             必殺技描述：{char.skill_description}。
 
-            ⚠️ 絕對禁止：圖片中出現任何文字、標語、說明、標籤、中英文等，只能是純角色圖像。
+            絕對禁止：圖片中出現任何文字、標語、說明、標籤、中英文等，只能是純角色圖像。
             """,
             config=types.GenerateContentConfig(
                 response_modalities=['TEXT', 'IMAGE']
@@ -41,6 +41,85 @@ def generate_character_image(character_id):
         # 可加 log 或通知
         print(f"Error generating character image for {character_id}: {e}")
         pass
+
+def validate_battle_result(battle_result, player, opponent):
+    """驗證戰鬥結果的一致性"""
+    try:
+        battle_log = battle_result.get('battle_log', [])
+        winner_id = battle_result.get('winner')
+        
+        # 追蹤血量
+        player_hp = 100
+        opponent_hp = 100
+        
+        for i, log in enumerate(battle_log):
+            attacker = log.get('attacker')
+            defender = log.get('defender')
+            damage = log.get('damage', 0)
+            remaining_hp = log.get('remaining_hp', 0)
+            
+            # 更新血量
+            if defender == player.name:
+                player_hp = max(0, player_hp - damage)
+                if remaining_hp != player_hp:
+                    print(f"血量不一致：回合 {i+1}，{player.name} 血量應該是 {player_hp}，但記錄為 {remaining_hp}")
+                    return False
+            elif defender == opponent.name:
+                opponent_hp = max(0, opponent_hp - damage)
+                if remaining_hp != opponent_hp:
+                    print(f"血量不一致：回合 {i+1}，{opponent.name} 血量應該是 {opponent_hp}，但記錄為 {remaining_hp}")
+                    return False
+            
+            # 檢查是否有人血量歸零
+            if player_hp <= 0 or opponent_hp <= 0:
+                break
+        
+        # 驗證勝者
+        actual_winner_id = player.id if opponent_hp <= 0 else opponent.id
+        if str(winner_id) != str(actual_winner_id):
+            print(f"勝者不一致：記錄的勝者是 {winner_id}，但實際勝者應該是 {actual_winner_id}")
+            return False
+            
+        return True
+        
+    except Exception as e:
+        print(f"驗證戰鬥結果時發生錯誤：{e}")
+        return False
+
+def fix_battle_result(battle_result, player, opponent):
+    """修正戰鬥結果的不一致性"""
+    try:
+        battle_log = battle_result.get('battle_log', [])
+        
+        # 重新計算血量
+        player_hp = 100
+        opponent_hp = 100
+        
+        for log in battle_log:
+            attacker = log.get('attacker')
+            defender = log.get('defender')
+            damage = log.get('damage', 0)
+            
+            if defender == player.name:
+                player_hp = max(0, player_hp - damage)
+                log['remaining_hp'] = player_hp
+            elif defender == opponent.name:
+                opponent_hp = max(0, opponent_hp - damage)
+                log['remaining_hp'] = opponent_hp
+        
+        # 修正勝者
+        actual_winner_id = player.id if opponent_hp <= 0 else opponent.id
+        battle_result['winner'] = str(actual_winner_id)
+        
+        # 修正戰鬥描述
+        winner_name = player.name if opponent_hp <= 0 else opponent.name
+        battle_result['battle_description'] = f"經過激烈的戰鬥，{winner_name} 最終獲得了勝利！"
+        
+        return battle_result
+        
+    except Exception as e:
+        print(f"修正戰鬥結果時發生錯誤：{e}")
+        return battle_result
 
 @shared_task
 def run_battle_task(battle_id):
@@ -80,34 +159,44 @@ def run_battle_task(battle_id):
                         幸運：{opponent.luck}
                         特殊能力：{opponent.skill_description}
 
-                        **生成規則：**
+                        **重要規則：**
                         1. 3-5個回合的戰鬥。
-                        2. **你想像出的戰鬥地點必須對戰局產生決定性或意想不到的影響。** 這個地點可能會給其中一方帶來優勢或劣勢，甚至導致看似弱小的一方反敗為勝。
+                        2. **你想像出的戰鬥地點必須對戰局產生決定性或意想不到的影響。**
                         3. 每個回合要有具體的動作和傷害值。
                         4. 要運用到角色的特殊能力。
-                        5. **不要單純根據角色的名字或描述來決定勝負（例如，不要讓「關羽」因為他是關羽就一定贏）。勝負應該是基於你所創造的、受場地影響的戰鬥過程的創意結果。**
-                        6. 血量先歸零者輸。
+                        5. **血量先歸零者輸，請嚴格按照血量計算決定勝負。**
+                        6. **每個回合結束後，請仔細檢查剩餘血量，確保敘述與血量一致。**
 
-                        回傳格式一定要是以下JSON格式：
+                        **血量追蹤規則：**
+                        - 每個角色初始血量：100
+                        - 每回合結束後，被攻擊者的剩餘血量 = 當前血量 - 受到的傷害
+                        - 如果剩餘血量 <= 0，該角色立即敗北
+                        - **最後一個血量 > 0 的角色獲勝**
+
+                        **JSON格式要求：**
                         {{
-                            "winner": "{player.id}或{opponent.id}",
+                            "winner": "獲勝者ID（{player.id}或{opponent.id}）",
                             "battle_log": [
                                 {{
                                     "attacker": "攻擊者名稱",
-                                    "defender": "防守者名稱",
+                                    "defender": "防守者名稱", 
                                     "action": "動作描述",
-                                    "damage": 50,
-                                    "description": "詳細描述",
-                                    "remaining_hp": 100
+                                    "damage": 傷害數值（數字）,
+                                    "description": "詳細描述（必須與血量變化一致）",
+                                    "remaining_hp": 防守者剩餘血量（數字）
                                 }}
                             ],
-                            "battle_description": "整體戰鬥描述"
+                            "battle_description": "整體戰鬥描述（必須與最終結果一致）"
                         }}
 
-                        注意：
-                        1. damage 和 remaining_hp 必須是數字
-                        2. winner 必須是兩個角色 ID 其中之一 血量先歸零者輸
-                        3. battle_log 至少要有 3 個回合
+                        **檢查清單：**
+                        1. 每個回合的 damage 和 remaining_hp 必須是數字
+                        2. 血量計算必須正確：remaining_hp = 100 - 累積傷害
+                        3. 最後一個血量 > 0 的角色必須是 winner
+                        4. battle_description 必須與 winner 一致
+                        5. 如果某角色血量歸零，戰鬥立即結束
+
+                        請仔細檢查你的回答，確保敘述與數據完全一致！
                         """
 
         # 使用 Gemini API 生成戰鬥結果
@@ -126,6 +215,11 @@ def run_battle_task(battle_id):
             json_str = raw_text
         
         battle_result = json.loads(json_str)
+
+        # 驗證並修正戰鬥結果
+        if not validate_battle_result(battle_result, player, opponent):
+            print("戰鬥結果不一致，正在修正...")
+            battle_result = fix_battle_result(battle_result, player, opponent)
 
         # 更新 Battle 物件
         battle.winner = player if str(battle_result['winner']) == str(player.id) else opponent
