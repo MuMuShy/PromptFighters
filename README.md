@@ -40,7 +40,6 @@
 首先，複製此專案到您的本地電腦：
 ```bash
 git clone https://github.com/your-username/ai-hero-battle.git
-cd ai-hero-battle
 ```
 
 ### 2. 後端設定與啟動
