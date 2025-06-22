@@ -105,13 +105,12 @@ cp .env.example .env
 # Django 設定
 SECRET_KEY=your-django-secret-key-here
 
-# OpenAI API 設定
-OPENAI_API_KEY=your-openai-api-key-here
+# GEMINI API 設定
+GEMINI_API_KEY=your-openai-api-key-here
 ```
 
 **重要提醒**：
 - `SECRET_KEY`：可以使用 Django 的 `python manage.py shell -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` 生成
-- `OPENAI_API_KEY`：從 [OpenAI Platform](https://platform.openai.com/api-keys) 取得
 
 **b. 啟動 Docker 容器**
 
