@@ -47,7 +47,7 @@
 
 首先，複製此專案到您的本地電腦：
 ```bash
-git clone https://github.com/your-username/ai-hero-battle.git
+git clone https://github.com/MuMuShy/PromptFighters.git
 ```
 
 ### 2. Google Identity Services 設定
