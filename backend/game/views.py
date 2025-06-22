@@ -7,22 +7,25 @@ from django.contrib.auth.models import User
 from .models import Player, Character, Battle
 from .serializers import PlayerSerializer, CharacterSerializer, BattleSerializer
 from django.shortcuts import get_object_or_404
-from google import genai
+# from google import genai #不再需要
 import os
 import json
 from .tasks import generate_character_image, run_battle_task
 from rest_framework.permissions import AllowAny
-from rest_framework import status
+# from rest_framework import status # status 已被 import
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from rest_framework import viewsets
 from rest_framework.decorators import action
-import openai
+# import openai #不再需要
 from django.conf import settings
 from django.db import models
 from django.db.models import F, ExpressionWrapper, FloatField
 import re
+
+# 匯入新的服務
+from .services import CharacterService
 
 # Create your views here.
 
@@ -144,63 +147,25 @@ class CharacterViewSet(viewsets.ModelViewSet):
         return Character.objects.filter(player=self.request.user.player)
 
     def perform_create(self, serializer):
-        prompt = self.request.data.get('prompt')
-        # Gemini 產生技能描述與屬性
-        genai_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-        ai_prompt = f"""
-請根據以下角色名稱，回傳一個 JSON，格式如下：
-{{
-  \"skill_description\": \"30字以內的中二技能描述（中文）\",
-  \"strength\": 30~100的整數,
-  \"agility\": 30~100的整數,
-  \"luck\": 30~100的整數
-}}
-角色名稱：「{prompt}」
-"""
-        try:
-            response = genai_client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=ai_prompt
-            )
-            # 印出 Gemini 回傳內容方便 debug
-            print("Gemini 回傳內容：", getattr(response, "text", None), response)
-            # 處理 markdown 標記，確保能正確解析 JSON
-            raw_text = getattr(response, "text", "")
-            if raw_text.startswith("```json"):
-                raw_text = raw_text[len("```json"):].strip()
-            if raw_text.endswith("```"):
-                raw_text = raw_text[:-3].strip()
-            data = json.loads(raw_text)
-            skill_description = data.get('skill_description', '技能描述生成失敗')
-            strength = int(data.get('strength', random.randint(30, 100)))
-            agility = int(data.get('agility', random.randint(30, 100)))
-            luck = int(data.get('luck', random.randint(30, 100)))
-        except Exception as e:
-            print(f"Error generating skill description for {prompt}: {e}")
-            skill_description = "技能描述生成失敗"
-            strength = random.randint(30, 100)
-            agility = random.randint(30, 100)
-            luck = random.randint(30, 100)
-
-        # 產生圖片（如無法串接則用 placeholder）
-        image_url = f"https://via.placeholder.com/256?text={prompt}"
+        """
+        將角色創建邏輯委託給 CharacterService。
+        視圖層只負責傳遞參數和處理 HTTP 回應。
+        """
+        # 因為 serializer 已被設定為可接收 prompt，
+        # 所以我們可以從 validated_data 中安全地獲取它。
+        prompt = serializer.validated_data['prompt']
         
-        # 使用 serializer.save() 創建角色
-        character = serializer.save(
+        # 呼叫服務來處理核心邏輯
+        service = CharacterService()
+        character = service.create_character(
             player=self.request.user.player,
-            name=prompt,
-            prompt=prompt,
-            image_url=image_url,
-            strength=strength,
-            agility=agility,
-            luck=luck,
-            skill_description=skill_description,
-            win_count=0,
-            loss_count=0
+            name=prompt,  # 暫時讓 name 和 prompt 相同
+            prompt=prompt
         )
         
-        # 非同步生成角色圖片
-        generate_character_image.delay(character.id)
+        # 將創建好的實例回傳給序列化器，以便 DRF 能正確生成回應
+        # 這一步很重要，它讓 DRF 知道該回傳哪個物件的資料
+        serializer.instance = character
 
     @action(detail=True, methods=['get'])
     def battles(self, request, pk=None):

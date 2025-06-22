@@ -38,9 +38,9 @@ declare const google: any;
         <div class="terms">
           <p>登入即表示您同意我們的</p>
           <div class="mt-1 space-x-2">
-            <a href="#" target="_blank">服務條款</a>
+            <a href="/terms" target="_blank">服務條款</a>
             <span>和</span>
-            <a href="#" target="_blank">隱私政策</a>
+            <a href="/privacy" target="_blank">隱私政策</a>
           </div>
         </div>
       </div>

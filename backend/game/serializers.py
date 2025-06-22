@@ -16,6 +16,7 @@ class PlayerSerializer(serializers.ModelSerializer):
 class CharacterSerializer(serializers.ModelSerializer):
     win_rate = serializers.SerializerMethodField()
     player_name = serializers.CharField(source='player.user.username', read_only=True)
+    prompt = serializers.CharField(write_only=True, required=True, max_length=100)
 
     class Meta:
         model = Character
