@@ -1,0 +1,59 @@
+/* Maintenance Overlay Styles */
+.maintenance-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #111827; /* bg-gray-900 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  color: #d1d5db; /* text-gray-300 */
+  text-align: center;
+  font-family: 'Noto Sans TC', sans-serif; /* A more standard font for readability */
+}
+
+.maintenance-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.maintenance-content .logo {
+  width: 100px;
+  height: auto;
+  opacity: 0.8;
+}
+
+.maintenance-content .title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #fcd34d; /* rpg-gold */
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.maintenance-content .message {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.maintenance-content .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(252, 211, 77, 0.2);
+  border-top-color: #fcd34d; /* rpg-gold */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-top: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+} 

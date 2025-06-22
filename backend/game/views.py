@@ -17,12 +17,13 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from rest_framework import viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 # import openai #不再需要
 from django.conf import settings
 from django.db import models
 from django.db.models import F, ExpressionWrapper, FloatField
 import re
+from django.http import JsonResponse
 
 # 匯入新的服務
 from .services import CharacterService
@@ -253,3 +254,11 @@ class LeaderboardView(generics.ListAPIView):
 
         # Order by the calculated win rate and win count
         return queryset.order_by('-win_rate_calculated', '-win_count')[:100]
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health_check(request):
+    """
+    一個簡單的健康檢查端點，用於確認服務是否在線。
+    """
+    return JsonResponse({"status": "ok"})
