@@ -261,4 +261,7 @@ def health_check(request):
     """
     一個簡單的健康檢查端點，用於確認服務是否在線。
     """
+    print("--- DEBUG HEADERS ---")
+    print(json.dumps(dict(request.headers), indent=2))
+    print("---------------------")
     return JsonResponse({"status": "ok"})
