@@ -25,18 +25,11 @@ export class HealthCheckService {
    * @param interval - 檢查間隔（毫秒），預設為 15 秒。
    */
   startPeriodicChecks(interval: number = 15000): void {
-    // 設置 Headers 來防止快取
-    const headers = new HttpHeaders({
-      'Cache-Control': 'no-cache, no-store, must-revalidate, post-check=0, pre-check=0',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
-    
     // 使用 timer 來創建一個定期觸發的 Observable
     timer(0, interval).pipe(
       // 每次觸發時，切換到 health check 的 HTTP 請求
       switchMap(() => 
-        this.http.get<{status: string}>(`${this.apiBaseUrl}/api/health/`, { headers }).pipe(
+        this.http.get<{status: string}>(`${this.apiBaseUrl}/api/health/`).pipe(
           // 5 秒超時機制
           timeout(5000) 
         )
