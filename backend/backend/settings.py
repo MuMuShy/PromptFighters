@@ -28,27 +28,43 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']
+# In production, only allow your specific domain.
+# In development, '*' is more convenient, and Django adds 'localhost' by default when DEBUG=True.
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    # This should be your backend's domain, not the full frontend URL.
+    # Example: 'api.promptfighters.app'
+    ALLOWED_HOSTS = [os.getenv('PROD_BACKEND_HOSTNAME')]
 
-# Get the production origin from the .env file.
-# e.g., 'https://api.promptfighters.app'
-prod_origin = os.getenv('CSRF_TRUSTED_ORIGINS')
 
-# Create a list of trusted origins for CSRF protection.
-CSRF_TRUSTED_ORIGINS = [
-    prod_origin,
-    'http://localhost:4200',  # For Angular local dev server
-    'http://localhost:8000',  # For local Django admin
-    'http://127.0.0.1:4200',
-    'http://127.0.0.1:8000',
+# --- CORS & CSRF Settings ---
+
+# Build a list of allowed origins.
+# It starts with the production URL and is extended for development.
+allowed_origins = [
+    os.getenv('CSRF_TRUSTED_ORIGINS'),  # e.g., 'https://promptfighters.app'
 ]
 
-# Filter out any None or empty values from the list, just in case.
-CSRF_TRUSTED_ORIGINS = [origin for origin in CSRF_TRUSTED_ORIGINS if origin]
+# In development (DEBUG=True), add local development origins.
+if DEBUG:
+    allowed_origins.extend([
+        'http://localhost:4200',
+        'http://127.0.0.1:4200',
+        'http://localhost:8000',  # For Django Admin and browsable API
+        'http://127.0.0.1:8000',
+    ])
+    ALLOWED_HOSTS = ['*']
 
-CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
+# Create the final, clean list by filtering out any None values (from unset env vars).
+CORS_ALLOWED_ORIGINS = [origin for origin in allowed_origins if origin]
+
+# For security, Django's CSRF protection should trust these same origins.
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+# This setting is crucial for allowing the frontend to send credentials.
 CORS_ALLOW_CREDENTIALS = True
 
 # Application definition

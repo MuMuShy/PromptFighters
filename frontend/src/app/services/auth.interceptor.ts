@@ -18,7 +18,12 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(public authService: AuthService) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    if (request.url.includes('/api/health/')) {
+      return next.handle(request);
+    }
+
     const token = this.authService.getToken();
+
     if (token) {
       request = this.addToken(request, token);
     }
