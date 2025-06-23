@@ -156,8 +156,18 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
 CORS_ALLOW_CREDENTIALS = True
+
+prod_origin = os.getenv('CSRF_TRUSTED_ORIGINS')
+
+CSRF_TRUSTED_ORIGINS = [
+    prod_origin,
+    'http://localhost:4200',  # For Angular local dev server
+    'http://localhost:8000',  # For local Django admin
+    'http://127.0.0.1:4200',
+    'http://127.0.0.1:8000',
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
