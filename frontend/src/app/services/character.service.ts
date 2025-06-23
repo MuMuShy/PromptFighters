@@ -68,4 +68,15 @@ export class CharacterService {
   getLeaderboard(): Observable<Character[]> {
     return this.http.get<Character[]>(`${environment.backendBaseUrl}/api/leaderboard/`);
   }
+
+  advancedSummonCharacter(name: string, prompt: string, token: string): Observable<Character> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    return this.http.post<Character>(
+      this.apiUrl + 'advanced_summon/',
+      { name, prompt },
+      { headers }
+    );
+  }
 }

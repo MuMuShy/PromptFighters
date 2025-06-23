@@ -1,0 +1,133 @@
+<div *ngIf="isGenerating" class="overlay-loading">
+  <div class="overlay-content">
+    <div class="overlay-spinner"></div>
+    <div class="overlay-text">英雄生成中...</div>
+  </div>
+</div>
+
+<div *ngIf="showSuccessModal" class="modal-success">
+  <div class="modal-content">
+    <h2 class="modal-title">英雄誕生！</h2>
+    <div class="modal-character-preview">
+      <app-character-card *ngIf="generatedCharacter" [character]="generatedCharacter"></app-character-card>
+    </div>
+    <div class="modal-actions">
+      <button class="game-btn" (click)="closeModal()">確定</button>
+    </div>
+  </div>
+</div>
+
+<div class="game-bg">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-pixel font-bold text-center mb-8 animate-pulse-slow create-title-fancy">
+      創建你的英雄
+    </h1>
+    <div class="max-w-4xl mx-auto">
+      <!-- Tab 切換 -->
+      <div class="flex justify-center mb-6">
+        <button (click)="mode = 'normal'" [class.bg-yellow-600]="mode==='normal'" class="game-tab px-6 py-2 rounded-l-lg font-bold text-white bg-gray-700 hover:bg-yellow-700 focus:outline-none">普通召喚</button>
+        <button (click)="mode = 'advanced'" [class.bg-yellow-600]="mode==='advanced'" class="game-tab px-6 py-2 rounded-r-lg font-bold text-white bg-gray-700 hover:bg-yellow-700 focus:outline-none">高級召喚</button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Creation Form -->
+        <div class="game-card rpg-card p-6">
+          <h2 class="text-2xl font-bold text-white mb-6">{{ mode==='normal' ? '普通召喚' : '高級召喚' }}</h2>
+          <!-- 普通召喚 -->
+          <ng-container *ngIf="mode==='normal'">
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                英雄名字
+              </label>
+              <input 
+                type="text" 
+                [(ngModel)]="characterPrompt"
+                placeholder="例如：炒麵戰士、Shadow Ninja..."
+                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rpg-gold focus:border-transparent"
+                [disabled]="isGenerating">
+              <p class="text-xs text-gray-400 mt-1">
+                輸入你的英雄名字或簡單描述。
+              </p>
+            </div>
+          </ng-container>
+          <!-- 高級召喚 -->
+          <ng-container *ngIf="mode==='advanced'">
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-300 mb-2">英雄名字</label>
+              <input type="text" [(ngModel)]="advancedName" placeholder="請輸入英雄名字" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rpg-gold focus:border-transparent" [disabled]="isGenerating">
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-300 mb-2">高級描述（Prompt）</label>
+              <textarea [(ngModel)]="advancedPrompt" rows="3" placeholder="描述你的英雄外觀、背景、特殊能力..." class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rpg-gold focus:border-transparent" [disabled]="isGenerating"></textarea>
+              <p class="text-xs text-gray-400 mt-1">可輸入外觀、背景、特殊能力等，讓 AI 幫你生成獨特英雄！</p>
+            </div>
+          </ng-container>
+          <button 
+            (click)="mode==='normal' ? generateCharacter() : generateAdvancedCharacter()"
+            [disabled]="(mode==='normal' ? !characterPrompt.trim() : !advancedName.trim() || !advancedPrompt.trim()) || isGenerating"
+            class="game-btn rpg-button w-full mb-4"
+            [class.opacity-50]="(mode==='normal' ? !characterPrompt.trim() : !advancedName.trim() || !advancedPrompt.trim()) || isGenerating">
+            <span *ngIf="!isGenerating">{{ mode==='normal' ? '🎲 召喚英雄' : '✨ 高級召喚' }}</span>
+            <span *ngIf="isGenerating" class="flex items-center justify-center">
+              <span class="animate-spin mr-2">⚡</span>
+              生成中...
+            </span>
+          </button>
+          <div *ngIf="generatedCharacter && !isGenerating" class="space-y-4">
+            <div class="bg-green-900/30 border border-green-500/30 rounded-lg p-4">
+              <h3 class="text-green-400 font-semibold mb-2">✨ 英雄已生成！</h3>
+              <p class="text-green-200 text-sm">
+                你的英雄已經誕生，快來看看他的獨特屬性與能力吧！
+              </p>
+            </div>
+            <div class="flex space-x-3">
+              <button 
+                (click)="saveCharacter()"
+                class="game-btn rpg-button flex-1">
+                前往戰鬥
+              </button>
+            </div>
+          </div>
+          <!-- Tips -->
+          <div class="mt-8 bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
+            <h3 class="text-blue-400 font-semibold mb-2">💡 小提示</h3>
+            <ul class="text-blue-200 text-sm space-y-1">
+              <li>• 普通召喚適合快速體驗，高級召喚可打造獨一無二的英雄</li>
+              <li>• 高級描述越詳細，AI 生成的角色越有個性</li>
+              <li>• 每次生成屬性與技能都不同，勇敢嘗試！</li>
+            </ul>
+          </div>
+        </div>
+        <!-- Character Preview -->
+        <div class="game-card rpg-card p-6">
+          <h2 class="text-2xl font-bold text-white mb-6">英雄預覽</h2>
+          <div *ngIf="!generatedCharacter" class="text-center py-12">
+            <div class="text-6xl mb-4 animate-bounce-slow">🎭</div>
+            <h3 class="text-xl font-bold text-white mb-2">預覽</h3>
+            <p class="text-gray-300">
+              輸入資料並召喚，即可預覽你的英雄！
+            </p>
+          </div>
+          <div *ngIf="generatedCharacter">
+            <app-character-card [character]="generatedCharacter"></app-character-card>
+          </div>
+        </div>
+      </div>
+      <!-- Example Characters -->
+      <div class="mt-12">
+        <h2 class="text-2xl font-bold text-center text-white mb-6">
+          🌟 範例角色
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button 
+            *ngFor="let example of examplePrompts"
+            (click)="characterPrompt = example; mode='normal'; generateCharacter()"
+            class="game-btn bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105"
+            [disabled]="isGenerating">
+            <div class="text-2xl mb-1">{{getExampleEmoji(example)}}</div>
+            <div class="text-white text-sm font-medium">{{example}}</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

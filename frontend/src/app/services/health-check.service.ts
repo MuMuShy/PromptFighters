@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, timer, of } from 'rxjs';
+import { BehaviorSubject, timer, of, Subscription } from 'rxjs';
 import { switchMap, catchError, tap, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -18,31 +18,57 @@ export class HealthCheckService {
   // 將狀態作為 Observable 暴露出去，供其他元件訂閱
   public serverStatus$ = this.serverStatus.asObservable();
 
+  private periodicSub: Subscription | null = null;
+
   constructor(private http: HttpClient) { }
 
   /**
-   * 開始定期檢查伺服器健康狀況。
-   * @param interval - 檢查間隔（毫秒），預設為 15 秒。
+   * 單次檢查伺服器健康狀態。
+   * @returns Observable<boolean> 代表是否在線
    */
-  startPeriodicChecks(interval: number = 15000): void {
-    // 使用 timer 來創建一個定期觸發的 Observable
-    timer(0, interval).pipe(
-      // 每次觸發時，切換到 health check 的 HTTP 請求
-      switchMap(() => 
-        this.http.get<{status: string}>(`${this.apiBaseUrl}/api/health/`).pipe(
-          // 5 秒超時機制
-          timeout(5000) 
-        )
-      ),
-      // 處理請求成功的情況
+  checkOnce(): void {
+    this.http.get<{status: string}>(`${this.apiBaseUrl}/api/health/`).pipe(
+      timeout(5000),
       tap(() => this.updateStatus(true)),
-      // 處理任何錯誤（網路錯誤、伺服器 5xx 錯誤等）
       catchError(() => {
         this.updateStatus(false);
-        // 返回一個 'of(null)' 來讓 observable 鏈繼續下去，不會因為一次錯誤就終止
         return of(null);
       })
     ).subscribe();
+  }
+
+  /**
+   * 開始定期檢查伺服器健康狀況。
+   * @param interval - 檢查間隔（毫秒），預設為 60 秒。
+   * @returns Subscription，可用於隨時停止檢查
+   */
+  startPeriodicChecks(interval: number = 60000): Subscription {
+    if (this.periodicSub) {
+      this.periodicSub.unsubscribe();
+    }
+    this.periodicSub = timer(0, interval).pipe(
+      switchMap(() => 
+        this.http.get<{status: string}>(`${this.apiBaseUrl}/api/health/`).pipe(
+          timeout(5000)
+        )
+      ),
+      tap(() => this.updateStatus(true)),
+      catchError(() => {
+        this.updateStatus(false);
+        return of(null);
+      })
+    ).subscribe();
+    return this.periodicSub;
+  }
+
+  /**
+   * 停止定期健康檢查。
+   */
+  stopPeriodicChecks(): void {
+    if (this.periodicSub) {
+      this.periodicSub.unsubscribe();
+      this.periodicSub = null;
+    }
   }
 
   /**

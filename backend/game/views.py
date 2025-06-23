@@ -152,20 +152,13 @@ class CharacterViewSet(viewsets.ModelViewSet):
         將角色創建邏輯委託給 CharacterService。
         視圖層只負責傳遞參數和處理 HTTP 回應。
         """
-        # 因為 serializer 已被設定為可接收 prompt，
-        # 所以我們可以從 validated_data 中安全地獲取它。
         prompt = serializer.validated_data['prompt']
-        
-        # 呼叫服務來處理核心邏輯
         service = CharacterService()
         character = service.create_character(
             player=self.request.user.player,
-            name=prompt,  # 暫時讓 name 和 prompt 相同
+            name=prompt,
             prompt=prompt
         )
-        
-        # 將創建好的實例回傳給序列化器，以便 DRF 能正確生成回應
-        # 這一步很重要，它讓 DRF 知道該回傳哪個物件的資料
         serializer.instance = character
 
     @action(detail=True, methods=['get'])
@@ -224,6 +217,23 @@ class CharacterViewSet(viewsets.ModelViewSet):
             {"battle_id": battle.id, "status": battle.status},
             status=status.HTTP_202_ACCEPTED
         )
+
+    @action(detail=False, methods=['post'])
+    def advanced_summon(self, request):
+        """
+        高級召喚：只需 prompt，隨機產生 rarity=2~5。
+        """
+        prompt = request.data.get('prompt')
+        name = request.data.get('name')
+        if not prompt:
+            return Response({'error': 'Prompt is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        service = CharacterService()
+        character = service.create_advanced_character(
+            player=request.user.player,
+            name=name,
+            prompt=prompt
+        )
+        return Response(CharacterSerializer(character).data, status=status.HTTP_201_CREATED)
 
 class LeaderboardView(generics.ListAPIView):
     """

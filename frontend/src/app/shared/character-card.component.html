@@ -1,22 +1,25 @@
-<div class="character-card">
+<div class="character-card" [ngClass]="'rarity-' + character.rarity">
+  <div class="card-header-row">
+    <div class="stats stats-header">
+      <span class="stat strength">💪 {{ character.strength }}</span>
+      <span class="stat agility">⚡ {{ character.agility }}</span>
+      <span class="stat luck">🍀 {{ character.luck }}</span>
+    </div>
+    <div class="rarity-badge" [ngClass]="'rarity-' + character.rarity">{{ getRarityLabel(character.rarity) }}</div>
+  </div>
   <div class="card-image-wrapper">
     <img *ngIf="!character.image_url.includes('placeholder')" [src]="getFullImageUrl(character.image_url)" [alt]="character.name" class="card-image" />
     <div *ngIf="character.image_url.includes('placeholder')" class="image-loading">
       <div class="spinner"></div>
       <div class="loading-text">圖片產生中...</div>
     </div>
-    <div class="info-bar">
-      <div class="name">{{ character.name }}</div>
-      <div class="stats">
-        <span class="stat strength">💪 {{ character.strength }}</span>
-        <span class="stat agility">⚡ {{ character.agility }}</span>
-        <span class="stat luck">🍀 {{ character.luck }}</span>
-      </div>
-    </div>
   </div>
   <div class="card-footer">
     <div class="skill-bar">
       <span>{{ character.skill_description }}</span>
+    </div>
+    <div class="character-name-bar">
+      <span class="character-name">{{ character.name }}</span>
     </div>
     <div class="stats-row">
       <div class="footer-item">

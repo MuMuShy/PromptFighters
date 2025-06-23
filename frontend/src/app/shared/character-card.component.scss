@@ -8,6 +8,28 @@
   position: relative;
 }
 
+.character-card.rarity-2 {
+  border: 2.5px solid #4fd2ff;
+  box-shadow: 0 0 16px 2px #4fd2ff88;
+}
+.character-card.rarity-3 {
+  border: 2.5px solid #a259ff;
+  box-shadow: 0 0 18px 3px #a259ff88;
+}
+.character-card.rarity-4 {
+  border: 2.5px solid #ffb300;
+  box-shadow: 0 0 22px 4px #ffb30099;
+}
+.character-card.rarity-5 {
+  border: 3px solid #ff3c6e;
+  box-shadow: 0 0 32px 8px #ff3c6e99, 0 0 40px 10px #fff0;
+  /* animation: rare-glow 1.5s infinite alternate; */
+}
+@keyframes rare-glow {
+  0% { box-shadow: 0 0 28px 6px #ff3c6eaa, 0 0 40px 10px #fff0; }
+  100% { box-shadow: 0 0 40px 12px #fff, 0 0 60px 20px #ff3c6e77; }
+}
+
 .card-image-wrapper {
   width: 100%;
   height: 460px;
@@ -177,4 +199,59 @@
   color: #bdbdbd;
   font-size: 0.9rem;
   margin-top: 0.2rem;
+}
+
+.rarity-badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 10;
+  padding: 0.04em 0.6em;
+  font-weight: 600;
+  font-size: 0.82rem;
+  border-radius: 1.5em;
+  box-shadow: 0 2px 8px #0003;
+  letter-spacing: 1.2px;
+  color: #fff;
+  background: #888a;
+  border: 1.2px solid #fff4;
+  user-select: none;
+  text-shadow: 0 1px 4px #0007, 0 0 1px #fff;
+  transition: box-shadow 0.2s, background 0.2s, border 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+}
+.rarity-badge.rarity-2 { background: linear-gradient(90deg,#2196f3 60%,#4fd2ff 100%); border-color: #4fd2ff; }
+.rarity-badge.rarity-3 { background: linear-gradient(90deg,#a259ff 60%,#7f53ac 100%); border-color: #a259ff; }
+.rarity-badge.rarity-4 { background: linear-gradient(90deg,#ffd700 60%,#ffb300 100%); color: #333; border-color: #ffb300; }
+.rarity-badge.rarity-5 { background: linear-gradient(90deg,#ff3c6e 60%,#ffb300 100%); color: #fff; border: 1.5px solid #fff; box-shadow: 0 0 10px 2px #ff3c6e77, 0 0 0 1.5px #fff8 inset; }
+
+.card-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 0.5rem 1.2rem 0.2rem 1.2rem;
+  z-index: 10;
+}
+.stats-header {
+  display: flex;
+  gap: 0.7rem;
+  font-size: 1.1rem;
+  align-items: center;
+}
+.character-name-bar {
+  width: 100%;
+  text-align: center;
+  margin: 0.5rem 0 0.2rem 0;
+}
+.character-name {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #ffd700;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 8px #000a;
+  display: inline-block;
 } 

@@ -1,0 +1,109 @@
+.overlay-loading {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10, 10, 20, 0.8);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+.overlay-content {
+  background: linear-gradient(145deg, #2a304d, #1c2135);
+  padding: 2.5rem 3.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  border: 1px solid #bfa04655;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.overlay-spinner {
+  width: 56px;
+  height: 56px;
+  border: 6px solid #ffd70044;
+  border-top: 6px solid #ffd700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1.2rem;
+}
+.overlay-text {
+  color: #ffd700;
+  font-size: 1.3rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 8px #000a;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
+.modal-success {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10,10,20,0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  pointer-events: all;
+}
+.modal-content {
+  background: linear-gradient(135deg, #232946 60%, #181c2b 100%);
+  border: 2px solid #ffd700;
+  border-radius: 20px;
+  box-shadow: 0 8px 40px 0 #000a, 0 0 0 2px #ffd70055 inset;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+.modal-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffd700;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 8px #000a;
+}
+.modal-desc {
+  color: #fff;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+.modal-character-preview {
+  width: 100%;
+  transform: scale(0.9);
+  margin: -20px 0;
+}
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.modal-actions .game-btn {
+  background: linear-gradient(90deg, #bfa046 0%, #e0c97f 100%);
+  color: #232946;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 2.5rem;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px 0 rgba(191,160,70,0.2);
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+  cursor: pointer;
+}
+.modal-actions .game-btn:hover {
+  box-shadow: 0 0 16px 4px #ffe066, 0 2px 8px 0 rgba(191,160,70,0.2);
+  background: linear-gradient(90deg, #ffe066 0%, #bfa046 100%);
+  color: #181c2b;
+  transform: scale(1.04);
+} 

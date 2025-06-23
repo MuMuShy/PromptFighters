@@ -34,4 +34,14 @@ export class CharacterCardComponent implements OnInit {
     const total = this.character.win_count + this.character.loss_count;
     return total > 0 ? Math.round((this.character.win_count / total) * 100) : 0;
   }
+
+  getRarityLabel(rarity: number): string {
+    switch (rarity) {
+      case 2: return 'R';
+      case 3: return 'SR';
+      case 4: return 'SSR';
+      case 5: return 'UR';
+      default: return 'N';
+    }
+  }
 }

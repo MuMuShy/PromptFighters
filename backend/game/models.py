@@ -25,6 +25,7 @@ class Character(models.Model):
     win_count = models.IntegerField(default=0)
     loss_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    rarity = models.IntegerField(default=1)
 
     def __str__(self):
         return self.name

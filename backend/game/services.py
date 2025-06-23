@@ -37,21 +37,59 @@ class GeminiService:
         if raw_text.endswith("```"):
             raw_text = raw_text[:-3].strip()
         return json.loads(raw_text)
+    
+    def generate_advanced_character_attributes(self, character_name: str, prompt: str) -> Dict[str, Any]:
+        """
+        使用 Gemini API 生成角色屬性（技能、數值）。
+        """
+        prompt = f"""
+            請根據以下角色名稱，回傳一個 JSON，格式如下：
+            {{
+            "skill_description": "30字以內的中二技能描述（中文）",
+            "strength": "80~150的整數",
+            "agility": "80~150的整數",
+            "luck": "80~150的整數"
+            }}
+            角色名稱：「{character_name}」
+            角色描述：「{prompt}」
+            """
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt
+            )
+            data = self._parse_gemini_response(response)
+            return {
+                'skill_description': data.get('skill_description', '技能描述生成失敗'),
+                'strength': int(data.get('strength', 80)),
+                'agility': int(data.get('agility', 80)),
+                'luck': int(data.get('luck', 80)),
+            }
+        except Exception as e:
+            print(f"屬性生成錯誤: {e}")
+            # 備援機制：隨機生成屬性
+            return {
+                'skill_description': '技能描述生成失敗',
+                'strength': random.randint(80, 150),
+                'agility': random.randint(80, 150),
+                'luck': random.randint(80, 150),
+            }
+        
 
     def generate_character_attributes(self, character_name: str) -> Dict[str, Any]:
         """
         使用 Gemini API 生成角色屬性（技能、數值）。
         """
         prompt = f"""
-請根據以下角色名稱，回傳一個 JSON，格式如下：
-{{
-  "skill_description": "30字以內的中二技能描述（中文）",
-  "strength": "30~100的整數",
-  "agility": "30~100的整數",
-  "luck": "30~100的整數"
-}}
-角色名稱：「{character_name}」
-"""
+            請根據以下角色名稱，回傳一個 JSON，格式如下：
+            {{
+            "skill_description": "30字以內的中二技能描述（中文）",
+            "strength": "30~100的整數",
+            "agility": "30~100的整數",
+            "luck": "30~100的整數"
+            }}
+            角色名稱：「{character_name}」
+            """
         try:
             response = self.client.models.generate_content(
                 model="gemini-2.0-flash",
@@ -101,4 +139,23 @@ class CharacterService:
         from .tasks import generate_character_image
         generate_character_image.delay(character.id)
         
+        return character 
+
+    def create_advanced_character(self, player: Player, name: str, prompt: str) -> Character:
+        """
+        高級召喚：隨機產生 rarity=2~5，並用 AI 生成屬性。
+        """
+        rarity = random.randint(2, 5)
+        attributes = self.gemini_service.generate_advanced_character_attributes(name, prompt)
+        image_url = f"https://via.placeholder.com/256?text={prompt.replace(' ', '+')}"
+        character = Character.objects.create(
+            player=player,
+            name=name,
+            prompt=prompt,
+            image_url=image_url,
+            rarity=rarity,
+            **attributes
+        )
+        from .tasks import generate_character_image
+        generate_character_image.delay(character.id)
         return character 

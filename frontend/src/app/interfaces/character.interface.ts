@@ -11,4 +11,5 @@ export interface Character {
     loss_count: number;
     created_at: string;
     win_rate: number;
+    rarity: number;
 } 

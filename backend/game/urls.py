@@ -11,4 +11,5 @@ urlpatterns = [
     path('social-login/', SocialLoginView.as_view(), name='social-login'),
     path('', include(router.urls)),
     path('health/', health_check, name='health_check'),
+    path('characters/advanced_summon/', CharacterViewSet.as_view({'post': 'advanced_summon'}), name='advanced_summon'),
 ]  

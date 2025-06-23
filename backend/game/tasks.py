@@ -16,13 +16,19 @@ def generate_character_image(character_id):
     try:
         response = client.models.generate_content(
             model="gemini-2.0-flash-preview-image-generation",
-            contents=f"""請畫出一個具有中二風格、動畫電影等級的{char.prompt}角色，風格偏向精緻成熟的日系動漫或遊戲角色設計，具備飽滿色彩、專業渲染、角色比例自然、眼神有戲。請避免任何可愛風、低齡化、卡通化或Q版風格。
+            contents=f"""
+            請以3A級遊戲CG、電影級渲染的風格，繪製{char.prompt}這個角色。風格需極度精緻成熟，參考《Final Fantasy》、《Genshin Impact》、《Fate/Grand Order》、《Arknights》、《暴雪爐石傳說》角色卡面。  
+            重點要求：  
+            - 飽和且高對比的色彩，光影立體，材質細膩（如金屬、皮革、布料、魔法特效等）  
+            - 線條乾淨俐落，無任何草圖感或插畫感  
+            - 角色比例自然，姿勢帥氣，眼神有戲  
+            - 服裝設計複雜且有層次，細節豐富  
+            - 構圖以角色為主體，背景可柔焦或帶魔法特效  
+            - 禁止Q版、卡通、低齡、簡筆畫、模糊、低解析、插畫風、草圖風  
+            - 圖片中禁止出現任何文字、標語、說明、標籤、中英文等
 
-            角色需具備立體光影效果與細膩服裝設計，整體構圖參考日系 RPG 遊戲封面或角色卡面，例如《Final Fantasy》、《Genshin Impact》風格。若有背景請柔焦處理，主體突出。
-
-            必殺技描述：{char.skill_description}。
-
-            絕對禁止：圖片中出現任何文字、標語、說明、標籤、中英文等，只能是純角色圖像。
+            角色描述：{char.prompt}
+            必殺技描述：{char.skill_description}
             """,
             config=types.GenerateContentConfig(
                 response_modalities=['TEXT', 'IMAGE']
