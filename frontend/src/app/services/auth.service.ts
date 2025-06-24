@@ -19,6 +19,8 @@ export class AuthService {
   private refreshUrl = environment.backendBaseUrl + '/api/token/refresh/';
   private oauthUrl = environment.backendBaseUrl + '/api/oauth/';
   private socialLoginUrl = environment.backendBaseUrl + '/api/social-login/';
+  private web3AuthUrl = environment.backendBaseUrl + '/api/auth/web3-login/';
+  private web3NonceUrl = environment.backendBaseUrl + '/api/auth/web3-nonce/';
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -47,6 +49,18 @@ export class AuthService {
       tap(response => {
         console.log('Social login response:', response);
         this.setTokens(response.access, response.refresh);
+      })
+    );
+  }
+
+  web3Login(address: string, signature: string, nonce: string): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(
+      this.web3AuthUrl,
+      { address, signature, nonce }
+    ).pipe(
+      tap(response => {
+        this.setTokens(response.access, response.refresh);
+        localStorage.setItem('wallet_address', address);
       })
     );
   }
@@ -104,5 +118,13 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return this.isTokenValid();
+  }
+
+  getWeb3Nonce(address: string): Promise<{ nonce: string, message: string } | null> {
+    return this.http
+      .get<{ nonce: string, message: string }>(`${this.web3NonceUrl}?address=${address}`)
+      .toPromise()
+      .then(resp => resp || null)
+      .catch(() => null);
   }
 } 

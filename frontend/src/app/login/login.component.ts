@@ -5,6 +5,8 @@ import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 import { Subject, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { Web3Service } from '../services/web3.service';
+import { ethers } from 'ethers';
 
 declare global {
   interface Window { handleCredentialResponse: (response: any) => void; }
@@ -34,6 +36,9 @@ declare const google: any;
                   class="fallback-button">
             重新載入登入按鈕
           </button>
+          <button (click)="loginWithWallet()" class="wallet-login-btn simple-metamask-btn">
+            以錢包登入 (Metamask)
+          </button>
         </div>
         <div class="terms">
           <p>登入即表示您同意我們的</p>
@@ -59,7 +64,8 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     private http: HttpClient,
     private router: Router,
     private ngZone: NgZone,
-    private auth: AuthService
+    private auth: AuthService,
+    private web3Service: Web3Service
   ) {}
 
   ngOnInit(): void {
@@ -150,5 +156,47 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   retryGoogleButton(): void {
     this.renderAttempts = 0;
     this.tryRenderGoogleButton();
+  }
+
+  async loginWithWallet() {
+    const address = await this.web3Service.connectMetamask();
+    if (!address) {
+      alert('錢包連接失敗');
+      return;
+    }
+    try {
+      // 1. 取得 nonce 與 message
+      const nonceResp = await this.auth.getWeb3Nonce(address);
+      const nonce = nonceResp?.nonce;
+      const message = nonceResp?.message;
+      if (!nonce || !message) {
+        alert('無法取得驗證訊息');
+        return;
+      }
+
+      console.log('Sign message:', message);
+
+      // 3. 用錢包簽名 message
+      const provider = (window as any).ethereum
+        ? new ethers.BrowserProvider((window as any).ethereum)
+        : null;
+      if (!provider) {
+        alert('找不到錢包提供者');
+        return;
+      }
+      const signer = await provider.getSigner();
+      const signature = await signer.signMessage(message);
+
+      // 4. 呼叫 AuthService 統一處理登入
+      this.auth.web3Login(address, signature, nonce).subscribe({
+        next: (res) => {
+          this.router.navigate(['/profile']);
+        },
+        error: () => alert('錢包驗證失敗'),
+      });
+    } catch (err) {
+      console.error('登入流程失敗', err);
+      alert('登入流程失敗');
+    }
   }
 } 

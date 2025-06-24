@@ -32,6 +32,13 @@ from django.http import JsonResponse
 # 匯入新的服務
 from .services import CharacterService
 
+# --- Web3 錢包登入驗證 ---
+from django.core.cache import cache
+from django.utils import timezone
+from eth_account.messages import encode_defunct
+from eth_account import Account
+import secrets
+
 # Create your views here.
 
 class CharacterDetailView(generics.RetrieveAPIView):
@@ -324,3 +331,54 @@ def health_check(request):
     一個簡單的健康檢查端點，用於確認服務是否在線。
     """
     return JsonResponse({"status": "ok"})
+
+# --- Web3 錢包登入驗證 ---
+class Web3NonceView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def get(self, request):
+        address = request.GET.get('address')
+        if not address:
+            return Response({'error': 'No address'}, status=400)
+        nonce = secrets.token_hex(16)
+        # 包裝成明文訊息
+        message = f"Sign in to Prompt Fighters to verify your wallet address."
+        cache.set(f'web3_nonce_{address.lower()}', nonce, timeout=300)
+        return Response({'nonce': nonce, 'message': message})
+
+class Web3LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def post(self, request):
+        address = request.data.get('address')
+        signature = request.data.get('signature')
+        nonce = request.data.get('nonce')
+        if not address or not signature or not nonce:
+            return Response({'error': '缺少參數'}, status=400)
+        # 取出 cache 中的 nonce
+        cached_nonce = cache.get(f'web3_nonce_{address.lower()}')
+        if not cached_nonce or cached_nonce != nonce:
+            return Response({'error': '無效或過期的 nonce'}, status=400)
+        # 驗證簽名
+        try:
+            message = f"Sign in to Prompt Fighters to verify your wallet address."
+            print('Backend verify message:', message)
+            message_obj = encode_defunct(text=message)
+            recovered = Account.recover_message(message_obj, signature=signature)
+        except Exception as e:
+            return Response({'error': '簽名驗證失敗'}, status=400)
+        if recovered.lower() != address.lower():
+            return Response({'error': '地址與簽名不符'}, status=400)
+        # 取得或創建 User/Player
+        User = get_user_model()
+        user, _ = User.objects.get_or_create(username=address.lower(), defaults={'email': f'{address.lower()}@web3.local'})
+        player, _ = Player.objects.get_or_create(user=user)
+        # 簽發 JWT
+        refresh = RefreshToken.for_user(user)
+        # 清除 nonce
+        cache.delete(f'web3_nonce_{address.lower()}')
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'player_id': player.id,
+            'username': user.username,
+            'email': user.email
+        })

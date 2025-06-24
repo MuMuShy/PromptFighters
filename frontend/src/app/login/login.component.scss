@@ -126,4 +126,51 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.metamask-btn {
+  background: #f6851b;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75em 1.5em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+  .icon {
+    display: flex;
+    align-items: center;
+  }
+
+  &:hover {
+    background: #e2761b;
+  }
+}
+
+.simple-metamask-btn {
+  width: 100%;
+  padding: 0.75em 0;
+  background: #f6851b;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  cursor: pointer;
+  margin-top: 0.5em;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #e2761b;
+  }
 } 
