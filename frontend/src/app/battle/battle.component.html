@@ -1,140 +1,361 @@
-<!-- Main Battle Container -->
-<div class="battle-container" [class.battle-active]="battleStarted">
-  <!-- Background Scenery -->
-  <div class="battle-background"></div>
+<!-- 戰鬥競技場主容器 -->
+<div class="arena-container" [class.battle-mode]="battleStarted || battleResult">
+  <!-- 競技場背景 -->
+  <div class="arena-background">
+    <div class="magical-atmosphere">
+      <div class="energy-orb orb-1"></div>
+      <div class="energy-orb orb-2"></div>
+      <div class="energy-orb orb-3"></div>
+      <div class="energy-orb orb-4"></div>
+    </div>
+    <div class="arena-floor"></div>
+  </div>
 
-  <!-- No Character Message -->
-  <div *ngIf="!playerCharacter" class="message-card-container">
-    <div class="message-card">
-      <div class="message-icon">🎭</div>
-      <h2 class="message-title">尚未選擇角色</h2>
-      <p class="message-text">你需要一個英雄才能踏入戰場！</p>
-      <a routerLink="/create" class="action-button primary">前往創建</a>
+  <!-- 頂部狀態列 -->
+  <div *ngIf="playerCharacter && opponent" class="battle-hud">
+    <div class="champion-info left">
+      <div class="champion-portrait">
+        <img [src]="playerCharacter.image_url | mediaUrl" [alt]="playerCharacter.name">
+        <div class="portrait-frame player"></div>
+      </div>
+      <div class="champion-details">
+        <h3 class="champion-name">{{ playerCharacter.name }}</h3>
+        <div class="health-container">
+          <div class="health-bar player">
+            <div class="health-fill" [style.width.%]="playerHealth"></div>
+            <div class="health-text">{{ playerHealth }}/100</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="battle-center">
+      <div class="versus-display">
+        <div class="vs-icon">⚔</div>
+        <div class="battle-timer" *ngIf="battleStarted && !battleResult">
+          <div class="timer-ring"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="champion-info right">
+      <div class="champion-details">
+        <h3 class="champion-name">{{ opponent.name }}</h3>
+        <div class="health-container">
+          <div class="health-bar opponent">
+            <div class="health-fill" [style.width.%]="opponentHealth"></div>
+            <div class="health-text">{{ opponentHealth }}/100</div>
+          </div>
+        </div>
+      </div>
+      <div class="champion-portrait">
+        <img [src]="opponent.image_url | mediaUrl" [alt]="opponent.name">
+        <div class="portrait-frame opponent"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Opponent Search Message -->
-  <div *ngIf="playerCharacter && !opponent && !battleResult" class="message-card-container">
-    <div class="message-card">
-      <div class="message-icon animate-pulse">⚔️</div>
-      <h2 class="message-title">準備好戰鬥了嗎？</h2>
-      <p class="message-text">進入競技場，尋找一個值得一戰的對手。</p>
-      <button (click)="findNewOpponent()" class="action-button primary" [disabled]="isLoading">
-        <span *ngIf="!isLoading">尋找對手</span>
-        <span *ngIf="isLoading" class="animate-spin">⏳</span>
+  <!-- 主要戰鬥區域 -->
+  <div class="main-arena">
+    <!-- 沒有角色狀態 -->
+    <div *ngIf="!playerCharacter" class="arena-message">
+      <div class="message-portal">
+        <div class="portal-rings">
+          <div class="ring ring-1"></div>
+          <div class="ring ring-2"></div>
+          <div class="ring ring-3"></div>
+        </div>
+        <div class="portal-center">
+          <div class="portal-icon">⭐</div>
+        </div>
+      </div>
+      <h2 class="message-title">召喚你的英雄</h2>
+      <p class="message-text">競技場等待著真正的戰士！</p>
+      <a routerLink="/create" class="arena-button primary">
+        <span class="button-icon">✨</span>
+        前往召喚
+      </a>
+    </div>
+
+    <!-- 尋找對手狀態 -->
+    <div *ngIf="playerCharacter && !opponent && !battleResult" class="arena-message">
+      <div class="message-portal searching">
+        <div class="portal-rings">
+          <div class="ring ring-1 searching"></div>
+          <div class="ring ring-2 searching"></div>
+          <div class="ring ring-3 searching"></div>
+        </div>
+        <div class="portal-center">
+          <div class="portal-icon">⚔</div>
+        </div>
+      </div>
+      <h2 class="message-title">尋找對手中...</h2>
+      <p class="message-text">正在競技場中搜尋強大的挑戰者</p>
+      <button (click)="findNewOpponent()" class="arena-button primary" [disabled]="isLoading">
+        <span *ngIf="!isLoading" class="button-icon">🎯</span>
+        <span *ngIf="isLoading" class="button-icon loading">⚡</span>
+        {{ isLoading ? '搜尋中...' : '尋找對手' }}
+      </button>
+    </div>
+
+    <!-- 戰鬥場景 -->
+    <div *ngIf="playerCharacter && opponent" class="battle-field">
+      <!-- 玩家戰士 -->
+      <div class="warrior player-warrior" [class.combat-stance]="battleStarted" [class.hit-impact]="isPlayerBeingAttacked" [class.defeated]="isBattleLogComplete && battleResult && battleResult.winner.id !== playerCharacter.id">
+        <div class="warrior-platform">
+          <div class="platform-glow player"></div>
+        </div>
+        <div class="warrior-container">
+          <img [src]="playerCharacter.image_url | mediaUrl" [alt]="playerCharacter.name" class="warrior-image">
+          <div class="warrior-aura player"></div>
+          <div class="warrior-stats">
+            <div class="stat-item">
+              <span class="stat-icon strength">💪</span>
+              <span>{{ playerCharacter.strength }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon agility">⚡</span>
+              <span>{{ playerCharacter.agility }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon luck">🍀</span>
+              <span>{{ playerCharacter.luck }}</span>
+            </div>
+          </div>
+          <div *ngIf="isBattleLogComplete && battleResult && battleResult.winner.id !== playerCharacter.id" class="defeat-effect">
+            <div class="defeat-symbol">💀</div>
+            <div class="defeat-text">戰敗</div>
+          </div>
+          <div *ngIf="isBattleLogComplete && battleResult && battleResult.winner.id === playerCharacter.id" class="victory-effect">
+            <div class="victory-symbol">👑</div>
+            <div class="victory-text">勝利</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 戰鬥日誌區域 -->
+      <div class="combat-log-area">
+        <div class="log-container" *ngIf="battleResult; else preBattleLog">
+          <div class="log-header">
+            <h3 class="log-title">戰鬥實況</h3>
+          </div>
+          
+          <div class="battle-narrative" *ngIf="battleResult.battle_log.battle_description">
+            <div class="narrative-icon">📜</div>
+            <p class="narrative-text">{{ battleResult.battle_log.battle_description }}</p>
+          </div>
+          
+          <div class="log-entries">
+            <div *ngFor="let log of battleResult.battle_log.battle_log; let i = index"
+                 class="log-entry"
+                 [ngClass]="log.type"
+                 [class.visible]="i < currentRound">
+              <div class="log-indicator">
+                <span class="log-icon" [ngSwitch]="log.type">
+                  <span *ngSwitchCase="'attack'">⚔️</span>
+                  <span *ngSwitchCase="'defense'">🛡️</span>
+                  <span *ngSwitchCase="'critical'">💥</span>
+                  <span *ngSwitchDefault>ℹ️</span>
+                </span>
+              </div>
+              <div class="log-content">
+                <p class="log-text">{{ log.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #preBattleLog>
+          <div class="pre-battle-display">
+            <div class="countdown-circle">
+              <div class="countdown-inner">
+                <div class="countdown-icon">⚔</div>
+              </div>
+            </div>
+            <h3 class="countdown-text">準備戰鬥</h3>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- 對手戰士 -->
+      <div class="warrior opponent-warrior" [class.combat-stance]="battleStarted" [class.hit-impact]="isOpponentBeingAttacked" [class.defeated]="isBattleLogComplete && battleResult && battleResult.winner.id !== opponent.id">
+        <div class="warrior-platform">
+          <div class="platform-glow opponent"></div>
+        </div>
+        <div class="warrior-container">
+          <img [src]="opponent?.image_url || null | mediaUrl" [alt]="opponent?.name || ''" class="warrior-image flipped">
+          <div class="warrior-aura opponent"></div>
+          <div class="warrior-stats">
+            <div class="stat-item">
+              <span class="stat-icon strength">💪</span>
+              <span>{{ opponent.strength }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon agility">⚡</span>
+              <span>{{ opponent.agility }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon luck">🍀</span>
+              <span>{{ opponent.luck }}</span>
+            </div>
+          </div>
+          <div *ngIf="isBattleLogComplete && battleResult && battleResult.winner.id !== opponent.id" class="defeat-effect">
+            <div class="defeat-symbol">💀</div>
+            <div class="defeat-text">戰敗</div>
+          </div>
+          <div *ngIf="isBattleLogComplete && battleResult && battleResult.winner.id === opponent.id" class="victory-effect">
+            <div class="victory-symbol">👑</div>
+            <div class="victory-text">勝利</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 戰鬥控制台 -->
+  <div *ngIf="playerCharacter && opponent && !battleStarted && !battleResult" class="battle-controls pre-battle">
+    <div class="control-panel">
+      <button (click)="startBattle()" class="arena-button primary large" [disabled]="isLoading">
+        <span class="button-icon">⚔</span>
+        發起決鬥
+      </button>
+      <button (click)="findNewOpponent()" class="arena-button secondary" [disabled]="isLoading">
+        <span class="button-icon">🔄</span>
+        更換對手
+      </button>
+    </div>
+  </div>
+  
+  <!-- 戰鬥結束後控制台 -->
+  <div *ngIf="battleResult && !showResultOverlay" class="battle-controls">
+    <div class="control-panel">
+      <button (click)="resetBattle()" class="arena-button primary large">
+        <span class="button-icon">🎯</span>
+        再戰一場
       </button>
     </div>
   </div>
 
-  <!-- Main Battle Scene -->
-  <div *ngIf="playerCharacter && opponent" class="battle-scene-grid flex flex-col">
-    <!-- Player Arena -->
-    <div class="arena-side player-side">
-      <div class="hero-card" [class.is-hit]="isPlayerBeingAttacked">
-        <div class="hero-image-container">
-          <img class="hero-image" [src]="playerCharacter.image_url | mediaUrl" [alt]="playerCharacter.name">
-        </div>
-        <div class="hero-info">
-          <h3 class="hero-name">{{ playerCharacter.name }}</h3>
-          <div class="hp-bar-container">
-            <div class="hp-bar" [style.width.%]="playerHealth"></div>
-            <span class="hp-text">{{ playerHealth }} / 100</span>
+  <!-- 戰鬥進行中覆蓋層 -->
+  <div *ngIf="battleStarted && !battleResult" class="battle-progress-overlay">
+    <!-- 戰鬥舞台 -->
+    <div class="battle-stage">
+      <div class="fighting-warriors">
+        <!-- 玩家角色 -->
+        <div class="fighting-character player" [class.attacking]="isPlayerAttacking">
+          <div class="character-battle-card">
+            <img [src]="playerCharacter?.image_url || null | mediaUrl" [alt]="playerCharacter?.name || ''" class="battle-char-image">
+            <div class="battle-aura player"></div>
+            <div class="impact-effect" *ngIf="isPlayerAttacking"></div>
           </div>
         </div>
-        <!-- Player Defeat Overlay -->
-        <div *ngIf="isBattleLogComplete && battleResult && battleResult.winner.id !== playerCharacter.id" class="defeat-overlay">
-          <div class="defeat-icon">💀</div>
-          <h3 class="defeat-text">戰敗</h3>
+        
+        <!-- 戰鬥中心效果區域 -->
+        <div class="battle-center-effect">
+          <div class="collision-zone">
+            <!-- 多層碰撞波紋 -->
+            <div class="collision-wave wave-1"></div>
+            <div class="collision-wave wave-2"></div>
+            <div class="collision-wave wave-3"></div>
+            
+            <!-- 能量碎片 -->
+            <div class="energy-fragments">
+              <div class="fragment fragment-1"></div>
+              <div class="fragment fragment-2"></div>
+              <div class="fragment fragment-3"></div>
+              <div class="fragment fragment-4"></div>
+              <div class="fragment fragment-5"></div>
+              <div class="fragment fragment-6"></div>
+              <div class="fragment fragment-7"></div>
+              <div class="fragment fragment-8"></div>
+            </div>
+            
+            <!-- 電光效果 -->
+            <div class="lightning-effects">
+              <div class="lightning lightning-1"></div>
+              <div class="lightning lightning-2"></div>
+              <div class="lightning lightning-3"></div>
+            </div>
+            
+            <!-- 中心衝擊 -->
+            <div class="core-impact"></div>
+          </div>
+        </div>
+        
+        <!-- 對手角色 -->
+        <div class="fighting-character opponent" [class.attacking]="isOpponentAttacking">
+          <div class="character-battle-card">
+            <img [src]="opponent?.image_url || null | mediaUrl" [alt]="opponent?.name || ''" class="battle-char-image flipped">
+            <div class="battle-aura opponent"></div>
+            <div class="impact-effect" *ngIf="isOpponentAttacking"></div>
+          </div>
         </div>
       </div>
     </div>
+    
+    <!-- 戰鬥狀態 -->
+    <div class="battle-status">
+      <h2 class="battle-phase">{{ currentBattlePhase }}</h2>
+      <p class="battle-description">{{ currentBattleDescription }}</p>
+    </div>
+    
+    <!-- 戰鬥進度 -->
+    <div class="battle-progress">
+      <div class="progress-step" [class.active]="battleProgressStep >= 1" [class.completed]="battleProgressStep > 1">
+        <span>⚔</span>
+      </div>
+      <div class="progress-line" [class.active]="battleProgressStep >= 2"></div>
+      <div class="progress-step" [class.active]="battleProgressStep >= 2" [class.completed]="battleProgressStep > 2">
+        <span>⚡</span>
+      </div>
+      <div class="progress-line" [class.active]="battleProgressStep >= 3"></div>
+      <div class="progress-step" [class.active]="battleProgressStep >= 3" [class.completed]="battleProgressStep > 3">
+        <span>👑</span>
+      </div>
+    </div>
+  </div>
 
-    <!-- Center Column: Log & Controls -->
-    <div class="arena-center">
-      <div class="battle-log-container">
-        <div *ngIf="battleResult; else preBattle" class="battle-log">
-          <!-- 顯示戰鬥描述（AI生成的背景與總結） -->
-          <div *ngIf="battleResult.battle_log.battle_description" class="battle-description mb-4 p-2 bg-gray-800/60 rounded text-gray-200">
-            <span class="font-bold text-rpg-gold">戰鬥背景：</span>
-            {{ battleResult.battle_log.battle_description }}
-          </div>
-          <div *ngFor="let log of battleResult.battle_log.battle_log; let i = index"
-               class="log-entry"
-               [ngClass]="log.type"
-               [class.visible]="i < currentRound">
-            <div class="log-icon">
-              <span *ngIf="log.type === 'attack'">⚔️</span>
-              <span *ngIf="log.type === 'defense'">🛡️</span>
-              <span *ngIf="log.type === 'critical'">💥</span>
-              <span *ngIf="log.type === 'info'">ℹ️</span>
-            </div>
-            <p class="log-text">{{ log.description }}</p>
-          </div>
-        </div>
-        <ng-template #preBattle>
-          <div class="pre-battle-status">
-            <div class="vs-text">VS</div>
-            <p>等待戰鬥開始...</p>
-          </div>
-        </ng-template>
+  <!-- 戰鬥結果覆蓋層 -->
+  <div *ngIf="battleResult && showResultOverlay" class="result-overlay" [@fadeInOut]>
+    <div class="result-content" [class.victory-theme]="battleResult.winner.id === playerCharacter?.id" [class.defeat-theme]="battleResult.winner.id !== playerCharacter?.id">
+      <div class="result-explosion">
+        <div class="explosion-ring ring-1"></div>
+        <div class="explosion-ring ring-2"></div>
+        <div class="explosion-ring ring-3"></div>
       </div>
       
-      <div class="battle-controls">
-        <ng-container *ngIf="!battleStarted && !battleResult">
-          <button (click)="startBattle()" class="action-button primary" [disabled]="isLoading">發起挑戰</button>
-          <button (click)="findNewOpponent()" class="action-button secondary" [disabled]="isLoading">更換對手</button>
-        </ng-container>
-        <!-- This button now shows up after the battle is completely over -->
-        <ng-container *ngIf="battleResult && !showResultOverlay">
-           <button (click)="resetBattle()" class="action-button primary">再來一局</button>
-        </ng-container>
-      </div>
-    </div>
-
-    <!-- Opponent Arena -->
-    <div class="arena-side opponent-side">
-       <div class="hero-card" [class.is-hit]="isOpponentBeingAttacked">
-        <div class="hero-image-container">
-          <img class="hero-image" [src]="opponent.image_url | mediaUrl" [alt]="opponent.name">
-        </div>
-        <div class="hero-info">
-          <h3 class="hero-name">{{ opponent.name }}</h3>
-          <div class="hp-bar-container">
-            <div class="hp-bar" [style.width.%]="opponentHealth"></div>
-             <span class="hp-text">{{ opponentHealth }} / 100</span>
-          </div>
-        </div>
-        <!-- Opponent Defeat Overlay -->
-        <div *ngIf="isBattleLogComplete && battleResult && battleResult.winner.id !== opponent.id" class="defeat-overlay">
-          <div class="defeat-icon">💀</div>
-          <h3 class="defeat-text">戰敗</h3>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Battle In-Progress Overlay -->
-  <div *ngIf="battleStarted && !battleResult" class="battle-in-progress-overlay">
-    <div class="spinner">⚔️</div>
-    <p>AI 正在主導戰鬥...</p>
-  </div>
-
-  <!-- Battle Result Overlay -->
-  <div *ngIf="battleResult && showResultOverlay" class="result-overlay" [@fadeInOut]>
-    <div class="result-card" [class.victory]="battleResult.winner.id === playerCharacter?.id" [class.defeat]="battleResult.winner.id !== playerCharacter?.id">
       <div class="result-icon">
-        {{ battleResult.winner.id === playerCharacter?.id ? '🏆' : '💀' }}
+        <div class="icon-glow"></div>
+        <span class="result-symbol">
+          {{ battleResult.winner.id === playerCharacter?.id ? '👑' : '💀' }}
+        </span>
       </div>
-      <h2 class="result-title">
-        {{ battleResult.winner.id === playerCharacter?.id ? '光榮勝利' : '惜敗' }}
-      </h2>
+      
+      <h1 class="result-title">
+        {{ battleResult.winner.id === playerCharacter?.id ? '榮耀勝利' : '英勇戰敗' }}
+      </h1>
+      
       <p class="result-message">
-        {{ battleResult.winner.id === playerCharacter?.id ? '你的英雄技壓群雄！' : '英雄雖敗猶榮，重整旗鼓再來！' }}
+        {{ battleResult.winner.id === playerCharacter?.id ? '你的英雄在競技場上展現了無與倫比的實力！' : '雖然戰敗，但你的英雄展現了真正戰士的精神！' }}
       </p>
+      
+      <div class="result-stats">
+        <div class="stat-item">
+          <span class="stat-label">勝者</span>
+          <span class="stat-value">{{ battleResult.winner.name }}</span>
+        </div>
+      </div>
+      
       <div class="result-actions">
-        <button (click)="resetBattle()" class="action-button primary">再來一局</button>
-        <button (click)="showResultOverlay = false" class="action-button secondary">查看戰報</button>
+        <button (click)="resetBattle()" class="arena-button primary large">
+          <span class="button-icon">🎯</span>
+          再戰一場
+        </button>
+        <button (click)="showResultOverlay = false" class="arena-button secondary">
+          <span class="button-icon">📊</span>
+          查看戰報
+        </button>
       </div>
     </div>
   </div>
-</div> 
+</div>

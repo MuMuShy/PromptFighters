@@ -1,86 +1,149 @@
 <div *ngIf="isLoading" class="loading-overlay">
-  <div class="loading-spinner"></div>
-  <p class="loading-text">正在從異次元讀取您的英雄檔案...</p>
+  <div class="magical-portal">
+    <div class="magic-circle">
+      <div class="inner-circle"></div>
+      <div class="runes">✦ ✧ ✦ ✧ ✦ ✧</div>
+    </div>
+    <div class="energy-particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+    <div class="overlay-text">
+      <span class="text-glow">正在載入冒險者檔案...</span>
+      <div class="progress-dots">
+        <span>●</span><span>●</span><span>●</span>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div *ngIf="!isLoading" class="profile-page-container">
+<div *ngIf="!isLoading" class="game-profile-container">
+  <div class="magical-background">
+    <div class="floating-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+  </div>
+  
   <!-- Case: No characters exist -->
   <div *ngIf="allCharacters.length === 0" class="empty-state">
-    <div class="empty-icon">🎭</div>
-    <h2 class="empty-title">你的冒險尚未開始</h2>
-    <p class="empty-text">每段偉大的傳奇都始於第一步。創建你的首位英雄，讓他/她的名字響徹雲霄！</p>
-    <a routerLink="/create" class="action-button primary">✨ 創建我的第一位英雄</a>
+    <div class="empty-portal">
+      <div class="portal-ring"></div>
+      <div class="portal-inner"></div>
+      <div class="portal-icon">◉</div>
+    </div>
+    <h2 class="empty-title">冒險尚未開始</h2>
+    <p class="empty-text">召喚你的第一位英雄，開啟傳奇之路</p>
+    <a routerLink="/create" class="game-button primary">
+      <span class="button-icon">✦</span>
+      創建第一位英雄
+    </a>
   </div>
 
   <!-- Case: Characters exist -->
-  <div *ngIf="allCharacters.length > 0" class="profile-grid">
-    <!-- Left Column: User Info & Character Details -->
-    <aside class="left-sidebar">
-      <!-- Player Info Card -->
-      <div class="info-card player-info-card">
-        <div class="player-avatar">👤</div>
-        <h2 class="player-name">冒險者檔案</h2>
-        <p class="player-email">總覽</p>
-        <div class="player-stats-summary">
-          <div class="summary-item">
-            <span class="value">{{ totalCharacters }}</span>
-            <span class="label">英雄</span>
-          </div>
-          <div class="summary-item">
-            <span class="value">{{ totalBattles }}</span>
-            <span class="label">總戰鬥</span>
-          </div>
-          <div class="summary-item">
-            <span class="value">{{ overallWinRate }}%</span>
-            <span class="label">總勝率</span>
+  <div *ngIf="allCharacters.length > 0" class="profile-layout">
+    <!-- Header Section -->
+    <div class="profile-header">
+      <div class="player-card">
+        <div class="player-avatar">
+          <div class="avatar-ring"></div>
+          <div class="avatar-icon">◉</div>
+        </div>
+        <div class="player-info">
+          <h1 class="player-title">冒險者檔案</h1>
+          <div class="player-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ totalCharacters }}</span>
+              <span class="stat-label">英雄總數</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ totalBattles }}</span>
+              <span class="stat-label">總戰鬥數</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ overallWinRate }}%</span>
+              <span class="stat-label">總勝率</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ getRarityCount(5) }}</span>
+              <span class="stat-label">傳說英雄</span>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Selected Character Stats -->
-      <div *ngIf="currentCharacter" class="info-card character-stats-card">
-        <h3 class="card-title">數據面板: {{ currentCharacter.name }}</h3>
-        <div class="stats-grid">
-            <div class="stat-box victory">
-              <div class="value">{{ currentCharacter.win_count || 0 }}</div>
-              <div class="label">勝利</div>
-            </div>
-            <div class="stat-box defeat">
-              <div class="value">{{ currentCharacter.loss_count || 0 }}</div>
-              <div class="label">失敗</div>
-            </div>
-            <div class="stat-box winrate">
-              <div class="value">{{ winRate }}%</div>
-              <label class="label">勝率</label>
-            </div>
+      
+      <!-- Selected Character Panel -->
+      <div *ngIf="currentCharacter" class="selected-character-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">{{ currentCharacter.name }}</h3>
+          <div class="rarity-badge rarity-{{ currentCharacter.rarity }}">
+            {{ getRarityText(currentCharacter.rarity) }}
+          </div>
         </div>
-
-        <!-- "Go to Battle" button, shown only when a character is selected -->
-        <a routerLink="/battle" class="action-button primary w-full mt-6 animate-pulse">
-          ⚔️ 前往戰鬥
+        <div class="combat-stats">
+          <div class="combat-stat win">
+            <span class="combat-value">{{ currentCharacter.win_count || 0 }}</span>
+            <span class="combat-label">勝利</span>
+          </div>
+          <div class="combat-stat loss">
+            <span class="combat-value">{{ currentCharacter.loss_count || 0 }}</span>
+            <span class="combat-label">失敗</span>
+          </div>
+          <div class="combat-stat rate">
+            <span class="combat-value">{{ winRate }}%</span>
+            <span class="combat-label">勝率</span>
+          </div>
+        </div>
+        <a routerLink="/battle" class="battle-btn">
+          <span class="battle-icon">⚔</span>
+          前往戰鬥
         </a>
       </div>
-    </aside>
+    </div>
 
-    <!-- Right Column: Character Roster -->
-    <main class="main-content">
-      <h1 class="main-title">英雄庫</h1>
-      <div class="character-roster-grid">
-        <!-- Loop through characters -->
-        <div *ngFor="let character of allCharacters" class="roster-card-wrapper">
-          <app-character-card
-            [character]="character"
-            (click)="selectCharacter(character)"
-            [class.selected]="character.id === currentCharacter?.id">
-          </app-character-card>
+    <!-- Character Collection -->
+    <div class="character-collection">
+      <div class="collection-header">
+        <h2 class="collection-title">英雄收藏庫</h2>
+        <div class="collection-filters">
+          <button 
+            *ngFor="let filter of rarityFilters" 
+            (click)="setRarityFilter(filter.value)"
+            [class.active]="selectedRarityFilter === filter.value"
+            class="filter-btn rarity-{{ filter.value }}">
+            <span class="filter-icon">{{ filter.icon }}</span>
+            <span class="filter-text">{{ filter.label }}</span>
+            <span class="filter-count">({{ getRarityCount(filter.value) }})</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="heroes-grid">
+        <!-- Character Cards -->
+        <div *ngFor="let character of filteredCharacters" class="hero-card-wrapper">
+          <div class="hero-card" (click)="selectCharacter(character)" 
+               [class.selected]="character.id === currentCharacter?.id"
+               [class.rarity-glow]="'rarity-' + character.rarity">
+            <app-character-card [character]="character"></app-character-card>
+            <div *ngIf="character.id === currentCharacter?.id" class="selected-indicator">
+              <span class="selected-text">已選擇</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Create New Character Card -->
-        <a routerLink="/create" class="create-new-card">
-          <div class="create-icon">+</div>
+        <!-- Create New Card -->
+        <a routerLink="/create" class="create-hero-card">
+          <div class="create-portal">
+            <div class="create-ring"></div>
+            <div class="create-plus">+</div>
+          </div>
           <p class="create-text">召喚新英雄</p>
         </a>
       </div>
-    </main>
+    </div>
   </div>
 </div> 

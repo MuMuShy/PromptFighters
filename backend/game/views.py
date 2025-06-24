@@ -7,6 +7,8 @@ from django.contrib.auth.models import User
 from .models import Player, Character, Battle
 from .serializers import PlayerSerializer, CharacterSerializer, BattleSerializer
 from django.shortcuts import get_object_or_404
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+from rest_framework.decorators import throttle_classes
 # from google import genai #不再需要
 import os
 import json
@@ -316,6 +318,7 @@ class SpendResourceView(APIView):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([])
 def health_check(request):
     """
     一個簡單的健康檢查端點，用於確認服務是否在線。

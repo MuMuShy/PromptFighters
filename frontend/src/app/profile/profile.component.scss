@@ -1,141 +1,698 @@
-:host {
-  display: block;
-}
-
-.profile-page-container {
-  @apply w-full h-full p-4 md:p-6;
-}
-
-/* --- Empty State --- */
-.empty-state {
-  @apply flex flex-col items-center justify-center text-center h-full max-w-lg mx-auto;
-  .empty-icon { @apply text-7xl mb-6 text-slate-500; }
-  .empty-title { @apply text-3xl font-bold text-white mb-3; }
-  .empty-text { @apply text-slate-400 mb-8; }
-}
-
-/* --- Main Grid Layout --- */
-.profile-grid {
-  @apply grid grid-cols-1 lg:grid-cols-12 gap-6;
-}
-
-.left-sidebar {
-  @apply lg:col-span-4 xl:col-span-3 space-y-6;
-}
-
-.main-content {
-  @apply lg:col-span-8 xl:col-span-9;
-}
-
-/* --- Shared Card Styles --- */
-.info-card {
-  @apply bg-slate-800/50 border border-slate-700 rounded-xl p-6;
-}
-.card-title {
-  @apply text-lg font-bold text-rpg-gold mb-4 border-b border-slate-700 pb-3 truncate;
-}
-
-/* --- Left Sidebar Cards --- */
-.player-info-card {
-  @apply text-center;
-  .player-avatar {
-    @apply w-24 h-24 bg-slate-700 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl;
-  }
-  .player-name { @apply text-2xl font-bold text-white; }
-  .player-email { @apply text-sm text-slate-400 mb-6; }
-  .player-stats-summary { @apply flex justify-around border-t border-slate-700 pt-4; }
-  .summary-item {
-    @apply text-center;
-    .value { @apply block text-xl font-bold text-white; }
-    .label { @apply text-xs text-slate-400; }
-  }
-}
-
-.stats-grid {
-  @apply grid grid-cols-3 gap-4;
-  .stat-box {
-    @apply rounded-lg p-3 text-center border;
-    &.victory {
-      @apply bg-green-900/30 border-green-500/30;
-      .value { @apply text-green-400; }
-      .label { @apply text-green-300; }
-    }
-    &.defeat {
-      @apply bg-red-900/30 border-red-500/30;
-      .value { @apply text-red-400; }
-      .label { @apply text-red-300; }
-    }
-    &.winrate {
-      @apply bg-yellow-900/30 border-yellow-500/30;
-      .value { @apply text-yellow-400; }
-      .label { @apply text-yellow-300; }
-    }
-    .value { @apply text-2xl font-bold; }
-    .label { @apply text-xs; }
-  }
-}
-
-
-/* --- Main Content (Roster) --- */
-.main-title {
-  @apply text-2xl font-bold text-white mb-6 px-2;
-}
-.character-roster-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6;
-}
-
-.roster-card-wrapper {
-  position: relative; /* Needed for the selected indicator */
-
-  app-character-card {
-    @apply h-full cursor-pointer transition-all duration-300 ease-in-out block;
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-      z-index: 10; /* Ensure hovered card can go above others, but below the badge */
-    }
-    &.selected {
-      @apply ring-4 ring-rpg-gold ring-opacity-70 rounded-2xl;
-    }
-  }
-
-  /* "Selected" badge - now with z-index */
-  .selected::after {
-    content: '已選擇';
-    @apply absolute -top-2 -right-2 bg-rpg-gold text-black text-xs font-bold px-2 py-1 rounded-full;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-    z-index: 20; /* High z-index to ensure it's on top */
-  }
-}
-
-.create-new-card {
-  @apply border-2 border-dashed border-slate-600 rounded-2xl min-h-[300px];
-  @apply flex flex-col items-center justify-center text-slate-500;
-  @apply hover:bg-slate-800/50 hover:border-rpg-gold hover:text-rpg-gold transition-all duration-300;
-  .create-icon {
-    @apply w-16 h-16 border-2 border-current rounded-full flex items-center justify-center text-4xl mb-4;
-  }
-  .create-text {
-    @apply font-semibold;
-  }
-}
-
-/* --- Reusable Action Button --- */
-.action-button {
-  @apply inline-block px-6 py-3 font-bold rounded-lg transition-all duration-300 text-center;
-  &.primary { @apply bg-rpg-gold text-black hover:bg-yellow-400; }
-  &.secondary { @apply bg-slate-700 text-white hover:bg-slate-600; }
-}
-
-
-/* --- Loading Overlay --- */
+// 魔法載入動畫
 .loading-overlay {
-  @apply fixed inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center z-50;
-  backdrop-filter: blur(4px);
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(5, 5, 15, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
 }
-.loading-spinner {
-  @apply w-16 h-16 border-4 border-t-rpg-gold border-gray-600 rounded-full animate-spin;
+
+.magical-portal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
 }
-.loading-text {
-  @apply mt-4 text-lg text-white font-pixel;
-} 
+
+.magic-circle {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border: 3px solid #ffd700;
+  border-radius: 50%;
+  animation: rotate 3s linear infinite;
+  box-shadow: 0 0 30px #ffd700, 0 0 60px #ffd70050;
+}
+
+.inner-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  border: 2px solid #87ceeb;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: rotate 2s linear infinite reverse;
+}
+
+.runes {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.energy-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ffd700;
+  border-radius: 50%;
+  animation: float 2s ease-in-out infinite;
+  box-shadow: 0 0 10px #ffd700;
+}
+
+.particle:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+.particle:nth-child(2) { top: 80%; left: 20%; animation-delay: 0.4s; }
+.particle:nth-child(3) { top: 30%; right: 15%; animation-delay: 0.8s; }
+.particle:nth-child(4) { bottom: 20%; right: 10%; animation-delay: 1.2s; }
+.particle:nth-child(5) { bottom: 30%; left: 30%; animation-delay: 1.6s; }
+
+.text-glow {
+  color: #ffd700;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-shadow: 0 0 20px #ffd700;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.progress-dots {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.progress-dots span {
+  color: #ffd700;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+.progress-dots span:nth-child(2) { animation-delay: 0.5s; }
+.progress-dots span:nth-child(3) { animation-delay: 1s; }
+
+// 主要容器
+.game-profile-container {
+  position: relative;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+// 魔法背景
+.magical-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.floating-orbs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,215,0,0.2), rgba(255,215,0,0.05), transparent);
+  animation: floatOrb 8s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 120px;
+  height: 120px;
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 80px;
+  height: 80px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 3s;
+}
+
+.orb-3 {
+  width: 100px;
+  height: 100px;
+  bottom: 20%;
+  left: 20%;
+  animation-delay: 6s;
+}
+
+// 空狀態
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.empty-portal {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 2rem;
+}
+
+.portal-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid #ffd700;
+  border-radius: 50%;
+  animation: rotate 4s linear infinite;
+  box-shadow: 0 0 30px rgba(255,215,0,0.3);
+}
+
+.portal-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  height: 70%;
+  border: 2px solid #87ceeb;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: rotate 3s linear infinite reverse;
+}
+
+.portal-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: #ffd700;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.empty-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.empty-text {
+  font-size: 1.1rem;
+  color: #ccc;
+  margin-bottom: 2rem;
+  max-width: 400px;
+}
+
+// 主要佈局
+.profile-layout {
+  position: relative;
+  z-index: 2;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// 玩家資訊標頭
+.profile-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  align-items: start;
+}
+
+.player-card {
+  background: rgba(42, 42, 74, 0.9);
+  border: 2px solid #444;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.player-avatar {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid #ffd700;
+  border-radius: 50%;
+  animation: rotate 6s linear infinite;
+  box-shadow: 0 0 20px rgba(255,215,0,0.3);
+}
+
+.avatar-icon {
+  font-size: 2.5rem;
+  color: #ffd700;
+  z-index: 2;
+}
+
+.player-info {
+  flex: 1;
+}
+
+.player-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.player-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(20, 20, 40, 0.6);
+  border: 1px solid #555;
+  border-radius: 12px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #87ceeb;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+// 選中角色面板
+.selected-character-panel {
+  background: rgba(42, 42, 74, 0.9);
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  padding: 1.5rem;
+  min-width: 300px;
+  box-shadow: 0 0 30px rgba(255,215,0,0.2);
+  backdrop-filter: blur(10px);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.panel-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #fff;
+  flex: 1;
+}
+
+.rarity-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rarity-1 { background: #666; color: #fff; } // 普通
+.rarity-2 { background: #4ade80; color: #000; } // 稀有
+.rarity-3 { background: #3b82f6; color: #fff; } // 精英
+.rarity-4 { background: #a855f7; color: #fff; } // 史詩
+.rarity-5 { background: #f59e0b; color: #000; } // 傳說
+
+.combat-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.combat-stat {
+  text-align: center;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.combat-stat.win {
+  background: rgba(74, 222, 128, 0.1);
+  border-color: #4ade80;
+}
+
+.combat-stat.loss {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+.combat-stat.rate {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: #fbbf24;
+}
+
+.combat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+
+.combat-stat.win .combat-value { color: #4ade80; }
+.combat-stat.loss .combat-value { color: #ef4444; }
+.combat-stat.rate .combat-value { color: #fbbf24; }
+
+.combat-label {
+  font-size: 0.8rem;
+  color: #ccc;
+}
+
+.battle-btn {
+  width: 100%;
+  background: linear-gradient(45deg, #dc2626, #ef4444);
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+}
+
+.battle-btn:hover {
+  background: linear-gradient(45deg, #ef4444, #f87171);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220,38,38,0.4);
+}
+
+.battle-icon {
+  font-size: 1.1rem;
+}
+
+// 角色收藏區
+.character-collection {
+  position: relative;
+  z-index: 2;
+}
+
+.collection-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.collection-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.collection-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  background: rgba(42, 42, 74, 0.8);
+  border: 2px solid #444;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.filter-btn:hover {
+  border-color: #666;
+  background: rgba(52, 52, 84, 0.8);
+}
+
+.filter-btn.active {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+  box-shadow: 0 0 15px rgba(255,215,0,0.2);
+}
+
+.filter-btn.rarity-1.active { border-color: #666; color: #666; background: rgba(102,102,102,0.1); }
+.filter-btn.rarity-2.active { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.1); }
+.filter-btn.rarity-3.active { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1); }
+.filter-btn.rarity-4.active { border-color: #a855f7; color: #a855f7; background: rgba(168,85,247,0.1); }
+.filter-btn.rarity-5.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1); }
+
+.filter-icon {
+  font-size: 1rem;
+}
+
+.filter-count {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+// 英雄網格
+.heroes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.hero-card-wrapper {
+  position: relative;
+}
+
+.hero-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.hero-card:hover {
+  transform: translateY(-4px);
+}
+
+.hero-card.selected {
+  box-shadow: 0 0 30px rgba(255,215,0,0.5);
+}
+
+// 稀有度光效
+.hero-card.rarity-glow.rarity-1:hover { box-shadow: 0 8px 32px rgba(102,102,102,0.3); }
+.hero-card.rarity-glow.rarity-2:hover { box-shadow: 0 8px 32px rgba(74,222,128,0.3); }
+.hero-card.rarity-glow.rarity-3:hover { box-shadow: 0 8px 32px rgba(59,130,246,0.3); }
+.hero-card.rarity-glow.rarity-4:hover { box-shadow: 0 8px 32px rgba(168,85,247,0.3); }
+.hero-card.rarity-glow.rarity-5:hover { box-shadow: 0 8px 32px rgba(245,158,11,0.3); }
+
+.selected-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ffd700;
+  color: #000;
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(255,215,0,0.7);
+  z-index: 10;
+}
+
+// 創建新英雄卡片
+.create-hero-card {
+  border: 2px dashed #555;
+  border-radius: 16px;
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #666;
+  transition: all 0.3s ease;
+  background: rgba(42, 42, 74, 0.3);
+}
+
+.create-hero-card:hover {
+  border-color: #ffd700;
+  color: #ffd700;
+  background: rgba(42, 42, 74, 0.5);
+  transform: translateY(-4px);
+}
+
+.create-portal {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+}
+
+.create-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  animation: rotate 4s linear infinite;
+}
+
+.create-plus {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.create-text {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+// 按鈕樣式
+.game-button {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  color: #1a1a3a;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255,215,0,0.3);
+}
+
+.game-button:hover {
+  background: linear-gradient(45deg, #ffed4e, #ffd700);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+}
+
+.button-icon {
+  font-size: 1.1rem;
+}
+
+// 動畫定義
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes glow {
+  from { text-shadow: 0 0 20px #ffd700; }
+  to { text-shadow: 0 0 30px #ffd700, 0 0 40px #ffd700; }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+@keyframes floatOrb {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+// 響應式設計
+@media (max-width: 1024px) {
+  .profile-header {
+    grid-template-columns: 1fr;
+  }
+  
+  .player-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .collection-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .game-profile-container {
+    padding: 1rem;
+  }
+  
+  .player-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .player-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+  }
+  
+  .heroes-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  
+  .collection-filters {
+    justify-content: center;
+  }
+  
+  .filter-btn {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}

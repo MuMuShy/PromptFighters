@@ -61,6 +61,20 @@ export class BattleComponent implements OnInit, OnDestroy {
   isPlayerBeingAttacked = false;
   isOpponentBeingAttacked = false;
   isBattleLogComplete = false;
+  
+  // 戰鬥進度動畫相關
+  battleProgressStep = 0;
+  currentBattlePhase = '初始化戰鬥...';
+  currentBattleDescription = '戰士們正在進入競技場';
+  isPlayerAttacking = false;
+  isOpponentAttacking = false;
+  
+  private battlePhases = [
+    { phase: '初始化戰鬥...', description: '戰士們正在進入競技場' },
+    { phase: '激烈交鋒中', description: '雙方正在展開猛烈攻擊' },
+    { phase: '決定性時刻', description: '戰況進入白熱化階段' },
+    { phase: '分出勝負', description: '勝負即將揭曉...' }
+  ];
 
   private pollingSubscription: Subscription | null = null;
   private characterSubscription: Subscription | null = null;
@@ -114,6 +128,10 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.currentRound = 0;
     this.isBattleLogComplete = false;
     this.resetHealth();
+    
+    // 重置戰鬥進度動畫
+    this.battleProgressStep = 0;
+    this.startBattleProgressAnimation();
 
     this.battleService.startBattle(this.playerCharacter.id, this.opponent.id).subscribe({
       next: (response: BattleStartResponse) => {
@@ -215,8 +233,57 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.showResultOverlay = false;
     this.currentRound = 0;
     this.isBattleLogComplete = false;
+    this.battleProgressStep = 0;
     this.resetHealth();
     this.findNewOpponent();
+  }
+  
+  private startBattleProgressAnimation(): void {
+    // 開始隨機攻擊動畫
+    this.startRandomAttackAnimations();
+    
+    // 戰鬥進度階段
+    setTimeout(() => {
+      this.battleProgressStep = 1;
+      this.currentBattlePhase = this.battlePhases[1].phase;
+      this.currentBattleDescription = this.battlePhases[1].description;
+    }, 1000);
+    
+    setTimeout(() => {
+      this.battleProgressStep = 2;
+      this.currentBattlePhase = this.battlePhases[2].phase;
+      this.currentBattleDescription = this.battlePhases[2].description;
+    }, 3000);
+    
+    setTimeout(() => {
+      this.battleProgressStep = 3;
+      this.currentBattlePhase = this.battlePhases[3].phase;
+      this.currentBattleDescription = this.battlePhases[3].description;
+    }, 5000);
+  }
+  
+  private startRandomAttackAnimations(): void {
+    const attackInterval = setInterval(() => {
+      if (!this.battleStarted || this.battleResult) {
+        clearInterval(attackInterval);
+        return;
+      }
+      
+      // 隨機選擇攻擊者
+      const isPlayerTurn = Math.random() > 0.5;
+      
+      if (isPlayerTurn) {
+        this.isPlayerAttacking = true;
+        setTimeout(() => {
+          this.isPlayerAttacking = false;
+        }, 600);
+      } else {
+        this.isOpponentAttacking = true;
+        setTimeout(() => {
+          this.isOpponentAttacking = false;
+        }, 600);
+      }
+    }, 1200 + Math.random() * 800); // 隨機間隔 1.2-2 秒
   }
 
   private calculatePower(character: Character): number {

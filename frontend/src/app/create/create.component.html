@@ -1,7 +1,22 @@
 <div *ngIf="isGenerating" class="overlay-loading">
-  <div class="overlay-content">
-    <div class="overlay-spinner"></div>
-    <div class="overlay-text">英雄生成中...</div>
+  <div class="magical-portal">
+    <div class="magic-circle">
+      <div class="inner-circle"></div>
+      <div class="runes">✦ ✧ ✦ ✧ ✦ ✧</div>
+    </div>
+    <div class="energy-particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+    <div class="overlay-text">
+      <span class="text-glow">召喚魔法進行中...</span>
+      <div class="progress-dots">
+        <span>●</span><span>●</span><span>●</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -18,114 +33,230 @@
 </div>
 
 <div class="game-bg">
+  <div class="magical-background">
+    <div class="floating-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+  </div>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-pixel font-bold text-center mb-8 animate-pulse-slow create-title-fancy">
-      創建你的英雄
-    </h1>
+    <div class="title-section">
+      <!-- <div class="title-ornament">英雄召喚祭壇</div> -->
+      <h1 class="magical-title">
+        <span class="title-text">創造你的傳奇英雄</span>
+        <div class="title-underline"></div>
+      </h1>
+      <p class="title-subtitle">運用古老的召喚魔法，賦予你的英雄生命與力量</p>
+    </div>
     <div class="max-w-4xl mx-auto">
-      <!-- Tab 切換 -->
-      <div class="flex justify-center mb-6">
-        <button (click)="mode = 'normal'" [class.bg-yellow-600]="mode==='normal'" class="game-tab px-6 py-2 rounded-l-lg font-bold text-white bg-gray-700 hover:bg-yellow-700 focus:outline-none">普通召喚</button>
-        <button (click)="mode = 'advanced'" [class.bg-yellow-600]="mode==='advanced'" class="game-tab px-6 py-2 rounded-r-lg font-bold text-white bg-gray-700 hover:bg-yellow-700 focus:outline-none">高級召喚</button>
+      <!-- 召喚方式選擇 -->
+      <div class="summon-tabs">
+        <button 
+          (click)="mode = 'normal'" 
+          [class.active]="mode==='normal'" 
+          class="summon-tab">
+          <div class="tab-icon">◉</div>
+          <div class="tab-content">
+            <div class="tab-title">普通召喚</div>
+            <div class="tab-desc">快速創造英雄</div>
+          </div>
+        </button>
+        <button 
+          (click)="mode = 'advanced'" 
+          [class.active]="mode==='advanced'" 
+          class="summon-tab">
+          <div class="tab-icon">✦</div>
+          <div class="tab-content">
+            <div class="tab-title">高級召喚</div>
+            <div class="tab-desc">客製化你的英雄</div>
+          </div>
+        </button>
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Creation Form -->
-        <div class="game-card rpg-card p-6">
-          <h2 class="text-2xl font-bold text-white mb-6">{{ mode==='normal' ? '普通召喚' : '高級召喚' }}</h2>
+        <!-- 召喚法陣 -->
+        <div class="summon-circle-container">
+          <div class="summon-circle">
+            <div class="circle-outer"></div>
+            <div class="circle-inner"></div>
+            <div class="circle-runes">
+              <div class="rune">✦</div>
+              <div class="rune">◉</div>
+              <div class="rune">✧</div>
+              <div class="rune">◈</div>
+            </div>
+            <div class="circle-center">
+              <div class="center-icon">{{ mode==='normal' ? '◉' : '✦' }}</div>
+            </div>
+          </div>
+          
+          <div class="summon-form">
+            <h2 class="form-title">
+              {{ mode==='normal' ? '普通召喚法陣' : '高級召喚法陣' }}
+            </h2>
           <!-- 普通召喚 -->
           <ng-container *ngIf="mode==='normal'">
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                英雄名字
+            <div class="input-group">
+              <label class="magic-label">
+                <span class="label-icon">◈</span>
+                <span class="label-text">英雄名字</span>
               </label>
-              <input 
-                type="text" 
-                [(ngModel)]="characterPrompt"
-                placeholder="例如：炒麵戰士、Shadow Ninja..."
-                class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rpg-gold focus:border-transparent"
-                [disabled]="isGenerating">
-              <p class="text-xs text-gray-400 mt-1">
-                輸入你的英雄名字或簡單描述。
+              <div class="magic-input-container">
+                <input 
+                  type="text" 
+                  [(ngModel)]="characterPrompt"
+                  placeholder="例如：炒麵戰士、Shadow Ninja..."
+                  class="magic-input"
+                  [disabled]="isGenerating">
+                <div class="input-glow"></div>
+              </div>
+              <p class="input-hint">
+                輸入你的英雄名字，讓魔法為你創造獨特的戰士
               </p>
             </div>
           </ng-container>
           <!-- 高級召喚 -->
           <ng-container *ngIf="mode==='advanced'">
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-300 mb-2">英雄名字</label>
-              <input type="text" [(ngModel)]="advancedName" placeholder="請輸入英雄名字" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rpg-gold focus:border-transparent" [disabled]="isGenerating">
+            <div class="input-group">
+              <label class="magic-label">
+                <span class="label-icon">◈</span>
+                <span class="label-text">英雄名字</span>
+              </label>
+              <div class="magic-input-container">
+                <input 
+                  type="text" 
+                  [(ngModel)]="advancedName" 
+                  placeholder="請輸入英雄名字" 
+                  class="magic-input" 
+                  [disabled]="isGenerating">
+                <div class="input-glow"></div>
+              </div>
             </div>
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-300 mb-2">高級描述（Prompt）</label>
-              <textarea [(ngModel)]="advancedPrompt" rows="3" placeholder="描述你的英雄外觀、背景、特殊能力..." class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rpg-gold focus:border-transparent" [disabled]="isGenerating"></textarea>
-              <p class="text-xs text-gray-400 mt-1">可輸入外觀、背景、特殊能力等，讓 AI 幫你生成獨特英雄！</p>
+            <div class="input-group">
+              <label class="magic-label">
+                <span class="label-icon">◎</span>
+                <span class="label-text">英雄傳說</span>
+              </label>
+              <div class="magic-input-container">
+                <textarea 
+                  [(ngModel)]="advancedPrompt" 
+                  rows="4" 
+                  placeholder="描述你的英雄外觀、背景故事、特殊能力、武器裝備..." 
+                  class="magic-input magic-textarea" 
+                  [disabled]="isGenerating"></textarea>
+                <div class="input-glow"></div>
+              </div>
+              <p class="input-hint">
+                詳細描述讓AI能創造出更獨特強大的英雄
+              </p>
             </div>
           </ng-container>
           <button 
             (click)="mode==='normal' ? generateCharacter() : generateAdvancedCharacter()"
             [disabled]="(mode==='normal' ? !characterPrompt.trim() : !advancedName.trim() || !advancedPrompt.trim()) || isGenerating"
-            class="game-btn rpg-button w-full mb-4"
-            [class.opacity-50]="(mode==='normal' ? !characterPrompt.trim() : !advancedName.trim() || !advancedPrompt.trim()) || isGenerating">
-            <span *ngIf="!isGenerating">{{ mode==='normal' ? '🎲 召喚英雄' : '✨ 高級召喚' }}</span>
-            <span *ngIf="isGenerating" class="flex items-center justify-center">
-              <span class="animate-spin mr-2">⚡</span>
-              生成中...
-            </span>
+            class="magic-button"
+            [class.disabled]="(mode==='normal' ? !characterPrompt.trim() : !advancedName.trim() || !advancedPrompt.trim()) || isGenerating">
+            <div class="button-glow"></div>
+            <div class="button-content">
+              <span *ngIf="!isGenerating" class="button-text">
+                <span class="button-icon">{{ mode==='normal' ? '◉' : '✦' }}</span>
+                {{ mode==='normal' ? '開始召喚' : '高級召喚' }}
+              </span>
+              <span *ngIf="isGenerating" class="button-loading">
+                <span class="loading-icon">◉</span>
+                召喚進行中...
+              </span>
+            </div>
           </button>
-          <div *ngIf="generatedCharacter && !isGenerating" class="space-y-4">
-            <div class="bg-green-900/30 border border-green-500/30 rounded-lg p-4">
-              <h3 class="text-green-400 font-semibold mb-2">✨ 英雄已生成！</h3>
-              <p class="text-green-200 text-sm">
-                你的英雄已經誕生，快來看看他的獨特屬性與能力吧！
+          <div *ngIf="generatedCharacter && !isGenerating" class="success-notification">
+            <div class="success-content">
+              <div class="success-icon">✦</div>
+              <h3 class="success-title">英雄召喚成功！</h3>
+              <p class="success-message">
+                你的英雄已經誕生，準備踏上冒險之旅！
               </p>
             </div>
-            <div class="flex space-x-3">
-              <button 
-                (click)="saveCharacter()"
-                class="game-btn rpg-button flex-1">
-                前往戰鬥
-              </button>
+            <button 
+              (click)="saveCharacter()"
+              class="battle-button">
+              <div class="battle-button-bg"></div>
+              <span class="battle-button-text">
+                <span class="battle-icon">◈</span>
+                前往戰場
+              </span>
+            </button>
+          </div>
+          <!-- 召喚指南 -->
+          <div class="guide-scroll">
+            <div class="scroll-header">
+              <span class="scroll-icon">◎</span>
+              <span class="scroll-title">召喚師指南</span>
+            </div>
+            <div class="scroll-content">
+              <div class="guide-item">
+                <span class="guide-icon">◉</span>
+                <span class="guide-text">普通召喚：快速創造隨機英雄</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">✦</span>
+                <span class="guide-text">高級召喚：客製化獨特戰士</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">◈</span>
+                <span class="guide-text">描述越詳細，英雄越強大</span>
+              </div>
             </div>
           </div>
-          <!-- Tips -->
-          <div class="mt-8 bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
-            <h3 class="text-blue-400 font-semibold mb-2">💡 小提示</h3>
-            <ul class="text-blue-200 text-sm space-y-1">
-              <li>• 普通召喚適合快速體驗，高級召喚可打造獨一無二的英雄</li>
-              <li>• 高級描述越詳細，AI 生成的角色越有個性</li>
-              <li>• 每次生成屬性與技能都不同，勇敢嘗試！</li>
-            </ul>
           </div>
         </div>
-        <!-- Character Preview -->
-        <div class="game-card rpg-card p-6">
-          <h2 class="text-2xl font-bold text-white mb-6">英雄預覽</h2>
-          <div *ngIf="!generatedCharacter" class="text-center py-12">
-            <div class="text-6xl mb-4 animate-bounce-slow">🎭</div>
-            <h3 class="text-xl font-bold text-white mb-2">預覽</h3>
-            <p class="text-gray-300">
-              輸入資料並召喚，即可預覽你的英雄！
-            </p>
-          </div>
-          <div *ngIf="generatedCharacter">
-            <app-character-card [character]="generatedCharacter"></app-character-card>
+        <!-- 角色預覽 -->
+        <div class="character-preview-container">
+          <h2 class="preview-title">角色預覽</h2>
+          <div class="preview-content">
+            <div *ngIf="!generatedCharacter" class="empty-preview">
+              <div class="empty-icon">◉</div>
+              <h3>等待召喚</h3>
+              <p>完成召喚後，你的英雄將在此顯現</p>
+            </div>
+            <div *ngIf="generatedCharacter" class="character-display">
+              <app-character-card [character]="generatedCharacter"></app-character-card>
+            </div>
           </div>
         </div>
       </div>
-      <!-- Example Characters -->
-      <div class="mt-12">
-        <h2 class="text-2xl font-bold text-center text-white mb-6">
-          🌟 範例角色
-        </h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button 
-            *ngFor="let example of examplePrompts"
-            (click)="characterPrompt = example; mode='normal'; generateCharacter()"
-            class="game-btn bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600 rounded-lg p-3 text-center transition-all duration-200 hover:scale-105"
-            [disabled]="isGenerating">
-            <div class="text-2xl mb-1">{{getExampleEmoji(example)}}</div>
-            <div class="text-white text-sm font-medium">{{example}}</div>
-          </button>
+      <!-- 快速召喚 & 注意事項 -->
+      <div class="info-section">
+        <div class="quick-summon">
+          <h3 class="section-title">快速召喚</h3>
+          <p class="section-subtitle">點擊範例快速開始召喚</p>
+          <div class="quick-examples">
+            <button 
+              *ngFor="let example of examplePrompts"
+              (click)="characterPrompt = example; mode='normal'; generateCharacter()"
+              class="example-button"
+              [disabled]="isGenerating">
+              <span class="example-emoji">{{getExampleEmoji(example)}}</span>
+              <span class="example-name">{{example}}</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="game-info">
+          <h3 class="section-title">遊戲說明</h3>
+          <div class="info-content">
+            <div class="info-item">
+              <span class="info-icon">◉</span>
+              <span class="info-text">每個英雄都有獨特的屬性和技能</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">✦</span>
+              <span class="info-text">高級召喚可創造更強大的英雄</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">◈</span>
+              <span class="info-text">英雄生成後可立即參與戰鬥</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

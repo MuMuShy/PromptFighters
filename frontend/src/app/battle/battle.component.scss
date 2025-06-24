@@ -1,182 +1,1341 @@
 :host {
-  display: flex;
-  flex-grow: 1;
+  display: block;
   width: 100%;
+  height: 100vh;
   overflow: hidden;
 }
 
-.battle-container {
-  @apply w-full h-full relative flex items-center justify-center;
-  overflow: hidden;
-}
-
-.battle-background {
-  @apply absolute inset-0 bg-cover bg-center transition-all duration-500;
-  /* A dark, thematic gradient more suitable for a battle scene */
-  background-image: radial-gradient(ellipse at bottom, #4a148c 0%, #1a1a2e 100%);
-  filter: blur(2px) brightness(0.6);
-  transform: scale(1.1);
-}
-
-// --- Message Cards (No character / Find opponent) ---
-.message-card-container {
-  @apply relative z-10;
-}
-.message-card {
-  @apply bg-slate-900/70 backdrop-blur-md text-center p-8 rounded-2xl;
-  @apply border border-slate-700 max-w-md mx-auto;
-  .message-icon { @apply text-6xl mb-4; }
-  .message-title { @apply text-2xl font-bold text-white mb-2; }
-  .message-text { @apply text-slate-400 mb-6; }
-}
-
-// --- Main Battle Scene ---
-.battle-scene-grid {
-  @apply relative z-10 w-full h-full p-4 md:p-6 lg:p-8 grid gap-4 md:gap-6 lg:gap-8;
-  grid-template-areas: "player center opponent";
-  grid-template-columns: 3fr 2.5fr 3fr;
-  grid-template-rows: 1fr;
-
-  // --- Mobile Layout ---
-  @media (max-width: 768px) {
-    grid-template-areas:
-      "player"
-      "center"
-      "opponent";
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-    padding: 1rem;
-    gap: 1rem;
+@media (max-width: 768px) {
+  :host {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .arena-container {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
 }
 
-.arena-side {
-  @apply flex items-center justify-center;
-  min-width: 0;
-  &.player-side { grid-area: player; }
-  &.opponent-side { grid-area: opponent; }
-}
-
-// --- Hero Card ---
-.hero-card {
-  @apply w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl bg-slate-900/60 backdrop-blur-sm rounded-2xl;
-  @apply border border-slate-700 p-2 sm:p-4 transition-all duration-300;
+// 競技場主容器
+.arena-container {
   position: relative;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  
-  &.is-hit { animation: hit-shake 0.4s ease-in-out; }
+  transition: all 0.5s ease;
 }
 
-.hero-image-container {
-  @apply w-full aspect-square rounded-lg overflow-hidden mb-4;
-  .hero-image { @apply w-full h-full object-cover; }
-}
-.opponent-side .hero-image { transform: scaleX(-1); }
-
-// Responsive hero name and HP bar
-.hero-name { @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-white mb-3 text-center truncate; }
-.hp-bar-container { @apply w-full bg-black/50 rounded-full p-1 relative h-5 sm:h-6 lg:h-8; }
-
-.hp-bar {
-  @apply h-full rounded-full transition-all duration-500;
-  background: linear-gradient(90deg, #d32f2f, #f44336);
-}
-.player-side .hp-bar { background: linear-gradient(90deg, #2e7d32, #4caf50); }
-.hp-text {
-  @apply absolute inset-0 text-white font-bold text-xs sm:text-sm lg:text-base flex items-center justify-center;
-  text-shadow: 1px 1px 2px #000;
+// 競技場背景
+.arena-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f1e 70%, #000000 100%);
+  z-index: 1;
 }
 
-// --- Center Arena (Log & Controls) ---
-.arena-center {
-  grid-area: center;
-  @apply flex flex-col justify-between;
-  min-height: 0;
+.magical-atmosphere {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-.battle-log-container {
-  @apply flex-grow bg-black/50 rounded-lg p-2 sm:p-4 overflow-y-auto;
-  @apply border border-slate-800;
-  max-height: 600px;
+.energy-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,215,0,0.3), rgba(255,215,0,0.1), transparent);
+  animation: floatOrb 8s ease-in-out infinite;
+}
+
+.energy-orb.orb-1 {
+  width: 100px;
+  height: 100px;
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.energy-orb.orb-2 {
+  width: 80px;
+  height: 80px;
+  top: 70%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.energy-orb.orb-3 {
+  width: 60px;
+  height: 60px;
+  top: 40%;
+  left: 80%;
+  animation-delay: 4s;
+}
+
+.energy-orb.orb-4 {
+  width: 120px;
+  height: 120px;
+  bottom: 20%;
+  left: 20%;
+  animation-delay: 6s;
+}
+
+.arena-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(to top, rgba(255,215,0,0.1) 0%, transparent 100%);
+  border-top: 2px solid rgba(255,215,0,0.3);
+}
+
+// 戰鬥 HUD
+.battle-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 10;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+  height: 120px;
+}
+
+.champion-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 300px;
+}
+
+.champion-info.right {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.champion-portrait {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.champion-portrait img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.portrait-frame {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: calc(100% + 10px);
+  height: calc(100% + 10px);
+  border: 3px solid;
+  border-radius: 50%;
+  animation: rotate 3s linear infinite;
+}
+
+.portrait-frame.player {
+  border-color: #4ade80;
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+}
+
+.portrait-frame.opponent {
+  border-color: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.champion-details {
+  flex: 1;
+}
+
+.champion-name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.health-container {
+  width: 200px;
+}
+
+.health-bar {
+  position: relative;
+  height: 25px;
+  background: rgba(0,0,0,0.8);
+  border-radius: 25px;
+  border: 2px solid;
+  overflow: hidden;
+}
+
+.health-bar.player {
+  border-color: #4ade80;
+}
+
+.health-bar.opponent {
+  border-color: #ef4444;
+}
+
+.health-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  transition: width 1s ease;
+  border-radius: 23px;
+}
+
+.health-bar.opponent .health-fill {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.health-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+// 戰鬥中心
+.battle-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.versus-display {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vs-icon {
+  font-size: 3rem;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255,215,0,0.8);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.battle-timer {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+}
+
+.timer-ring {
+  width: 100%;
+  height: 100%;
+  border: 3px solid rgba(255,215,0,0.3);
+  border-top: 3px solid #ffd700;
+  border-radius: 50%;
+  animation: spin 2s linear infinite;
+}
+
+// 主要競技場
+.main-arena {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  padding-top: 120px;
+  padding-bottom: 100px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+// 競技場訊息
+.arena-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
+}
+
+.message-portal {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 2rem;
+}
+
+.portal-rings {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ring {
+  position: absolute;
+  border: 3px solid;
+  border-radius: 50%;
+  animation: rotate 4s linear infinite;
+}
+
+.ring.ring-1 {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-color: #ffd700;
+  box-shadow: 0 0 30px rgba(255,215,0,0.3);
+}
+
+.ring.ring-2 {
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
+  border-color: #87ceeb;
+  animation-direction: reverse;
+  animation-duration: 3s;
+}
+
+.ring.ring-3 {
+  top: 30%;
+  left: 30%;
+  width: 40%;
+  height: 40%;
+  border-color: #ffd700;
+  animation-duration: 2s;
+}
+
+.ring.searching {
+  border-style: dashed;
+  animation-duration: 1.5s;
+}
+
+.portal-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portal-icon {
+  font-size: 3rem;
+  color: #ffd700;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.message-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.message-text {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-bottom: 2rem;
+  max-width: 400px;
+}
+
+// 戰鬥場景
+.battle-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-areas: "player log opponent";
+  width: 100%;
+  height: calc(100vh - 180px);
+  max-width: 1400px;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .battle-field {
+    height: auto;
+    min-height: calc(100vh - 180px);
+  }
+}
+
+// 戰士
+.warrior {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  transition: all 0.5s ease;
+}
+
+.warrior.player-warrior {
+  grid-area: player;
+}
+
+.warrior.opponent-warrior {
+  grid-area: opponent;
+}
+
+.warrior.combat-stance {
+  transform: scale(1.05);
+}
+
+.warrior.hit-impact {
+  animation: hitShake 0.5s ease-in-out;
+}
+
+.warrior.defeated {
+  filter: grayscale(0.8) brightness(0.6);
+}
+
+.warrior-platform {
+  position: absolute;
+  bottom: -20px;
+  width: 200px;
+  height: 20px;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.platform-glow {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.platform-glow.player {
+  background: radial-gradient(ellipse, rgba(74, 222, 128, 0.5), transparent);
+  box-shadow: 0 0 40px rgba(74, 222, 128, 0.3);
+}
+
+.platform-glow.opponent {
+  background: radial-gradient(ellipse, rgba(239, 68, 68, 0.5), transparent);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+}
+
+.warrior-container {
+  position: relative;
+  width: 320px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.warrior-image {
+  width: 280px;
+  height: 350px;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+
+.warrior-stats {
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(0,0,0,0.9);
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255,215,0,0.3);
+  backdrop-filter: blur(10px);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.stat-icon {
+  font-size: 1rem;
+}
+
+.stat-icon.strength { color: #ef4444; }
+.stat-icon.agility { color: #10b981; }
+.stat-icon.luck { color: #f59e0b; }
+
+.warrior-image.flipped {
+  transform: scaleX(-1);
+}
+
+.warrior-aura {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0.7;
+  animation: auraGlow 3s ease-in-out infinite;
+}
+
+.warrior-aura.player {
+  background: linear-gradient(45deg, transparent, rgba(74, 222, 128, 0.3), transparent);
+  box-shadow: 0 0 40px rgba(74, 222, 128, 0.5);
+}
+
+.warrior-aura.opponent {
+  background: linear-gradient(45deg, transparent, rgba(239, 68, 68, 0.3), transparent);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
+}
+
+// 勝敗效果
+.defeat-effect, .victory-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 1rem;
+  animation: effectAppear 0.5s ease-out;
+}
+
+.defeat-symbol, .victory-symbol {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.defeat-text, .victory-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.defeat-effect {
+  color: #ef4444;
+  border: 2px solid #ef4444;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+}
+
+.victory-effect {
+  color: #ffd700;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}
+
+// 戰鬥日誌區域
+.combat-log-area {
+  grid-area: log;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
+  min-height: 300px;
+}
+
+@media (max-width: 768px) {
+  .combat-log-area {
+    max-height: none;
+    height: auto;
+    min-height: 200px;
+  }
+}
+
+.log-container {
+  background: rgba(0,0,0,0.8);
+  border: 2px solid rgba(255,215,0,0.3);
+  border-radius: 16px;
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+}
+
+.log-header {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,215,0,0.3);
+}
+
+.log-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+.battle-narrative {
+  background: rgba(255,215,0,0.1);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.narrative-icon {
+  font-size: 1.2rem;
+  color: #ffd700;
+  flex-shrink: 0;
+}
+
+.narrative-text {
+  color: #fff;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.log-entries {
+  flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #fcd34d #222;
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.5); border-radius: 2px; }
-
-  @media (max-width: 768px) {
-    max-height: 300px;
-  }
+  scrollbar-color: #ffd700 transparent;
 }
-.pre-battle-status {
-  @apply flex flex-col items-center justify-center h-full text-slate-400;
-  .vs-text { @apply text-4xl sm:text-5xl font-pixel text-rpg-gold mb-4; }
-}
-.battle-log { @apply space-y-2; }
 
-// Rich Log Entry Styles
+.log-entries::-webkit-scrollbar {
+  width: 6px;
+}
+
+.log-entries::-webkit-scrollbar-thumb {
+  background: rgba(255,215,0,0.5);
+  border-radius: 3px;
+}
+
 .log-entry {
-  @apply flex items-start gap-3 p-2 rounded-md text-sm lg:text-base transition-all duration-500;
-  @apply opacity-0 translate-y-2;
-  &.visible { @apply opacity-100 translate-y-0; }
-
-  .log-icon { @apply flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-xs; }
-  .log-text { @apply text-slate-200 leading-snug; }
-
-  &.attack {
-    background-color: rgba(200, 160, 50, 0.1);
-    .log-icon { background-color: #c8a032; color: #fff; }
-  }
-  &.defense {
-    background-color: rgba(50, 150, 200, 0.1);
-    .log-icon { background-color: #3296c8; color: #fff; }
-  }
-  &.critical {
-    background-color: rgba(220, 50, 50, 0.15);
-    border: 1px solid rgba(220, 50, 50, 0.3);
-    .log-icon { background-color: #dc3232; color: #fff; animation: pulse 1s infinite; }
-    .log-text { @apply font-bold text-white; }
-  }
-  &.info {
-    background-color: rgba(128, 128, 128, 0.1);
-    .log-text { @apply text-slate-400 italic; }
-    .log-icon { background-color: #808080; color: #fff; }
-  }
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.5s ease;
+  opacity: 0;
+  transform: translateY(20px);
 }
 
-.battle-controls { @apply flex-shrink-0 text-center pt-4 flex gap-4 justify-center; }
-
-// --- Action Buttons ---
-.action-button {
-  @apply px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base font-bold rounded-lg transition-all duration-300;
-  &.primary { @apply bg-rpg-gold text-black hover:bg-yellow-400; }
-  &.secondary { @apply bg-slate-700 text-white hover:bg-slate-600; }
+.log-entry.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-// --- Overlays ---
-.battle-in-progress-overlay, .result-overlay {
-  @apply absolute inset-0 z-20 bg-black/70 backdrop-blur-sm flex items-center justify-center flex-col p-4;
-}
-.spinner { @apply text-5xl animate-spin mb-4; }
-
-.result-card {
-  @apply bg-slate-900/80 p-6 sm:p-8 rounded-2xl text-center border-2 w-full max-w-md;
-  &.victory { @apply border-yellow-400; }
-  &.defeat { @apply border-red-500; }
-  .result-icon { @apply text-7xl mb-4; }
-  .result-title { @apply text-3xl sm:text-4xl font-bold mb-2; }
-  .victory .result-title { @apply text-yellow-300; }
-  .defeat .result-title { @apply text-red-400; }
-  .result-message { @apply text-slate-300 mb-6; }
-  .result-actions { @apply flex gap-4 justify-center; }
+.log-entry.attack {
+  background: rgba(255, 215, 0, 0.1);
+  border-left: 4px solid #ffd700;
 }
 
-// --- Animations ---
-@keyframes hit-shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-5px); }
-  40%, 80% { transform: translateX(5px); }
+.log-entry.defense {
+  background: rgba(135, 206, 235, 0.1);
+  border-left: 4px solid #87ceeb;
+}
+
+.log-entry.critical {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid #ef4444;
+  animation: criticalPulse 1s ease-in-out infinite;
+}
+
+.log-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255,215,0,0.2);
+  flex-shrink: 0;
+}
+
+.log-icon {
+  font-size: 1rem;
+}
+
+.log-content {
+  flex: 1;
+}
+
+.log-text {
+  color: #fff;
+  line-height: 1.4;
+  margin: 0;
+}
+
+// 戰前顯示
+.pre-battle-display {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.countdown-circle {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border: 3px solid rgba(255,215,0,0.3);
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  animation: rotate 3s linear infinite;
+}
+
+.countdown-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border: 2px solid #ffd700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rotate 2s linear infinite reverse;
+}
+
+.countdown-icon {
+  font-size: 1.5rem;
+  color: #ffd700;
+}
+
+.countdown-text {
+  color: #ffd700;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+// 戰鬥控制台
+.battle-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem;
+  background: rgba(0,0,0,0.8);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  z-index: 15;
+  border: 2px solid rgba(255,215,0,0.3);
+}
+
+// 戰鬥前控制台（不會擋到準備戰鬥動畫）
+.battle-controls.pre-battle {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.control-panel {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+// 競技場按鈕
+.arena-button {
+  background: linear-gradient(45deg, #2a2a4a, #3a3a5a);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  color: #ffd700;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(255,215,0,0.2);
+}
+
+.arena-button:hover:not(:disabled) {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #1a1a3a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+}
+
+.arena-button.primary {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #1a1a3a;
+  border-color: #ffd700;
+}
+
+.arena-button.primary:hover:not(:disabled) {
+  background: linear-gradient(45deg, #ffed4e, #fff);
+}
+
+.arena-button.large {
+  padding: 1.2rem 2.5rem;
+  font-size: 1.1rem;
+}
+
+.arena-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.button-icon {
+  font-size: 1.2rem;
+}
+
+.button-icon.loading {
+  animation: spin 1s linear infinite;
+}
+
+// 戰鬥進行中覆蓋層
+.battle-progress-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(15px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.battle-stage {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  height: 400px;
+  margin-bottom: 2rem;
+}
+
+// 戰鬥角色動畫
+.fighting-warriors {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rem;
+}
+
+.fighting-character {
+  position: relative;
+  width: 140px;
+  height: 180px;
+  transition: all 0.3s ease;
+}
+
+.fighting-character.player {
+  animation: playerBattleMove 4s ease-in-out infinite;
+}
+
+.fighting-character.opponent {
+  animation: opponentBattleMove 4s ease-in-out infinite 2s;
+}
+
+.fighting-character.attacking {
+  animation: characterAttack 0.6s ease-out;
+}
+
+.character-battle-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+.battle-char-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+.battle-char-image.flipped {
+  transform: scaleX(-1);
+}
+
+.battle-aura {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  border-radius: 20px;
+  pointer-events: none;
+  animation: battleAuraGlow 2s ease-in-out infinite;
+}
+
+.battle-aura.player {
+  background: linear-gradient(45deg, transparent, rgba(74, 222, 128, 0.4), transparent);
+  box-shadow: 0 0 40px rgba(74, 222, 128, 0.6);
+}
+
+.battle-aura.opponent {
+  background: linear-gradient(45deg, transparent, rgba(239, 68, 68, 0.4), transparent);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.6);
+}
+
+.impact-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  background: radial-gradient(circle, rgba(255,255,255,0.8), transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: impactBlast 0.4s ease-out;
+  pointer-events: none;
+}
+
+// 戰鬥中心效果
+.battle-center-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 250px;
+}
+
+.collision-zone {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+// 碰撞波紋
+.collision-wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 3px solid rgba(255,215,0,0.8);
+  animation: waveExpand 2s ease-out infinite;
+}
+
+.wave-1 {
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  animation-delay: 0s;
+}
+
+.wave-2 {
+  width: 100px;
+  height: 100px;
+  transform: translate(-50%, -50%);
+  animation-delay: 0.4s;
+  border-color: rgba(135,206,235,0.6);
+}
+
+.wave-3 {
+  width: 140px;
+  height: 140px;
+  transform: translate(-50%, -50%);
+  animation-delay: 0.8s;
+  border-color: rgba(239,68,68,0.5);
+}
+
+// 能量碎片
+.energy-fragments {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.fragment {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(255,215,0,0.8);
+  animation: fragmentScatter 3s ease-out infinite;
+}
+
+.fragment-1 { top: 30%; left: 20%; animation-delay: 0s; }
+.fragment-2 { top: 70%; left: 25%; animation-delay: 0.2s; }
+.fragment-3 { top: 20%; right: 30%; animation-delay: 0.4s; }
+.fragment-4 { bottom: 25%; right: 20%; animation-delay: 0.6s; }
+.fragment-5 { bottom: 40%; left: 30%; animation-delay: 0.8s; }
+.fragment-6 { top: 50%; left: 15%; animation-delay: 1s; }
+.fragment-7 { top: 40%; right: 15%; animation-delay: 1.2s; }
+.fragment-8 { bottom: 50%; left: 50%; animation-delay: 1.4s; }
+
+// 電光效果
+.lightning-effects {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.lightning {
+  position: absolute;
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to bottom, rgba(135,206,235,1), rgba(135,206,235,0.3), transparent);
+  animation: lightningStrike 1.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.lightning-1 {
+  top: 20%;
+  left: 45%;
+  transform: rotate(15deg);
+  animation-delay: 0s;
+}
+
+.lightning-2 {
+  top: 25%;
+  right: 40%;
+  transform: rotate(-25deg);
+  animation-delay: 0.5s;
+}
+
+.lightning-3 {
+  top: 30%;
+  left: 35%;
+  transform: rotate(45deg);
+  animation-delay: 1s;
+}
+
+// 中心衝擊
+.core-impact {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, rgba(255,255,255,1), rgba(255,215,0,0.8), transparent);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: coreImpactPulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 30px rgba(255,215,0,1);
+}
+
+// 戰鬥狀態文字
+.battle-status {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.battle-phase {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(255,215,0,0.8);
+  animation: phaseGlow 2s ease-in-out infinite;
+}
+
+.battle-description {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+  animation: fadeInOut 3s ease-in-out infinite;
+}
+
+// 進度指示器
+.battle-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.progress-step {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.5s ease;
+}
+
+.progress-step.active {
+  border-color: #ffd700;
+  background: rgba(255,215,0,0.2);
+  color: #ffd700;
+  box-shadow: 0 0 20px rgba(255,215,0,0.5);
+  animation: stepPulse 1s ease-in-out infinite;
+}
+
+.progress-step.completed {
+  border-color: #4ade80;
+  background: rgba(74,222,128,0.2);
+  color: #4ade80;
+}
+
+.progress-line {
+  width: 60px;
+  height: 3px;
+  background: #444;
+  transition: all 0.5s ease;
+}
+
+.progress-line.active {
+  background: linear-gradient(90deg, #4ade80, #ffd700);
+  box-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+.progress-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(255,215,0,0.5);
+}
+
+.progress-text {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-bottom: 2rem;
+}
+
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  background: #ffd700;
+  border-radius: 50%;
+  animation: bounce 1.5s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 1s;
+}
+
+// 戰鬥結果覆蓋層
+.result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(15px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  overflow: hidden;
+}
+
+.result-content {
+  position: relative;
+  background: rgba(42, 42, 74, 0.9);
+  border-radius: 20px;
+  padding: 3rem;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  border: 3px solid;
+  backdrop-filter: blur(10px);
+}
+
+.result-content.victory-theme {
+  border-color: #ffd700;
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+}
+
+.result-content.defeat-theme {
+  border-color: #ef4444;
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.5);
+}
+
+.result-explosion {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  pointer-events: none;
+}
+
+.explosion-ring {
+  position: absolute;
+  border: 2px solid;
+  border-radius: 50%;
+  animation: explosionExpand 2s ease-out infinite;
+}
+
+.explosion-ring.ring-1 {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.explosion-ring.ring-2 {
+  top: 15%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
+  border-color: rgba(255, 215, 0, 0.5);
+  animation-delay: 0.3s;
+}
+
+.explosion-ring.ring-3 {
+  top: 30%;
+  left: 30%;
+  width: 40%;
+  height: 40%;
+  border-color: rgba(255, 215, 0, 0.7);
+  animation-delay: 0.6s;
+}
+
+.result-icon {
+  position: relative;
+  margin-bottom: 2rem;
+  z-index: 2;
+}
+
+.icon-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent);
+  border-radius: 50%;
+  animation: iconGlow 2s ease-in-out infinite;
+}
+
+.result-symbol {
+  font-size: 4rem;
+  filter: drop-shadow(0 0 20px currentColor);
+  animation: symbolBounce 0.8s ease-out;
+}
+
+.result-title {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.victory-theme .result-title {
+  color: #ffd700;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+}
+
+.defeat-theme .result-title {
+  color: #ef4444;
+  text-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+}
+
+.result-message {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.result-stats {
+  margin-bottom: 2rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  color: #fff;
+  font-weight: bold;
+}
+
+.result-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+// 動畫定義
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse {
@@ -184,371 +1343,422 @@
   50% { opacity: 0.7; transform: scale(1.1); }
 }
 
-.container {
-  position: relative;
-  min-height: 100vh;
+@keyframes floatOrb {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-30px) rotate(180deg); }
 }
 
-// 戰鬥場景樣式
-.battle-scene {
-  position: relative;
-  padding-top: 60px;
-  margin-bottom: 30px;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-// 血量條樣式
-.health-bars {
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-around;
-  padding: 0 20px;
-  z-index: 1000;
-
-  .health-bar {
-    width: 40%;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 10px;
-    border-radius: 10px;
-    
-    .name {
-      color: white;
-      font-weight: bold;
-      margin-bottom: 5px;
-      text-align: center;
-    }
-
-    .bar-container {
-      height: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
-      position: relative;
-
-      .bar {
-        height: 100%;
-        transition: width 0.5s ease-out;
-        position: relative;
-
-        .health-text {
-          position: absolute;
-          width: 100%;
-          text-align: center;
-          color: white;
-          font-size: 12px;
-          line-height: 20px;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-      }
-    }
-
-    &.player .bar {
-      background: linear-gradient(90deg, #4CAF50, #81C784);
-    }
-
-    &.opponent .bar {
-      background: linear-gradient(90deg, #f44336, #e57373);
-    }
-  }
+@keyframes hitShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
 }
 
-// 角色顯示樣式
-.characters-display {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  margin: 20px 0;
-
-  .character {
-    width: 200px;
-    height: 200px;
-    position: relative;
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-      transition: transform 0.3s ease;
-
-      &.shake-animation {
-        animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-      }
-    }
-
-    &.player img {
-      transform: scaleX(1);
-    }
-
-    &.opponent img {
-      transform: scaleX(-1);
-    }
-  }
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
-// RPG 卡片基本樣式
-.rpg-card {
-  background: rgba(30, 30, 30, 0.95);
-  border-radius: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-  }
+@keyframes auraGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
-// RPG 按鈕樣式
-.rpg-button {
-  background: linear-gradient(45deg, #4a148c, #7b1fa2);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: 2px solid #9c27b0;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  &:hover {
-    background: linear-gradient(45deg, #7b1fa2, #9c27b0);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  mat-icon {
-    margin-right: 8px;
-  }
+@keyframes effectAppear {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
-// 動畫類
-.animate-bounce {
-  animation: bounce 1s infinite;
+@keyframes criticalPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
 }
 
-.animate-bounce-slow {
-  animation: bounce 2s infinite;
-}
-
-.animate-pulse-slow {
-  animation: pulse 2s infinite;
+@keyframes expandRing {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 
 @keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+// 戰鬥動畫
+@keyframes playerBattleMove {
+  0%, 100% { transform: translateX(0) translateY(0) scale(1); }
+  25% { transform: translateX(20px) translateY(-5px) scale(1.05); }
+  50% { transform: translateX(0) translateY(0) scale(1); }
+  75% { transform: translateX(-5px) translateY(3px) scale(0.98); }
+}
+
+@keyframes opponentBattleMove {
+  0%, 100% { transform: translateX(0) translateY(0) scale(1); }
+  25% { transform: translateX(-20px) translateY(-5px) scale(1.05); }
+  50% { transform: translateX(0) translateY(0) scale(1); }
+  75% { transform: translateX(5px) translateY(3px) scale(0.98); }
+}
+
+@keyframes characterAttack {
+  0% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(25px) scale(1.1); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes battleAuraGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes impactBlast {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+@keyframes waveExpand {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+@keyframes fragmentScatter {
+  0% { 
+    opacity: 1; 
+    transform: translate(0, 0) rotate(0deg) scale(1); 
   }
-  50% {
-    transform: translateY(-20px);
+  70% { 
+    opacity: 0.8; 
+    transform: translate(var(--random-x, 60px), var(--random-y, -40px)) rotate(180deg) scale(0.8); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translate(var(--random-x, 100px), var(--random-y, -80px)) rotate(360deg) scale(0); 
   }
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
+@keyframes lightningStrike {
+  0%, 90%, 100% { opacity: 0; transform: scaleY(0); }
+  5%, 15% { opacity: 1; transform: scaleY(1); }
+  10% { opacity: 0.8; transform: scaleY(0.8); }
+}
+
+@keyframes coreImpactPulse {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(1); 
+    box-shadow: 0 0 30px rgba(255,215,0,1); 
   }
-  50% {
-    opacity: 0.5;
+  50% { 
+    transform: translate(-50%, -50%) scale(1.3); 
+    box-shadow: 0 0 50px rgba(255,215,0,1), 0 0 80px rgba(255,215,0,0.5); 
   }
-  100% {
-    opacity: 1;
-  }
+}
+
+@keyframes phaseGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(255,215,0,0.8); }
+  50% { text-shadow: 0 0 50px rgba(255,215,0,1), 0 0 70px rgba(255,215,0,0.8); }
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes stepPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+  50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255,215,0,0.8); }
+}
+
+@keyframes explosionExpand {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes iconGlow {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+@keyframes symbolBounce {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 // 響應式設計
-@media (max-width: 600px) {
-  .battle-result-container {
-    padding: 10px;
+@media (max-width: 1024px) {
+  .battle-field {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "player"
+      "opponent"
+      "log";
+    gap: 0.5rem;
+    height: auto;
+    min-height: calc(100vh - 160px);
   }
-
-  .result-card {
-    padding: 1.5rem;
+  
+  .warrior {
+    height: auto;
   }
-
-  .result-title {
-    font-size: 2rem;
+  
+  .combat-log-area {
+    max-height: 180px;
+    min-height: 120px;
   }
-
-  .action-buttons {
-    flex-direction: column;
-    
-    button {
-      width: 100%;
-    }
+  
+  .warrior-container {
+    width: 200px;
+    height: 250px;
   }
-
-  .rpg-button {
-    width: 100%;
-    justify-content: center;
+  
+  .warrior-image {
+    width: 160px;
+    height: 200px;
   }
-}
-
-.beautiful-overlay {
-  border-radius: 24px;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.5);
-  padding: 32px 0 24px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.result-icon.big-icon {
-  margin-bottom: 2rem;
-  .result-emoji {
-    font-size: 96px;
-    width: 96px;
-    height: 96px;
-    filter: drop-shadow(0 0 16px #ffd700cc);
-    animation: pop 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+  
+  .main-arena {
+    padding-top: 120px;
+    padding-bottom: 60px;
   }
-}
-
-@keyframes pop {
-  0% { transform: scale(0.5); opacity: 0; }
-  80% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); }
-}
-
-.result-title {
-  font-size: 2.8rem;
-  font-weight: bold;
-  margin-bottom: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.result-message {
-  font-size: 1.2rem;
-  color: #fffbe7;
-  margin-bottom: 2.2rem;
-  line-height: 1.7;
-}
-
-.action-buttons button {
-  font-size: 1.1rem;
-  padding: 0.8rem 2.2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px #00000033;
-}
-
-// 晃動動畫
-@keyframes shake {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translate3d(-4px, 0, 0);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translate3d(4px, 0, 0);
-  }
-}
-
-// 對手的晃動動畫需要考慮水平翻轉
-.character.opponent img.shake-animation {
-  animation: shake-opponent 0.5s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-@keyframes shake-opponent {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) scaleX(-1);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translate3d(-4px, 0, 0) scaleX(-1);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translate3d(4px, 0, 0) scaleX(-1);
-  }
-}
-
-.battle-in-progress-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(5px);
-
-  .content {
-    text-align: center;
-    color: white;
-
-    .spinner {
-      font-size: 4rem;
-      animation: pulse 1.5s infinite ease-in-out;
-    }
-
-    p {
-      margin-top: 1rem;
-      font-size: 1.5rem;
-      font-weight: bold;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    }
+  
+  .battle-controls {
+    bottom: 20px;
+    transform: translate(-50%, 0);
+    width: calc(100% - 2rem);
+    max-width: 400px;
   }
 }
 
 @media (max-width: 768px) {
-  .characters-display .character {
-    width: 150px;
-    height: 150px;
+  .battle-hud {
+    height: 100px;
+    padding: 0.5rem;
+    top: 64px;
   }
-
-  .health-bars .health-bar {
-    width: 45%;
-    padding: 8px;
-    .name {
-      font-size: 0.9rem;
-    }
-  }
-
-  .battle-controls {
-    display: flex;
+  
+  .champion-info {
+    min-width: auto;
     flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-
-    .rpg-button {
-      width: 80%;
-      justify-content: center;
-    }
+    text-align: center;
+    gap: 0.3rem;
+  }
+  
+  .champion-info.right {
+    flex-direction: column;
+  }
+  
+  .champion-portrait {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .champion-name {
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  .health-container {
+    width: 100px;
+  }
+  
+  .health-bar {
+    height: 16px;
+  }
+  
+  .health-text {
+    font-size: 0.7rem;
+  }
+  
+  .vs-icon {
+    font-size: 1.5rem;
+  }
+  
+  .battle-field {
+    height: auto;
+    min-height: calc(100vh - 180px);
+  }
+  
+  .main-arena {
+    padding: 0.5rem;
+    padding-top: 164px;
+    padding-bottom: 60px;
+  }
+  
+  .warrior-container {
+    width: 160px;
+    height: 200px;
+  }
+  
+  .warrior-image {
+    width: 130px;
+    height: 160px;
+  }
+  
+  .warrior-stats {
+    bottom: -10px;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .stat-item {
+    font-size: 0.7rem;
+    gap: 0.1rem;
+  }
+  
+  .stat-icon {
+    font-size: 0.8rem;
+  }
+  
+  .combat-log-area {
+    max-height: none;
+    height: auto;
+    min-height: 200px;
+  }
+  
+  .log-container {
+    padding: 0.8rem;
+  }
+  
+  .log-title {
+    font-size: 0.9rem;
+  }
+  
+  .battle-narrative {
+    padding: 0.6rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .narrative-text {
+    font-size: 0.8rem;
+  }
+  
+  .log-entry {
+    padding: 0.4rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  .log-text {
+    font-size: 0.75rem;
+  }
+  
+  .battle-controls {
+    position: fixed;
+    bottom: 20px;
+    transform: translate(-50%, 0);
+    width: calc(100% - 2rem);
+    max-width: 400px;
+    padding: 0.8rem;
+  }
+  
+  .control-panel {
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .arena-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+    max-width: 120px;
+  }
+  
+  .arena-button.large {
+    padding: 0.7rem 1.2rem;
+    max-width: 140px;
+  }
+  
+  .result-content {
+    padding: 1rem;
+    margin: 0.5rem;
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+    overflow-y: auto;
+  }
+  
+  .result-title {
+    font-size: 1.5rem;
+  }
+  
+  .result-message {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .result-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .result-actions .arena-button {
+    max-width: 100%;
+    padding: 0.8rem;
+  }
+  
+  .message-portal {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1rem;
+  }
+  
+  .message-title {
+    font-size: 1.8rem;
+  }
+  
+  .message-text {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .result-explosion {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .result-symbol {
+    font-size: 3rem;
+  }
+  
+  // 戰鬥進度動畫響應式
+  .battle-stage {
+    max-width: 600px;
+    height: 300px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .fighting-warriors {
+    padding: 0 2rem;
+  }
+  
+  .fighting-character {
+    width: 100px;
+    height: 130px;
+  }
+  
+  .battle-center-effect {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .battle-phase {
+    font-size: 1.8rem;
+  }
+  
+  .battle-description {
+    font-size: 1rem;
+  }
+  
+  .progress-step {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+  }
+  
+  .progress-line {
+    width: 40px;
   }
 }
-
-/* New Defeat Overlay Styles */
-.defeat-overlay {
-  @apply absolute inset-0 bg-black/70 backdrop-blur-sm;
-  @apply flex flex-col items-center justify-center text-white z-10;
-  animation: fadeIn 0.5s ease-out;
-
-  .defeat-icon {
-    @apply text-5xl sm:text-7xl mb-2;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
-  }
-
-  .defeat-text {
-    @apply text-2xl sm:text-3xl font-bold tracking-widest uppercase;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  }
-}
-
-/* New FadeIn Animation */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-} 

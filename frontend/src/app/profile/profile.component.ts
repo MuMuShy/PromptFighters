@@ -20,6 +20,16 @@ export class ProfileComponent implements OnInit {
   currentCharacter: Character | null = null;
   recentBattles: Battle[] = [];
   allCharacters: Character[] = [];
+  selectedRarityFilter: number | null = null;
+  
+  rarityFilters = [
+    { value: null, label: '全部', icon: '◉', count: 0 },
+    { value: 1, label: '普通', icon: '●', count: 0 },
+    { value: 2, label: '稀有', icon: '✦', count: 0 },
+    { value: 3, label: '精英', icon: '✧', count: 0 },
+    { value: 4, label: '史詩', icon: '✨', count: 0 },
+    { value: 5, label: '傳說', icon: '⭐', count: 0 }
+  ];
 
   constructor(
     private characterService: CharacterService,
@@ -89,6 +99,33 @@ export class ProfileComponent implements OnInit {
     if (!this.currentCharacter) return 0;
     const total = this.currentCharacter.win_count + this.currentCharacter.loss_count;
     return total > 0 ? Math.round((this.currentCharacter.win_count / total) * 100) : 0;
+  }
+  
+  get filteredCharacters(): Character[] {
+    if (this.selectedRarityFilter === null) {
+      return this.allCharacters;
+    }
+    return this.allCharacters.filter(char => char.rarity === this.selectedRarityFilter);
+  }
+  
+  setRarityFilter(rarity: number | null): void {
+    this.selectedRarityFilter = rarity;
+  }
+  
+  getRarityCount(rarity: number | null): number {
+    if (rarity === null) return this.allCharacters.length;
+    return this.allCharacters.filter(char => char.rarity === rarity).length;
+  }
+  
+  getRarityText(rarity: number): string {
+    const rarityMap: { [key: number]: string } = {
+      1: '普通',
+      2: '稀有', 
+      3: '精英',
+      4: '史詩',
+      5: '傳說'
+    };
+    return rarityMap[rarity] || '普通';
   }
 
   logout(): void {

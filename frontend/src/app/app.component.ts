@@ -34,7 +34,7 @@ import { Observable } from 'rxjs';
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
               <div class="flex-shrink-0">
-                <a routerLink="/" class="text-xl font-pixel font-bold text-rpg-gold">⚔️ 召喚亂鬥</a>
+                <a routerLink="/" class="text-xl font-pixel font-bold text-rpg-gold"><img src="/assets/icon_home.png" alt="Logo" class="w-10 h-10"></a>
               </div>
               <!-- Desktop Menu + 資源條 + 登出 -->
               <div class="hidden md:flex items-center w-full">
@@ -89,26 +89,26 @@ import { Observable } from 'rxjs';
           </div>
         </nav>
         <!-- 手機版資源條（md:hidden） -->
-        <div class="md:hidden game-status-bar flex items-center justify-around bg-gray-900/80 rounded-b-xl px-2 py-2 shadow fixed top-16 left-0 w-full z-40">
-          <div class="flex flex-col items-center">
-            <img src="/assets/game/gold_coin.png" alt="Gold" class="w-7 h-7" />
-            <span class="text-yellow-300 font-bold text-xs">{{ gold | number }}</span>
+        <div *ngIf="!isBattlePage" class="md:hidden game-status-bar flex items-center justify-between bg-gray-900/90 backdrop-blur-sm border-b border-gray-700/50 px-4 py-3 sticky top-16 left-0 w-full z-40">
+          <div class="flex items-center gap-1">
+            <img src="/assets/game/gold_coin.png" alt="Gold" class="w-6 h-6" />
+            <span class="text-yellow-300 font-bold text-sm">{{ gold | number }}</span>
           </div>
-          <div class="flex flex-col items-center">
-            <img src="/assets/game/diamond.png" alt="Diamond" class="w-7 h-7" />
-            <span class="text-blue-300 font-bold text-xs">{{ diamond }}</span>
+          <div class="flex items-center gap-1">
+            <img src="/assets/game/diamond.png" alt="Diamond" class="w-6 h-6" />
+            <span class="text-blue-300 font-bold text-sm">{{ diamond }}</span>
           </div>
-          <div class="flex flex-col items-center">
-            <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-7 h-7" />
-            <span class="text-purple-300 font-bold text-xs">{{ promptPower }}</span>
+          <div class="flex items-center gap-1">
+            <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-6 h-6" />
+            <span class="text-purple-300 font-bold text-sm">{{ promptPower }}</span>
           </div>
-          <div class="flex flex-col items-center">
-            <img src="/assets/game/stamina.png" alt="Energy" class="w-7 h-7" />
-            <span class="text-red-200 font-bold text-xs">{{ energy }}/100</span>
+          <div class="flex items-center gap-1">
+            <img src="/assets/game/stamina.png" alt="Energy" class="w-6 h-6" />
+            <span class="text-red-200 font-bold text-sm">{{ energy }}/100</span>
           </div>
         </div>
 
-        <main class="main-content pt-24" [class.contained-view]="!isBattlePage">
+        <main class="main-content" [class.pt-4]="!isBattlePage" [class.contained-view]="!isBattlePage" [class.battle-main]="isBattlePage">
           <router-outlet></router-outlet>
         </main>
       </div>
@@ -168,11 +168,29 @@ import { Observable } from 'rxjs';
       flex-direction: column;
     }
     /* This ensures the component rendered inside router-outlet also grows */
-    .main-content > *:first-child {
+    .main-content:not(.battle-main) > *:first-child {
       flex-grow: 1;
+    }
+    
+    /* Fix router-outlet for battle page */
+    .battle-main > router-outlet {
+      display: contents;
     }
     .contained-view {
       @apply max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8;
+    }
+    
+    /* Battle page specific styles */
+    .battle-main {
+      height: 100vh;
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .battle-main > * {
+      height: 100vh;
+      overflow: hidden;
     }
     
     /* Common link styles */
