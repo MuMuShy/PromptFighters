@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Router, NavigationEnd, RouterOutlet, RouterLink } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { PlayerService } from './services/player.service';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { HealthCheckService } from './services/health-check.service';
@@ -33,17 +34,38 @@ import { Observable } from 'rxjs';
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
               <div class="flex-shrink-0">
-                <a routerLink="/" class="text-xl font-pixel font-bold text-rpg-gold">⚔️ AI大亂鬥</a>
+                <a routerLink="/" class="text-xl font-pixel font-bold text-rpg-gold">⚔️ 召喚亂鬥</a>
               </div>
-              <!-- Desktop Menu -->
-              <div class="hidden md:block">
-                <div class="ml-10 flex items-baseline space-x-4">
+              <!-- Desktop Menu + 資源條 + 登出 -->
+              <div class="hidden md:flex items-center w-full">
+                <!-- 主選單 -->
+                <div class="flex items-baseline space-x-4 flex-grow ml-16">
                   <a routerLink="/profile" class="nav-link">Profile</a>
                   <a routerLink="/create" class="nav-link">Create</a>
                   <a routerLink="/battle" class="nav-link">Battle</a>
                   <a routerLink="/leaderboard" class="nav-link">Leaderboard</a>
-                  <button *ngIf="isLoggedIn" (click)="logout()" class="logout-btn">登出</button>
                 </div>
+                <!-- 資源條 -->
+                <div class="game-status-bar flex items-center gap-4 bg-gray-900/70 rounded-lg px-4 py-1 mx-8 shadow">
+                  <div class="flex items-center gap-1">
+                    <img src="/assets/game/gold_coin.png" alt="Gold" class="w-7 h-7" />
+                    <span class="text-yellow-300 font-bold text-base">{{ gold | number }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <img src="/assets/game/diamond.png" alt="Diamond" class="w-7 h-7" />
+                    <span class="text-blue-300 font-bold text-base">{{ diamond }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-7 h-7" />
+                    <span class="text-purple-300 font-bold text-base">{{ promptPower }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <img src="/assets/game/stamina.png" alt="Energy" class="w-7 h-7" />
+                    <span class="text-red-200 font-bold text-base">{{ energy }}/100</span>
+                  </div>
+                </div>
+                <!-- 登出按鈕 -->
+                <button *ngIf="isLoggedIn" (click)="logout()" class="logout-btn">登出</button>
               </div>
               <!-- Mobile Menu Button -->
               <div class="-mr-2 flex md:hidden">
@@ -66,8 +88,27 @@ import { Observable } from 'rxjs';
             </div>
           </div>
         </nav>
+        <!-- 手機版資源條（md:hidden） -->
+        <div class="md:hidden game-status-bar flex items-center justify-around bg-gray-900/80 rounded-b-xl px-2 py-2 shadow fixed top-16 left-0 w-full z-40">
+          <div class="flex flex-col items-center">
+            <img src="/assets/game/gold_coin.png" alt="Gold" class="w-7 h-7" />
+            <span class="text-yellow-300 font-bold text-xs">{{ gold | number }}</span>
+          </div>
+          <div class="flex flex-col items-center">
+            <img src="/assets/game/diamond.png" alt="Diamond" class="w-7 h-7" />
+            <span class="text-blue-300 font-bold text-xs">{{ diamond }}</span>
+          </div>
+          <div class="flex flex-col items-center">
+            <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-7 h-7" />
+            <span class="text-purple-300 font-bold text-xs">{{ promptPower }}</span>
+          </div>
+          <div class="flex flex-col items-center">
+            <img src="/assets/game/stamina.png" alt="Energy" class="w-7 h-7" />
+            <span class="text-red-200 font-bold text-xs">{{ energy }}/100</span>
+          </div>
+        </div>
 
-        <main class="main-content" [class.contained-view]="!isBattlePage">
+        <main class="main-content pt-24" [class.contained-view]="!isBattlePage">
           <router-outlet></router-outlet>
         </main>
       </div>
@@ -148,20 +189,56 @@ export class AppComponent implements OnInit {
   isLandingPage = false;
   isBattlePage = false;
   isServerOnline$: Observable<boolean>;
+  gold = 0;
+  diamond = 0;
+  promptPower = 0;
+  energy = 0;
 
-  constructor(private healthCheckService: HealthCheckService) {
+  constructor(
+    private healthCheckService: HealthCheckService,
+    private playerService: PlayerService
+  ) {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       const url = event.urlAfterRedirects;
       this.isLandingPage = (url === '/');
       this.isBattlePage = (url === '/battle');
+      
+      // 當導航到非 landing page 且已登入時，載入資源
+      if (!this.isLandingPage && this.isLoggedIn) {
+        this.loadPlayerResources();
+      }
     });
     this.isServerOnline$ = this.healthCheckService.serverStatus$;
   }
 
   ngOnInit(): void {
     this.healthCheckService.startPeriodicChecks();
+    
+    // 訂閱資源變化
+    this.playerService.resources$.subscribe(resources => {
+      this.gold = resources.gold;
+      this.diamond = resources.diamond;
+      this.promptPower = resources.prompt_power;
+      this.energy = resources.energy;
+    });
+    
+    // 如果已登入，載入資源
+    if (this.isLoggedIn) {
+      this.loadPlayerResources();
+    }
+  }
+
+  private loadPlayerResources(): void {
+    this.playerService.getResources().subscribe({
+      next: (resources) => {
+        // 資源會透過 subscription 自動更新
+      },
+      error: (error) => {
+        console.error('Failed to load player resources:', error);
+      }
+    });
   }
 
   get isLoggedIn(): boolean {

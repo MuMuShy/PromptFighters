@@ -18,6 +18,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from rest_framework import viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 # import openai #不再需要
 from django.conf import settings
 from django.db import models
@@ -41,6 +43,8 @@ class PlayerProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request, player_id):
         player = get_object_or_404(Player, id=player_id)
+        # 更新體力
+        player.update_energy()
         player_data = PlayerSerializer(player).data
         characters = Character.objects.filter(player=player)
         char_data = CharacterSerializer(characters, many=True).data
@@ -264,6 +268,51 @@ class LeaderboardView(generics.ListAPIView):
 
         # Order by the calculated win rate and win count
         return queryset.order_by('-win_rate_calculated', '-win_count')[:100]
+
+class PlayerResourceView(APIView):
+    """獲取當前玩家的資源狀態"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        player = request.user.player
+        # 更新體力
+        player.update_energy()
+        return Response({
+            'gold': player.gold,
+            'diamond': player.diamond,
+            'prompt_power': player.prompt_power,
+            'energy': player.energy,
+            'max_energy': player.max_energy
+        })
+
+class SpendResourceView(APIView):
+    """消耗玩家資源"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        player = request.user.player
+        # 更新體力
+        player.update_energy()
+        
+        gold_cost = request.data.get('gold_cost', 0)
+        diamond_cost = request.data.get('diamond_cost', 0)
+        prompt_power_cost = request.data.get('prompt_power_cost', 0)
+        energy_cost = request.data.get('energy_cost', 0)
+        
+        if player.spend_resources(gold_cost, diamond_cost, prompt_power_cost, energy_cost):
+            return Response({
+                'success': True,
+                'gold': player.gold,
+                'diamond': player.diamond,
+                'prompt_power': player.prompt_power,
+                'energy': player.energy,
+                'max_energy': player.max_energy
+            })
+        else:
+            return Response({
+                'success': False,
+                'error': 'Insufficient resources'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
