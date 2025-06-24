@@ -147,7 +147,7 @@ class CharacterService:
         """
         rarity = random.randint(2, 5)
         attributes = self.gemini_service.generate_advanced_character_attributes(name, prompt)
-        image_url = f"https://via.placeholder.com/256?text={prompt.replace(' ', '+')}"
+        image_url = f"https://via.placeholder.com/256?text={name.replace(' ', '+')}"
         character = Character.objects.create(
             player=player,
             name=name,
