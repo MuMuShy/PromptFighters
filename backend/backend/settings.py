@@ -68,7 +68,7 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 # This setting is crucial for allowing the frontend to send credentials.
 CORS_ALLOW_CREDENTIALS = True
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Application definition
 
 INSTALLED_APPS = [
