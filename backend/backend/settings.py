@@ -45,7 +45,9 @@ else:
 # Build a list of allowed origins.
 # It starts with the production URL and is extended for development.
 allowed_origins = [
-    os.getenv('CSRF_TRUSTED_ORIGINS'),  # e.g., 'https://promptfighters.app'
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
 ]
 
 # In development (DEBUG=True), add local development origins.
