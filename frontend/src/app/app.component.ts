@@ -89,7 +89,7 @@ import { Observable } from 'rxjs';
           </div>
         </nav>
         <!-- 手機版資源條（md:hidden） -->
-        <div *ngIf="!isBattlePage" class="md:hidden game-status-bar flex items-center justify-between bg-gray-900/90 backdrop-blur-sm border-b border-gray-700/50 px-4 py-3 sticky top-16 left-0 w-full z-40">
+        <div *ngIf="!isBattlePage && isLoggedIn" class="md:hidden game-status-bar flex items-center justify-between bg-gray-900/90 backdrop-blur-sm border-b border-gray-700/50 px-4 py-3 sticky top-16 left-0 w-full z-40">
           <div class="flex items-center gap-1">
             <img src="/assets/game/gold_coin.png" alt="Gold" class="w-6 h-6" />
             <span class="text-yellow-300 font-bold text-sm">{{ gold | number }}</span>
@@ -232,6 +232,8 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('ngOnInit');
+    console.log(this.isLoggedIn);
     this.healthCheckService.startPeriodicChecks();
     
     // 訂閱資源變化
@@ -242,9 +244,9 @@ export class AppComponent implements OnInit {
       this.energy = resources.energy;
     });
     
-    // 如果已登入，載入資源
-    if (this.isLoggedIn) {
-      this.loadPlayerResources();
+    // 只要已登入且不在 /profile 就自動導向 /profile
+    if (this.isLoggedIn && this.router.url !== '/profile') {
+      this.router.navigate(['/profile']);
     }
   }
 

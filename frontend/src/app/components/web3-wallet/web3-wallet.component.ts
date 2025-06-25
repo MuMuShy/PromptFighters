@@ -156,12 +156,12 @@ export class Web3WalletComponent {
 
     try {
       let address: string | null = null;
-
-      if (type === 'metamask') {
-        address = await this.web3Service.connectMetamask();
-      } else {
-        address = await this.web3Service.connectWithThirdweb(type);
-      }
+      address = await this.web3Service.connectWithThirdweb(type);
+      // if (type === 'metamask') {
+      //   address = await this.web3Service.connectMetamask();
+      // } else {
+      //   address = await this.web3Service.connectWithThirdweb(type);
+      // }
 
       if (!address) {
         throw new Error('錢包連接失敗');
