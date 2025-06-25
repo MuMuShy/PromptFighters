@@ -33,8 +33,17 @@
   backdrop-filter: blur(10px);
   background: rgba(0, 0, 0, 0.7);
   border: 2px solid rgba(255, 215, 0, 0.3);
-  max-height: calc(90vh - 64px);
-  overflow-y: auto;
+  max-width: 800px;
+  min-width: 300px;
+  width: 100vw;
+  min-height: 480px;
+  max-height: 90vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  padding: 2.5rem 2rem;
 }
 
 .title {
@@ -173,4 +182,126 @@
   &:hover {
     background: #e2761b;
   }
+}
+
+// 錢包分區樣式
+.wallet-section, .social-wallet-section, .other-wallet-section {
+  @apply mb-6;
+}
+
+.wallet-section-title {
+  @apply text-lg font-bold text-rpg-gold mb-3 text-center;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.wallet-buttons {
+  @apply space-y-3;
+}
+
+// 錢包按鈕基礎樣式
+.wallet-btn {
+  @apply w-full py-3 px-4 rounded-lg font-semibold text-sm
+         transition-all duration-200 flex items-center justify-center space-x-3
+         border-2 border-transparent shadow-lg;
+  
+  &:hover:not(:disabled) {
+    @apply transform scale-105 shadow-xl;
+  }
+  
+  &:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  
+  .wallet-icon {
+    @apply text-xl;
+  }
+}
+
+// MetaMask 按鈕
+.metamask-btn {
+  @apply bg-orange-500 hover:bg-orange-600 text-white;
+  border-color: #f6851b;
+}
+
+// WalletConnect 按鈕
+.walletconnect-btn {
+  @apply bg-blue-500 hover:bg-blue-600 text-white;
+  border-color: #3b9cfe;
+}
+
+// Coinbase 按鈕
+.coinbase-btn {
+  @apply bg-blue-600 hover:bg-blue-700 text-white;
+  border-color: #0052ff;
+}
+
+// 社交錢包按鈕
+.social-google-btn {
+  @apply bg-white hover:bg-gray-100 text-gray-800 border-gray-300;
+}
+
+.social-facebook-btn {
+  @apply bg-blue-600 hover:bg-blue-700 text-white;
+  border-color: #1877f2;
+}
+
+.social-apple-btn {
+  @apply bg-black hover:bg-gray-800 text-white;
+  border-color: #000;
+}
+
+// Email 和電話按鈕
+.email-btn {
+  @apply bg-gray-700 hover:bg-gray-600 text-white;
+  border-color: #4a5568;
+}
+
+.phone-btn {
+  @apply bg-green-600 hover:bg-green-700 text-white;
+  border-color: #38a169;
+}
+
+// 連接狀態
+.connecting-status {
+  @apply flex flex-col items-center justify-center py-4 mt-4;
+  
+  .loading-spinner {
+    @apply w-8 h-8 border-2 border-gray-300 border-t-rpg-gold rounded-full animate-spin mb-2;
+  }
+  
+  p {
+    @apply text-sm text-rpg-gold font-medium;
+  }
+}
+
+// 響應式設計
+@media (max-width: 640px) {
+  .wallet-btn {
+    @apply py-4 text-base;
+    
+    .wallet-icon {
+      @apply text-2xl;
+    }
+  }
+  
+  .wallet-section-title {
+    @apply text-base;
+  }
+  .rpg-card {
+    max-width: 98vw;
+    min-width: 0;
+    min-height: 320px;
+    max-height: 98vh;
+    padding: 1.5rem 0.5rem;
+  }
+  .space-y-4 {
+    max-height: none;
+  }
+}
+
+.space-y-4 {
+  max-height: none;
+  overflow-y: visible;
+  width: 100%;
+  margin-bottom: 3rem;
 } 

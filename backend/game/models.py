@@ -4,10 +4,29 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 class Player(models.Model):
+    LOGIN_METHOD_CHOICES = [
+        ('google', 'Google OAuth'),
+        ('metamask', 'MetaMask'),
+        ('walletconnect', 'WalletConnect'),
+        ('coinbase', 'Coinbase Wallet'),
+        ('email', 'Email Wallet'),
+        ('phone', 'Phone Wallet'),
+        ('social', 'Social Login'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
+    
+    # Web3 錢包相關欄位
+    wallet_address = models.CharField(max_length=42, null=True, blank=True, unique=True)
+    login_method = models.CharField(max_length=20, choices=LOGIN_METHOD_CHOICES, default='google')
+    chain_id = models.IntegerField(default=5000)  # Mantle 主網
+    
+    # thirdweb Connect 相關
+    thirdweb_user_id = models.CharField(max_length=100, null=True, blank=True)
+    social_provider = models.CharField(max_length=20, null=True, blank=True)  # facebook, twitter, apple 等
     
     # 遊戲資源
     gold = models.IntegerField(default=1000)
@@ -18,6 +37,16 @@ class Player(models.Model):
     last_energy_update = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
+        if self.wallet_address:
+            return f"{self.user.username} ({self.wallet_address[:8]}...)"
+        return self.user.username
+    
+    def get_display_name(self):
+        """取得顯示名稱"""
+        if self.login_method == 'google':
+            return self.user.email or self.user.username
+        elif self.wallet_address:
+            return f"{self.wallet_address[:6]}...{self.wallet_address[-4:]}"
         return self.user.username
     
     def update_energy(self):

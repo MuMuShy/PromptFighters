@@ -46,7 +46,7 @@ import { Observable } from 'rxjs';
                   <a routerLink="/leaderboard" class="nav-link">Leaderboard</a>
                 </div>
                 <!-- 資源條 -->
-                <div class="game-status-bar flex items-center gap-4 bg-gray-900/70 rounded-lg px-4 py-1 mx-8 shadow">
+                <div *ngIf="isLoggedIn" class="game-status-bar flex items-center gap-4 bg-gray-900/70 rounded-lg px-4 py-1 mx-8 shadow">
                   <div class="flex items-center gap-1">
                     <img src="/assets/game/gold_coin.png" alt="Gold" class="w-7 h-7" />
                     <span class="text-yellow-300 font-bold text-base">{{ gold | number }}</span>

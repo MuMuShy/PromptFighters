@@ -120,10 +120,38 @@ class SocialLoginView(APIView):
                 return Response({'error': 'Invalid Google token'}, status=400)
             info = google_resp.json()
             email = info['email']
+            name = info.get('name', email)
+            
             User = get_user_model()
-            user, created = User.objects.get_or_create(email=email, defaults={'username': email})
-            # **確保有 Player**
-            player, _ = Player.objects.get_or_create(user=user)
+            # 首先嘗試用 email 查找現有用戶
+            user = User.objects.filter(email=email).first()
+            if not user:
+                # 創建新用戶
+                user = User.objects.create(
+                    username=email,
+                    email=email,
+                    first_name=name.split(' ')[0] if ' ' in name else name
+                )
+            
+            # 確保有 Player 並填入正確資料
+            player, player_created = Player.objects.get_or_create(
+                user=user,
+                defaults={
+                    'login_method': 'google',
+                    'social_provider': 'google'
+                }
+            )
+            
+            # 如果 Player 已存在但登入方式不是 google，更新為 google
+            if not player_created and player.login_method != 'google':
+                player.login_method = 'google'
+                player.social_provider = 'google'
+                player.save()
+            
+            # 更新最後登入時間
+            player.last_login = timezone.now()
+            player.save()
+            
             # 產生 JWT
             refresh = RefreshToken.for_user(user)
             return Response({
@@ -369,8 +397,71 @@ class Web3LoginView(APIView):
             return Response({'error': '地址與簽名不符'}, status=400)
         # 取得或創建 User/Player
         User = get_user_model()
-        user, _ = User.objects.get_or_create(username=address.lower(), defaults={'email': f'{address.lower()}@web3.local'})
-        player, _ = Player.objects.get_or_create(user=user)
+        login_method = request.data.get('login_method', 'metamask')  # 預設 MetaMask
+        
+        # 首先檢查是否已有相同地址的 Player
+        existing_player = Player.objects.filter(wallet_address__iexact=address).first()
+        
+        if existing_player:
+            # 如果已有相同地址的 Player，更新登入方式
+            user = existing_player.user
+            existing_player.login_method = login_method
+            existing_player.last_login = timezone.now()
+            existing_player.save()
+            player = existing_player
+        else:
+            # 檢查是否有相同 email 的用戶（用於社交錢包整合）
+            social_email = request.data.get('social_email')  # 社交登入的 email
+            user = None
+            
+            if social_email:
+                # 嘗試找到相同 email 的用戶
+                user = User.objects.filter(email=social_email).first()
+                if user:
+                    # 找到相同 email 的用戶，更新其 Player 資料
+                    player, _ = Player.objects.get_or_create(user=user)
+                    player.wallet_address = address
+                    player.login_method = login_method
+                    player.chain_id = 5000  # Mantle
+                    player.last_login = timezone.now()
+                    if login_method in ['google', 'facebook', 'apple']:
+                        player.social_provider = login_method
+                    player.save()
+                else:
+                    # 沒有找到相同 email，創建新用戶
+                    user = User.objects.create(
+                        username=social_email,
+                        email=social_email
+                    )
+                    player = Player.objects.create(
+                        user=user,
+                        wallet_address=address,
+                        login_method=login_method,
+                        chain_id=5000,
+                        social_provider=login_method if login_method in ['google', 'facebook', 'apple'] else None,
+                        last_login=timezone.now()
+                    )
+            else:
+                # 一般 Web3 登入，使用地址作為 username
+                user, _ = User.objects.get_or_create(
+                    username=address.lower(),
+                    defaults={'email': f'{address.lower()}@web3.local'}
+                )
+                player, _ = Player.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'wallet_address': address,
+                        'login_method': login_method,
+                        'chain_id': 5000,
+                        'last_login': timezone.now()
+                    }
+                )
+                # 如果 Player 已存在但沒有地址，填入地址
+                if not player.wallet_address:
+                    player.wallet_address = address
+                    player.chain_id = 5000
+                    player.save()
+        
         # 簽發 JWT
         refresh = RefreshToken.for_user(user)
         # 清除 nonce
@@ -380,5 +471,7 @@ class Web3LoginView(APIView):
             'refresh': str(refresh),
             'player_id': player.id,
             'username': user.username,
-            'email': user.email
+            'email': user.email,
+            'wallet_address': player.wallet_address,
+            'login_method': player.login_method
         })

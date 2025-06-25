@@ -53,14 +53,24 @@ export class AuthService {
     );
   }
 
-  web3Login(address: string, signature: string, nonce: string): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(
-      this.web3AuthUrl,
-      { address, signature, nonce }
-    ).pipe(
+  web3Login(address: string, signature: string, nonce: string, loginMethod?: string, socialEmail?: string): Observable<TokenResponse> {
+    const payload: any = { address, signature, nonce };
+    
+    if (loginMethod) {
+      payload.login_method = loginMethod;
+    }
+    
+    if (socialEmail) {
+      payload.social_email = socialEmail;
+    }
+    
+    return this.http.post<TokenResponse>(this.web3AuthUrl, payload).pipe(
       tap(response => {
         this.setTokens(response.access, response.refresh);
         localStorage.setItem('wallet_address', address);
+        if (loginMethod) {
+          localStorage.setItem('login_method', loginMethod);
+        }
       })
     );
   }
