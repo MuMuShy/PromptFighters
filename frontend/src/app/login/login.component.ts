@@ -94,9 +94,9 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    timer(100).pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.tryRenderGoogleButton();
-    });
+    // timer(100).pipe(takeUntil(this.destroy$)).subscribe(() => {
+    //   this.tryRenderGoogleButton();
+    // });
   }
 
   ngOnDestroy(): void {
