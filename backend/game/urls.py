@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CharacterViewSet, BattleViewSet, SocialLoginView, LeaderboardView, Web3LoginView, Web3NonceView, health_check, PlayerResourceView, SpendResourceView
+from .views import CharacterViewSet, BattleViewSet, PlayerProfileView, SocialLoginView, LeaderboardView, Web3LoginView, Web3NonceView, health_check, PlayerResourceView, SpendResourceView
 
 router = DefaultRouter()
 router.register(r'characters', CharacterViewSet, basename='character')
@@ -16,4 +16,5 @@ urlpatterns = [
     path('characters/advanced_summon/', CharacterViewSet.as_view({'post': 'advanced_summon'}), name='advanced_summon'),
     path('auth/web3-nonce/', Web3NonceView.as_view(), name='web3-nonce'),
     path('auth/web3-login/', Web3LoginView.as_view(), name='web3-login'),
+    path('player/profile/', PlayerProfileView.as_view(), name='player-profile'),
 ]  

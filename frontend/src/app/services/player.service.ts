@@ -75,4 +75,8 @@ export class PlayerService {
   updateResources(resources: PlayerResources): void {
     this.resourcesSubject.next(resources);
   }
+
+  getProfile(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/player/profile/`);
+  }
 }

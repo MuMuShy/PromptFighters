@@ -212,29 +212,29 @@
     </div>
   </div>
 
-  <!-- 戰鬥控制台 -->
-  <div *ngIf="playerCharacter && opponent && !battleStarted && !battleResult" class="battle-controls pre-battle">
-    <div class="control-panel">
-      <button (click)="startBattle()" class="arena-button primary large" [disabled]="isLoading">
-        <span class="button-icon">⚔</span>
-        發起決鬥
-      </button>
-      <button (click)="findNewOpponent()" class="arena-button secondary" [disabled]="isLoading">
-        <span class="button-icon">🔄</span>
-        更換對手
-      </button>
+  <!-- 將所有戰鬥控制台移到最外層，確保底部固定 -->
+  <ng-container *ngIf="playerCharacter && opponent && !battleStarted && !battleResult">
+    <div class="battle-controls pre-battle">
+      <div class="control-panel">
+        <button (click)="startBattle()" class="arena-button primary large" [disabled]="isLoading">
+          發起決鬥
+        </button>
+        <button (click)="findNewOpponent()" class="arena-button primary large" [disabled]="isLoading">
+          更換對手
+        </button>
+      </div>
     </div>
-  </div>
-  
-  <!-- 戰鬥結束後控制台 -->
-  <div *ngIf="battleResult && !showResultOverlay" class="battle-controls">
-    <div class="control-panel">
-      <button (click)="resetBattle()" class="arena-button primary large">
-        <span class="button-icon">🎯</span>
-        再戰一場
-      </button>
+  </ng-container>
+  <ng-container *ngIf="battleResult && !showResultOverlay">
+    <div class="battle-controls">
+      <div class="control-panel">
+        <button (click)="resetBattle()" class="arena-button primary large">
+          <span class="button-icon">🎯</span>
+          再戰一場
+        </button>
+      </div>
     </div>
-  </div>
+  </ng-container>
 
   <!-- 戰鬥進行中覆蓋層 -->
   <div *ngIf="battleStarted && !battleResult" class="battle-progress-overlay">

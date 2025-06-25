@@ -7,6 +7,7 @@ import { CharacterCardComponent } from '../shared/character-card.component';
 import { Character } from '../interfaces/character.interface';
 import { AuthService } from '../services/auth.service';
 import { Battle } from '../interfaces/battle.interface';
+import { PlayerService } from '../services/player.service';
 
 @Component({
   selector: 'app-profile',
@@ -21,6 +22,7 @@ export class ProfileComponent implements OnInit {
   recentBattles: Battle[] = [];
   allCharacters: Character[] = [];
   selectedRarityFilter: number | null = null;
+  walletAddress: string = '';
   
   rarityFilters = [
     { value: null, label: '全部', icon: '◉', count: 0 },
@@ -34,12 +36,23 @@ export class ProfileComponent implements OnInit {
   constructor(
     private characterService: CharacterService,
     private battleService: BattleService,
-    private authService: AuthService
+    private authService: AuthService,
+    private playerService: PlayerService
   ) {}
 
   ngOnInit(): void {
     const token = this.authService.getToken() || '';
     
+    // 取得玩家錢包地址
+    this.playerService.getProfile().subscribe({
+      next: (profile: any) => {
+        this.walletAddress = profile.player.wallet_address || '';
+      },
+      error: () => {
+        this.walletAddress = '';
+      }
+    });
+
     // 获取所有角色
     this.characterService.getAllCharacters(token).subscribe({
       next: characters => {

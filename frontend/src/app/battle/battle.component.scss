@@ -263,7 +263,7 @@
   justify-content: center;
   z-index: 5;
   padding-top: 120px;
-  padding-bottom: 100px;
+  padding-bottom: 120px !important;
   padding-left: 1rem;
   padding-right: 1rem;
   box-sizing: border-box;
@@ -379,8 +379,37 @@
 
 @media (max-width: 768px) {
   .battle-field {
-    height: auto;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.8rem;
+    width: 100%;
     min-height: calc(100vh - 180px);
+    height: auto;
+    padding-bottom: 0;
+    grid-template-columns: none !important;
+    grid-template-areas: none !important;
+  }
+  .warrior-container {
+    width: 90vw;
+    max-width: 320px;
+    height: auto;
+    min-height: 180px;
+  }
+  .warrior-image {
+    width: 90vw;
+    max-width: 280px;
+    height: auto;
+    min-height: 140px;
+  }
+  .combat-log-area {
+    order: 3;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+    margin: 0;
+    padding: 0 0.5rem;
   }
 }
 
@@ -749,30 +778,54 @@
 // 戰鬥控制台
 .battle-controls {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 1rem;
-  background: rgba(0,0,0,0.8);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  z-index: 15;
-  border: 2px solid rgba(255,215,0,0.3);
-}
-
-// 戰鬥前控制台（不會擋到準備戰鬥動畫）
-.battle-controls.pre-battle {
-  position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
-}
-
-.control-panel {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  background: rgba(20,20,40,0.97);
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.3);
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  align-items: center;
+  padding: 1.2rem 0 1.2rem 0;
+  border-radius: 0;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 72px;
+  border: none;
+  backdrop-filter: blur(8px);
+}
+
+.battle-controls .control-panel {
+  display: flex;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .battle-controls {
+    padding: 0.5rem 0 0.5rem 0;
+    min-height: 48px;
+    min-width: 0;
+    max-width: 100vw;
+  }
+  .battle-controls .control-panel {
+    gap: 0.5rem;
+    width: 100vw;
+    align-items: stretch;
+    justify-content: center;
+    padding: 0 0.5rem;
+  }
+  .arena-button {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: 1rem;
+    padding: 1rem 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 // 競技場按鈕
@@ -1529,8 +1582,6 @@
   
   .battle-controls {
     bottom: 20px;
-    transform: translate(-50%, 0);
-    width: calc(100% - 2rem);
     max-width: 400px;
   }
 }
@@ -1539,7 +1590,6 @@
   .battle-hud {
     height: 100px;
     padding: 0.5rem;
-    top: 64px;
   }
   
   .champion-info {
@@ -1646,14 +1696,6 @@
     font-size: 0.75rem;
   }
   
-  .battle-controls {
-    position: fixed;
-    bottom: 20px;
-    transform: translate(-50%, 0);
-    width: calc(100% - 2rem);
-    max-width: 400px;
-    padding: 0.8rem;
-  }
   
   .control-panel {
     gap: 0.5rem;

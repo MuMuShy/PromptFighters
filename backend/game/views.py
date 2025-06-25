@@ -50,9 +50,8 @@ class CharacterDetailView(generics.RetrieveAPIView):
 
 class PlayerProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    def get(self, request, player_id):
-        player = get_object_or_404(Player, id=player_id)
-        # 更新體力
+    def get(self, request):
+        player = request.user.player  # 假設 OneToOne 關聯
         player.update_energy()
         player_data = PlayerSerializer(player).data
         characters = Character.objects.filter(player=player)
