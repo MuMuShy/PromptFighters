@@ -7,7 +7,7 @@ export const environment = {
   thirdwebClientId: '8e42d9fe5ba38fdb11d156d20d032dcf',
   
   // WalletConnect 配置
-  walletConnectProjectId: process.env['WALLETCONNECT_PROJECT_ID'] || 'your_walletconnect_project_id',
+  walletConnectProjectId: 'your_walletconnect_project_id',
   
   // Mantle 鏈配置
   mantleChainId: 5000,
