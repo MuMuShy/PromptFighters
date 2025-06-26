@@ -8,12 +8,25 @@
 
 ## 🎮 遊戲截圖
 
-<p align="center">
-  <img src="snapshot/battle_end.jpg" alt="遊戲截圖 1 - 戰鬥結果" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
-  <img src="snapshot/create.jpg" alt="遊戲截圖 2 - 腳色創建" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
-  <img src="snapshot/battle_new.jpg" alt="遊戲截圖 3 - 戰鬥準備" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
-  <img src="snapshot/profile.jpg" alt="遊戲截圖 3 - 個人資料" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
-</p>
+<div align="center" style="margin-bottom: 20px;">
+  <b>戰鬥結果畫面</b><br>
+  <img src="snapshot/battle_end.jpg" alt="遊戲截圖 1 - 戰鬥結果" title="戰鬥結束時，顯示勝負與戰鬥摘要" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+</div>
+
+<div align="center" style="margin-bottom: 20px;">
+  <b>角色創建畫面</b><br>
+  <img src="snapshot/create.jpg" alt="遊戲截圖 2 - 角色創建" title="輸入名字，由 AI 為你生成英雄設定" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+</div>
+
+<div align="center" style="margin-bottom: 20px;">
+  <b>戰鬥準備畫面</b><br>
+  <img src="snapshot/battle_new.jpg" alt="遊戲截圖 3 - 戰鬥準備" title="選擇英雄，準備展開新一場 AI 導演的戰鬥" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+</div>
+
+<div align="center" style="margin-bottom: 20px;">
+  <b>個人資料畫面</b><br>
+  <img src="snapshot/profile.jpg" alt="遊戲截圖 4 - 個人資料" title="查看你的英雄資訊、戰鬥紀錄與統計數據" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+</div>
 
 ## ✨ 主要功能
 
