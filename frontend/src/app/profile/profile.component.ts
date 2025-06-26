@@ -28,6 +28,7 @@ export class ProfileComponent implements OnInit {
   nickname: string = '';
   nicknameChanged: boolean = false;
   displayName: string = '';
+  editNicknameMode: boolean = false;
   
   rarityFilters = [
     { value: null, label: '全部', icon: '◉', count: 0 },
@@ -157,12 +158,20 @@ export class ProfileComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.nicknameChanged = true;
+          this.editNicknameMode = false;
+          this.displayName = this.nickname;
           // 顯示提示：暱稱已更新
         } else {
           // 顯示錯誤訊息
         }
       }
     });
+  }
+
+  startEditNickname() {
+    if (!this.nicknameChanged) {
+      this.editNicknameMode = true;
+    }
   }
 
   goToBattle() {
