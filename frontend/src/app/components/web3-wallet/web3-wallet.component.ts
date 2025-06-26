@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Web3Service } from '../../services/web3.service';
 import { AuthService } from '../../services/auth.service';
+import { DeviceService } from '../../services/device.service';
 import { Router } from '@angular/router';
 import { ethers } from 'ethers';
 
@@ -18,6 +19,14 @@ export interface WalletLoginEvent {
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="web3-wallet-container">
+      <!-- 手機版提示訊息 -->
+      <div *ngIf="deviceService.isMobile" class="mobile-hint">
+        <div class="hint-card">
+          <p>📱 使用手機請透過 MetaMask App 直接瀏覽遊戲，或是用電腦開啟 WalletConnect 即可使用</p>
+        </div>
+      </div>
+      
+      <!-- 所有錢包選項（桌面和手機都顯示） -->
       <div class="wallet-grid">
         <button 
           (click)="connectWallet('metamask')" 
@@ -55,6 +64,8 @@ export interface WalletLoginEvent {
           <img src="assets/apple.svg" alt="Apple" class="wallet-icon" />
         </button>
       </div>
+      
+      <!-- Email 和手機登入選項（所有設備都顯示） -->
       <div class="wallet-grid" style="margin-top:1.2rem;grid-template-columns:repeat(2,1fr);gap:1.2rem 1.2rem;">
         <button 
           (click)="connectOther('email')" 
@@ -144,7 +155,8 @@ export class Web3WalletComponent {
   constructor(
     private web3Service: Web3Service,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    public  deviceService: DeviceService
   ) {}
 
   // 連接傳統錢包
@@ -356,4 +368,5 @@ export class Web3WalletComponent {
     };
     return textMap[this.connectingType || ''] || '錢包';
   }
+
 }

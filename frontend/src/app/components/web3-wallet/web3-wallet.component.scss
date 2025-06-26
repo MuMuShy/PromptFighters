@@ -641,3 +641,40 @@
     border-width: 2px;
   }
 }
+
+/* 手機版提示樣式 */
+.mobile-hint {
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.hint-card {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  
+  p {
+    color: #93c5fd;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+    font-weight: 500;
+  }
+}
+
+/* 手機版響應式設計更新 */
+@media (max-width: 640px) {
+  .mobile-hint {
+    margin-bottom: 1rem;
+  }
+  
+  .hint-card {
+    padding: 0.875rem;
+    
+    p {
+      font-size: 0.8rem;
+    }
+  }
+}
