@@ -79,7 +79,7 @@ export class ProfileComponent implements OnInit {
     this.characterService.currentCharacter$.subscribe(character => {
       if (character && character.id !== this.currentCharacter?.id) {
         this.currentCharacter = character;
-        this.fetchBattlesForCharacter(character.id, this.authService.getToken() || '');
+        //this.fetchBattlesForCharacter(character.id, this.authService.getToken() || ''); 目前點選角色沒有歷史戰鬥顯示需求
       }
     });
   }
