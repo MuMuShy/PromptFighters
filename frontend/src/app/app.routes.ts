@@ -34,6 +34,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/leaderboard/leaderboard.component').then(m => m.LeaderboardComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'daily-quests',
+    loadComponent: () => import('./components/daily-quests/daily-quests.component').then(m => m.DailyQuestsComponent),
+    canActivate: [authGuard]
+  },
   { path: '', component: LandingComponent },
   {
     path: 'privacy',

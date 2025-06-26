@@ -38,79 +38,71 @@ class GeminiService:
             raw_text = raw_text[:-3].strip()
         return json.loads(raw_text)
     
-    def generate_advanced_character_attributes(self, character_name: str, prompt: str) -> Dict[str, Any]:
+    def generate_character_attributes_by_rarity(self, character_name: str, prompt: str, rarity: int) -> Dict[str, Any]:
         """
-        使用 Gemini API 生成角色屬性（技能、數值）。
+        根據稀有度使用 Gemini API 生成角色屬性（技能、數值）。
         """
-        prompt = f"""
-            請根據以下角色名稱，回傳一個 JSON，格式如下：
+        # 根據稀有度設定屬性範圍
+        rarity_ranges = {
+            1: {'min': 30, 'max': 60, 'name': 'N'},    # Normal
+            2: {'min': 50, 'max': 80, 'name': 'R'},    # Rare  
+            3: {'min': 70, 'max': 100, 'name': 'SR'},  # Super Rare
+            4: {'min': 90, 'max': 120, 'name': 'SSR'}, # Super Super Rare
+            5: {'min': 110, 'max': 150, 'name': 'UR'}  # Ultra Rare
+        }
+        
+        range_info = rarity_ranges.get(rarity, rarity_ranges[1])
+        min_val, max_val = range_info['min'], range_info['max']
+        rarity_name = range_info['name']
+        
+        ai_prompt = f"""
+            請根據以下角色資訊，回傳一個 JSON，格式如下：
             {{
             "skill_description": "30字以內的中二技能描述（中文）",
-            "strength": "80~150的整數",
-            "agility": "80~150的整數",
-            "luck": "80~150的整數"
+            "strength": "{min_val}~{max_val}的整數",
+            "agility": "{min_val}~{max_val}的整數", 
+            "luck": "{min_val}~{max_val}的整數"
             }}
             角色名稱：「{character_name}」
             角色描述：「{prompt}」
+            稀有度：{rarity_name}（{rarity}星）
+            注意：這是{rarity_name}稀有度角色，屬性應該在{min_val}-{max_val}範圍內
             """
         try:
             response = self.client.models.generate_content(
                 model="gemini-2.0-flash",
-                contents=prompt
+                contents=ai_prompt
             )
             data = self._parse_gemini_response(response)
             return {
-                'skill_description': data.get('skill_description', '技能描述生成失敗'),
-                'strength': int(data.get('strength', 80)),
-                'agility': int(data.get('agility', 80)),
-                'luck': int(data.get('luck', 80)),
+                'skill_description': data.get('skill_description', f'{rarity_name}稀有度角色的專屬技能'),
+                'strength': max(min_val, min(max_val, int(data.get('strength', min_val)))),
+                'agility': max(min_val, min(max_val, int(data.get('agility', min_val)))),
+                'luck': max(min_val, min(max_val, int(data.get('luck', min_val)))),
             }
         except Exception as e:
             print(f"屬性生成錯誤: {e}")
-            # 備援機制：隨機生成屬性
+            # 備援機制：根據稀有度隨機生成屬性
             return {
-                'skill_description': '技能描述生成失敗',
-                'strength': random.randint(80, 150),
-                'agility': random.randint(80, 150),
-                'luck': random.randint(80, 150),
+                'skill_description': f'{rarity_name}稀有度角色的專屬技能',
+                'strength': random.randint(min_val, max_val),
+                'agility': random.randint(min_val, max_val),
+                'luck': random.randint(min_val, max_val),
             }
+
+    def generate_advanced_character_attributes(self, character_name: str, prompt: str) -> Dict[str, Any]:
+        """
+        使用 Gemini API 生成角色屬性（技能、數值）。
+        保留舊方法以向後兼容
+        """
+        return self.generate_character_attributes_by_rarity(character_name, prompt, 3)
         
 
-    def generate_character_attributes(self, character_name: str) -> Dict[str, Any]:
+    def generate_character_attributes(self, character_name: str, rarity: int = 1) -> Dict[str, Any]:
         """
         使用 Gemini API 生成角色屬性（技能、數值）。
         """
-        prompt = f"""
-            請根據以下角色名稱，回傳一個 JSON，格式如下：
-            {{
-            "skill_description": "30字以內的中二技能描述（中文）",
-            "strength": "30~100的整數",
-            "agility": "30~100的整數",
-            "luck": "30~100的整數"
-            }}
-            角色名稱：「{character_name}」
-            """
-        try:
-            response = self.client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt
-            )
-            data = self._parse_gemini_response(response)
-            return {
-                'skill_description': data.get('skill_description', '技能描述生成失敗'),
-                'strength': int(data.get('strength', 50)),
-                'agility': int(data.get('agility', 50)),
-                'luck': int(data.get('luck', 50)),
-            }
-        except Exception as e:
-            print(f"屬性生成錯誤: {e}")
-            # 備援機制：隨機生成屬性
-            return {
-                'skill_description': '技能描述生成失敗',
-                'strength': random.randint(30, 100),
-                'agility': random.randint(30, 100),
-                'luck': random.randint(30, 100),
-            }
+        return self.generate_character_attributes_by_rarity(character_name, f"普通召喚的{character_name}", rarity)
 
 
 class CharacterService:
@@ -120,11 +112,47 @@ class CharacterService:
     def __init__(self):
         self.gemini_service = GeminiService()
 
+    def _generate_rarity_by_probability(self, summon_type: str) -> int:
+        """
+        根據召喚類型和機率產生稀有度
+        """
+        rand = random.random() * 100  # 0-100
+        
+        if summon_type == 'basic':
+            # 一般召喚: N=70%, R=25%, SR=5%
+            if rand < 70:
+                return 1  # N
+            elif rand < 95:
+                return 2  # R
+            else:
+                return 3  # SR
+        elif summon_type == 'premium':
+            # 高階召喚: SR=90%, SSR=8%, UR=2%
+            if rand < 90:
+                return 3  # SR
+            elif rand < 98:
+                return 4  # SSR
+            else:
+                return 5  # UR
+        else:
+            return 1  # 預設 N
+
     def create_character(self, player: Player, name: str, prompt: str) -> Character:
         """
-        創建一個新角色，並從 AI 服務獲取屬性。
+        創建一個新角色（一般召喚），先隨機稀有度再用AI生成屬性。
         """
-        attributes = self.gemini_service.generate_character_attributes(name)
+        # 檢查資源
+        if not player.can_afford(gold_cost=1000, prompt_power_cost=1):
+            raise ValueError("資源不足：需要1000金幣和1 Prompt Power")
+        
+        # 消耗資源
+        player.spend_resources(gold_cost=1000, prompt_power_cost=1)
+        
+        # 根據一般召喚機率決定稀有度
+        rarity = self._generate_rarity_by_probability('basic')
+        
+        # 使用AI根據稀有度生成屬性
+        attributes = self.gemini_service.generate_character_attributes_by_rarity(name, prompt, rarity)
         image_url = f"https://via.placeholder.com/256?text={name.replace(' ', '+')}"
 
         character = Character.objects.create(
@@ -132,22 +160,38 @@ class CharacterService:
             name=name,
             prompt=prompt,
             image_url=image_url,
+            rarity=rarity,
             **attributes
         )
         
         # 使用延遲匯入來避免循環依賴問題，並觸發異步任務
         from .tasks import generate_character_image
+        from .daily_quest_service import DailyQuestService
         generate_character_image.delay(character.id)
+        
+        # 更新召喚任務進度
+        DailyQuestService.update_quest_progress(player, 'character_summon', 1)
         
         return character 
 
     def create_advanced_character(self, player: Player, name: str, prompt: str) -> Character:
         """
-        高級召喚：隨機產生 rarity=2~5，並用 AI 生成屬性。
+        高階召喚：檢查資源，根據機率決定稀有度，用AI生成屬性。
         """
-        rarity = random.randint(2, 5)
-        attributes = self.gemini_service.generate_advanced_character_attributes(name, prompt)
+        # 檢查資源
+        if not player.can_afford(diamond_cost=5, prompt_power_cost=3):
+            raise ValueError("資源不足：需要5鑽石和3 Prompt Power")
+        
+        # 消耗資源
+        player.spend_resources(diamond_cost=5, prompt_power_cost=3)
+        
+        # 根據高階召喚機率決定稀有度
+        rarity = self._generate_rarity_by_probability('premium')
+        
+        # 使用AI根據稀有度生成屬性
+        attributes = self.gemini_service.generate_character_attributes_by_rarity(name, prompt, rarity)
         image_url = f"https://via.placeholder.com/256?text={name.replace(' ', '+')}"
+        
         character = Character.objects.create(
             player=player,
             name=name,
@@ -157,5 +201,10 @@ class CharacterService:
             **attributes
         )
         from .tasks import generate_character_image
+        from .daily_quest_service import DailyQuestService
         generate_character_image.delay(character.id)
+        
+        # 更新召喚任務進度
+        DailyQuestService.update_quest_progress(player, 'character_summon', 1)
+        
         return character 

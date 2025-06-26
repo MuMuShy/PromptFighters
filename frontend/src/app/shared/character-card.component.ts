@@ -44,4 +44,15 @@ export class CharacterCardComponent implements OnInit {
       default: return 'N';
     }
   }
+
+  getRarityInfo(rarity: number) {
+    const rarityMap: { [key: number]: { name: string, color: string, stars: string } } = {
+      1: { name: 'N', color: '#888888', stars: '★' },
+      2: { name: 'R', color: '#4fd2ff', stars: '★★' },
+      3: { name: 'SR', color: '#a259ff', stars: '★★★' },
+      4: { name: 'SSR', color: '#ffb300', stars: '★★★★' },
+      5: { name: 'UR', color: '#ff3c6e', stars: '★★★★★' }
+    };
+    return rarityMap[rarity] || rarityMap[1];
+  }
 }

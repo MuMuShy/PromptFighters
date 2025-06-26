@@ -1,0 +1,738 @@
+// 獎勵彈窗
+.reward-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.reward-modal {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 2px solid #ffd700;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+  animation: modalSlideIn 0.4s ease;
+}
+
+.reward-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.reward-title {
+  color: #ffd700;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.reward-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.reward-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.reward-icon {
+  width: 2rem;
+  height: 2rem;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+}
+
+.reward-amount {
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.confirm-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #ffd700, #ffed4a);
+  border: none;
+  color: #1a1a2e;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: linear-gradient(135deg, #ffed4a, #fff59d);
+    transform: translateY(-1px);
+  }
+}
+
+// 載入狀態
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: #fff;
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid rgba(255, 215, 0, 0.3);
+  border-top: 3px solid #ffd700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #ffd700;
+  font-size: 1.1rem;
+}
+
+// 主容器
+.daily-quests-container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #fff;
+}
+
+// 統計概覽
+.stats-overview {
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  background: linear-gradient(135deg, rgba(26, 32, 56, 0.9), rgba(74, 85, 104, 0.8));
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.stats-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffd700;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.title-icon {
+  font-size: 1.5rem;
+}
+
+.login-streak {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+}
+
+.streak-icon {
+  font-size: 1.2rem;
+}
+
+.streak-text {
+  color: #fbbf24;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.stats-summary {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.progress-ring {
+  flex-shrink: 0;
+}
+
+.progress-circle {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #ffd700 0deg calc(var(--progress) * 3.6deg),
+    rgba(255, 215, 0, 0.2) calc(var(--progress) * 3.6deg) 360deg
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-circle::before {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-radius: 50%;
+}
+
+.progress-text {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.progress-number {
+  display: block;
+  color: #ffd700;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.progress-label {
+  display: block;
+  color: #ccc;
+  font-size: 0.8rem;
+}
+
+.stats-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+// 簽到區域
+.checkin-section {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.checkin-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: #fff;
+  padding: 0.75rem 2rem;
+  border-radius: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+
+  &:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  }
+}
+
+.checkin-icon {
+  font-size: 1.2rem;
+}
+
+.checked-in {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #10b981;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+
+.checked-icon {
+  font-size: 1.2rem;
+}
+
+// 任務區域
+.quests-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffd700;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+
+.unclaimed-badge {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.quests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quest-card {
+  background: linear-gradient(135deg, rgba(42, 42, 74, 0.8), rgba(26, 32, 56, 0.9));
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+
+  &:hover {
+    border-color: rgba(255, 215, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  &.completed {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(42, 42, 74, 0.8));
+  }
+
+  &.claimed {
+    opacity: 0.8;
+    border-color: rgba(107, 114, 128, 0.5);
+  }
+}
+
+.quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.quest-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
+.quest-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.quest-details {
+  flex: 1;
+}
+
+.quest-name {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+}
+
+.quest-description {
+  color: #ccc;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.quest-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  &.claimed {
+    background: rgba(107, 114, 128, 0.2);
+    color: #9ca3af;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+
+  &.ready {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    animation: glow 2s infinite;
+  }
+
+  &.progress {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+}
+
+.badge-icon {
+  font-size: 1rem;
+}
+
+// 進度條
+.quest-progress {
+  margin-bottom: 1rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.progress-current {
+  color: #ffd700;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.progress-percentage {
+  color: #ccc;
+  font-size: 0.8rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+
+  &.not-started {
+    background: rgba(107, 114, 128, 0.5);
+  }
+
+  &.in-progress {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+  }
+
+  &.completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+}
+
+// 獎勵區域
+.quest-rewards {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rewards-list {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.rewards-label {
+  color: #ccc;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.reward-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reward-tag {
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.claim-btn {
+  background: linear-gradient(135deg, #ffd700, #ffed4a);
+  border: none;
+  color: #1a1a2e;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+
+  &:hover {
+    background: linear-gradient(135deg, #ffed4a, #fff59d);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+  }
+}
+
+.claim-icon {
+  font-size: 1rem;
+}
+
+// 小貼士
+.daily-tips {
+  margin-top: 2rem;
+}
+
+.tip-card {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(26, 32, 56, 0.8));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.tip-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.tip-content {
+  flex: 1;
+}
+
+.tip-title {
+  color: #3b82f6;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0 0 0.75rem 0;
+}
+
+.tip-list {
+  color: #ccc;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.tip-list li {
+  margin-bottom: 0.5rem;
+}
+
+// 空狀態
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #ccc;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.empty-title {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-message {
+  margin: 0 0 2rem 0;
+  font-size: 1rem;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  border: none;
+  color: #fff;
+  padding: 0.75rem 2rem;
+  border-radius: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #4b5563, #374151);
+    transform: translateY(-2px);
+  }
+}
+
+// 動畫
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.8) translateY(-50px);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+  }
+}
+
+// 響應式設計
+@media (max-width: 768px) {
+  .daily-quests-container {
+    padding: 0.5rem;
+  }
+
+  .stats-card {
+    padding: 1.5rem;
+  }
+
+  .stats-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .stats-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .progress-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .progress-circle::before {
+    width: 65px;
+    height: 65px;
+  }
+
+  .quest-card {
+    padding: 1rem;
+  }
+
+  .quest-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .quest-rewards {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .rewards-list {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .tip-card {
+    flex-direction: column;
+    text-align: center;
+  }
+}

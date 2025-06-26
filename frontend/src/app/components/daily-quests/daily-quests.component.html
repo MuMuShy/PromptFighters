@@ -1,0 +1,209 @@
+<!-- 獎勵領取成功彈窗 -->
+<div *ngIf="showRewardModal" class="reward-modal-overlay" (click)="closeRewardModal()">
+  <div class="reward-modal" (click)="$event.stopPropagation()">
+    <div class="reward-modal-header">
+      <h2 class="reward-title">🎉 獎勵領取成功！</h2>
+      <button class="close-btn" (click)="closeRewardModal()">×</button>
+    </div>
+    <div class="reward-content" *ngIf="lastClaimedReward?.rewards">
+      <div class="reward-items">
+        <div *ngIf="rewardGold > 0" class="reward-item">
+          <img src="/assets/game/gold_coin.png" alt="Gold" class="reward-icon" />
+          <span class="reward-amount">+{{ rewardGold | number }}</span>
+        </div>
+        <div *ngIf="rewardDiamond > 0" class="reward-item">
+          <img src="/assets/game/diamond.png" alt="Diamond" class="reward-icon" />
+          <span class="reward-amount">+{{ rewardDiamond }}</span>
+        </div>
+        <div *ngIf="rewardPromptPower > 0" class="reward-item">
+          <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="reward-icon" />
+          <span class="reward-amount">+{{ rewardPromptPower }}</span>
+        </div>
+        <div *ngIf="rewardEnergy > 0" class="reward-item">
+          <img src="/assets/game/stamina.png" alt="Energy" class="reward-icon" />
+          <span class="reward-amount">+{{ rewardEnergy }}</span>
+        </div>
+      </div>
+      <button class="confirm-btn" (click)="closeRewardModal()">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 載入中狀態 -->
+<div *ngIf="isLoading" class="loading-container">
+  <div class="loading-spinner"></div>
+  <p class="loading-text">載入每日任務中...</p>
+</div>
+
+<!-- 簽到成功彈窗 -->
+<div *ngIf="showCheckInModal" class="reward-modal-overlay" (click)="closeCheckInModal()">
+  <div class="reward-modal" (click)="$event.stopPropagation()">
+    <div class="reward-modal-header">
+      <h2 class="reward-title">🎉 簽到成功！</h2>
+      <button class="close-btn" (click)="closeCheckInModal()">×</button>
+    </div>
+    <div class="reward-content">
+      <p>{{ checkInMessage }}</p>
+      <button class="confirm-btn" (click)="closeCheckInModal()">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 主要內容 -->
+<div *ngIf="!isLoading && dailyStats" class="daily-quests-container">
+  
+  <!-- 頂部統計卡片 -->
+  <div class="stats-overview">
+    <div class="stats-card">
+      <div class="stats-header">
+        <h2 class="stats-title">
+          <span class="title-icon">📋</span>
+          每日任務
+        </h2>
+        <div class="login-streak">
+          <span class="streak-icon">🔥</span>
+          <span class="streak-text">連續登入 {{ dailyStats.login_streak }} 天</span>
+        </div>
+      </div>
+      
+      <div class="stats-summary">
+        <div class="progress-ring">
+          <div class="progress-circle">
+            <div class="progress-fill" [style.--progress]="completionPercentage + '%'"></div>
+            <div class="progress-text">
+              <span class="progress-number">{{ completionPercentage | number:'1.0-1' }}%</span>
+              <span class="progress-label">完成度</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stats-details">
+          <div class="stat-item">
+            <span class="stat-label">已完成</span>
+            <span class="stat-value">{{ dailyStats.completed_quests }}/{{ dailyStats.total_quests }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">已領取</span>
+            <span class="stat-value">{{ dailyStats.claimed_rewards }}/{{ dailyStats.total_quests }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 簽到按鈕 -->
+      <div class="checkin-section" *ngIf="canCheckIn">
+        <button class="checkin-btn" (click)="checkIn()">
+          <span class="checkin-icon">📅</span>
+          <span class="checkin-text">立即簽到</span>
+        </button>
+      </div>
+      
+      <!-- 已簽到提示 -->
+      <div class="checked-in" *ngIf="!canCheckIn">
+        <span class="checked-icon">✅</span>
+        <span class="checked-text">今日已簽到</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任務列表 -->
+  <div class="quests-section">
+    <h3 class="section-title">
+      <span class="title-icon">🎯</span>
+      今日任務
+      <span class="unclaimed-badge" *ngIf="hasUnclaimedRewards">有未領取獎勵</span>
+    </h3>
+    
+    <div class="quests-list">
+      <div *ngFor="let quest of dailyStats.quests" class="quest-card" [class.completed]="quest.is_completed" [class.claimed]="quest.is_claimed">
+        
+        <!-- 任務頭部 -->
+        <div class="quest-header">
+          <div class="quest-info">
+            <div class="quest-icon" [style.color]="getQuestColor(quest.quest.quest_type)">
+              {{ getQuestIcon(quest.quest.quest_type) }}
+            </div>
+            <div class="quest-details">
+              <h4 class="quest-name">{{ quest.quest.name }}</h4>
+              <p class="quest-description">{{ quest.quest.description }}</p>
+            </div>
+          </div>
+          
+          <div class="quest-status">
+            <div *ngIf="quest.is_completed && quest.is_claimed" class="status-badge claimed">
+              <span class="badge-icon">✅</span>
+              <span class="badge-text">已領取</span>
+            </div>
+            <div *ngIf="quest.is_completed && !quest.is_claimed" class="status-badge ready">
+              <span class="badge-icon">🎁</span>
+              <span class="badge-text">可領取</span>
+            </div>
+            <div *ngIf="!quest.is_completed" class="status-badge progress">
+              <span class="badge-text">進行中</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 進度條 -->
+        <div class="quest-progress">
+          <div class="progress-info">
+            <span class="progress-current">{{ quest.current_count }}/{{ quest.quest.target_count }}</span>
+            <span class="progress-percentage">{{ quest.progress_percentage | number:'1.0-1' }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" 
+                 [class]="getProgressBarClass(quest)"
+                 [style.width.%]="quest.progress_percentage">
+            </div>
+          </div>
+        </div>
+
+        <!-- 獎勵區域 -->
+        <div class="quest-rewards">
+          <div class="rewards-list">
+            <span class="rewards-label">獎勵：</span>
+            <div class="reward-items">
+              <div *ngFor="let reward of formatRewards(quest)" class="reward-tag">
+                <img *ngIf="reward.type === 'gold'" src="/assets/game/gold_coin.png" alt="Gold" class="reward-icon" />
+                <img *ngIf="reward.type === 'diamond'" src="/assets/game/diamond.png" alt="Diamond" class="reward-icon" />
+                <img *ngIf="reward.type === 'prompt_power'" src="/assets/game/prompt_power.png" alt="Prompt Power" class="reward-icon" />
+                <img *ngIf="reward.type === 'energy'" src="/assets/game/stamina.png" alt="Energy" class="reward-icon" />
+                <span class="reward-amount">+{{ reward.amount }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <button *ngIf="quest.is_completed && !quest.is_claimed" 
+                  class="claim-btn"
+                  (click)="claimReward(quest)">
+            <span class="claim-icon">🎁</span>
+            <span class="claim-text">領取獎勵</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部提示 -->
+  <div class="daily-tips">
+    <div class="tip-card">
+      <span class="tip-icon">💡</span>
+      <div class="tip-content">
+        <h4 class="tip-title">小貼士</h4>
+        <ul class="tip-list">
+          <li>每日任務於每天 00:00 重置</li>
+          <li>完成任務後記得領取獎勵</li>
+          <li>連續登入可獲得額外獎勵</li>
+          <li>參與對戰和召喚都能獲得任務進度</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 空狀態 -->
+<div *ngIf="!isLoading && !dailyStats" class="empty-state">
+  <div class="empty-icon">📋</div>
+  <h3 class="empty-title">暫無每日任務</h3>
+  <p class="empty-message">請稍後再試或聯繫客服</p>
+  <button class="retry-btn" (click)="loadDailyStats()">重新載入</button>
+</div>

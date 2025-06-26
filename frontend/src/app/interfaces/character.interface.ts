@@ -12,4 +12,6 @@ export interface Character {
     created_at: string;
     win_rate: number;
     rarity: number;
+    rarity_name: string;
+    star_count: number;
 } 

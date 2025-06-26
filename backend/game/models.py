@@ -81,6 +81,22 @@ class Player(models.Model):
         return False
 
 class Character(models.Model):
+    RARITY_CHOICES = [
+        (1, 'N - Normal'),
+        (2, 'R - Rare'),
+        (3, 'SR - Super Rare'),
+        (4, 'SSR - Super Super Rare'),
+        (5, 'UR - Ultra Rare'),
+    ]
+    
+    RARITY_NAMES = {
+        1: 'N',
+        2: 'R', 
+        3: 'SR',
+        4: 'SSR',
+        5: 'UR'
+    }
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='characters')
     name = models.CharField(max_length=100)
@@ -93,10 +109,18 @@ class Character(models.Model):
     win_count = models.IntegerField(default=0)
     loss_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    rarity = models.IntegerField(default=1)
+    rarity = models.IntegerField(choices=RARITY_CHOICES, default=1)
 
     def __str__(self):
         return self.name
+    
+    @property
+    def rarity_name(self):
+        return self.RARITY_NAMES.get(self.rarity, 'N')
+    
+    @property
+    def star_count(self):
+        return self.rarity
 
 class Battle(models.Model):
     BATTLE_STATUS_CHOICES = [
@@ -118,3 +142,105 @@ class Battle(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class DailyQuest(models.Model):
+    QUEST_TYPE_CHOICES = [
+        ('daily_checkin', '每日簽到'),
+        ('battle_count', '對戰次數'),
+        ('battle_win', '對戰勝利'),
+        ('character_summon', '召喚角色'),
+        ('login_streak', '連續登入'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, verbose_name='任務名稱')
+    description = models.TextField(verbose_name='任務描述')
+    quest_type = models.CharField(max_length=20, choices=QUEST_TYPE_CHOICES, verbose_name='任務類型')
+    target_count = models.IntegerField(default=1, verbose_name='目標數量')
+    
+    # 獎勵內容
+    reward_gold = models.IntegerField(default=0, verbose_name='金幣獎勵')
+    reward_diamond = models.IntegerField(default=0, verbose_name='鑽石獎勵') 
+    reward_prompt_power = models.IntegerField(default=0, verbose_name='Prompt Power獎勵')
+    reward_energy = models.IntegerField(default=0, verbose_name='體力獎勵')
+    
+    is_active = models.BooleanField(default=True, verbose_name='是否啟用')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.get_quest_type_display()})"
+    
+    class Meta:
+        verbose_name = '每日任務'
+        verbose_name_plural = '每日任務'
+
+
+class PlayerDailyQuest(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='daily_quests')
+    quest = models.ForeignKey(DailyQuest, on_delete=models.CASCADE)
+    current_count = models.IntegerField(default=0, verbose_name='當前進度')
+    is_completed = models.BooleanField(default=False, verbose_name='是否完成')
+    is_claimed = models.BooleanField(default=False, verbose_name='是否領取獎勵')
+    date = models.DateField(default=timezone.now, verbose_name='任務日期')
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name='完成時間')
+    claimed_at = models.DateTimeField(null=True, blank=True, verbose_name='領取時間')
+    
+    def __str__(self):
+        return f"{self.player.user.username} - {self.quest.name} ({self.date})"
+    
+    @property
+    def progress_percentage(self):
+        if self.quest.target_count == 0:
+            return 100
+        return min(100, (self.current_count / self.quest.target_count) * 100)
+    
+    def update_progress(self, increment=1):
+        """更新任務進度"""
+        if not self.is_completed:
+            self.current_count = min(self.current_count + increment, self.quest.target_count)
+            if self.current_count >= self.quest.target_count:
+                self.is_completed = True
+                self.completed_at = timezone.now()
+            self.save()
+            return True
+        return False
+    
+    def claim_reward(self):
+        """領取獎勵"""
+        if self.is_completed and not self.is_claimed:
+            player = self.player
+            player.gold += self.quest.reward_gold
+            player.diamond += self.quest.reward_diamond
+            player.prompt_power += self.quest.reward_prompt_power
+            player.energy = min(player.max_energy, player.energy + self.quest.reward_energy)
+            player.save()
+            
+            self.is_claimed = True
+            self.claimed_at = timezone.now()
+            self.save()
+            return True
+        return False
+    
+    class Meta:
+        verbose_name = '玩家每日任務'
+        verbose_name_plural = '玩家每日任務'
+        unique_together = ['player', 'quest', 'date']
+
+
+class PlayerLoginRecord(models.Model):
+    """玩家登入記錄，用於追蹤連續登入"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='login_records')
+    login_date = models.DateField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.player.user.username} - {self.login_date}"
+    
+    class Meta:
+        verbose_name = '玩家登入記錄'
+        verbose_name_plural = '玩家登入記錄'
+        unique_together = ['player', 'login_date']

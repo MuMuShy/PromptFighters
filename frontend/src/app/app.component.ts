@@ -43,6 +43,7 @@ import { Observable } from 'rxjs';
                   <a routerLink="/profile" class="nav-link">Profile</a>
                   <a routerLink="/create" class="nav-link">Create</a>
                   <a routerLink="/battle" class="nav-link">Battle</a>
+                  <a routerLink="/daily-quests" class="nav-link">Daily Quest</a>
                   <a routerLink="/leaderboard" class="nav-link">Leaderboard</a>
                 </div>
                 <!-- 資源條 -->
@@ -83,6 +84,7 @@ import { Observable } from 'rxjs';
               <a routerLink="/profile" (click)="closeMenu()" class="mobile-nav-link">Profile</a>
               <a routerLink="/create" (click)="closeMenu()" class="mobile-nav-link">Create</a>
               <a routerLink="/battle" (click)="closeMenu()" class="mobile-nav-link">Battle</a>
+              <a routerLink="/daily-quests" (click)="closeMenu()" class="mobile-nav-link">Daily Quest</a>
               <a routerLink="/leaderboard" (click)="closeMenu()" class="mobile-nav-link">Leaderboard</a>
               <button *ngIf="isLoggedIn" (click)="logout(); closeMenu();" class="w-full text-left mobile-nav-link">登出</button>
             </div>

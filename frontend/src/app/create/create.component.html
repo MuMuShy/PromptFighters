@@ -22,7 +22,16 @@
 
 <div *ngIf="showSuccessModal" class="modal-success">
   <div class="modal-content">
-    <h2 class="modal-title">英雄誕生！</h2>
+    <h2 class="modal-title">
+      <span class="success-icon">✦</span>
+      英雄召喚成功！
+    </h2>
+    <div *ngIf="generatedCharacter" class="rarity-announcement">
+      <div class="rarity-badge" [style.color]="getRarityInfo(generatedCharacter.rarity).color">
+        {{ getRarityInfo(generatedCharacter.rarity).stars }}
+        {{ getRarityInfo(generatedCharacter.rarity).name }}級英雄
+      </div>
+    </div>
     <div class="modal-character-preview">
       <app-character-card *ngIf="generatedCharacter" [character]="generatedCharacter"></app-character-card>
     </div>
@@ -40,43 +49,81 @@
       <div class="orb orb-3"></div>
     </div>
   </div>
+  
+
   <div class="container mx-auto px-4 py-8">
     <div class="title-section">
-      <!-- <div class="title-ornament">英雄召喚祭壇</div> -->
       <h1 class="magical-title">
-        <span class="title-text">創造你的傳奇英雄</span>
+        <span class="title-text">英雄召喚祭壇</span>
         <div class="title-underline"></div>
       </h1>
       <p class="title-subtitle">運用古老的召喚魔法，賦予你的英雄生命與力量</p>
     </div>
-    <div class="max-w-4xl mx-auto">
+    
+    <div class="max-w-6xl mx-auto">
       <!-- 召喚方式選擇 -->
       <div class="summon-tabs">
-        <button 
-          (click)="mode = 'normal'" 
-          [class.active]="mode==='normal'" 
-          class="summon-tab">
+        <div class="summon-tab" 
+             [class.active]="mode==='normal'" 
+             (click)="mode = 'normal'">
           <div class="tab-icon">◉</div>
           <div class="tab-content">
-            <div class="tab-title">普通召喚</div>
-            <div class="tab-desc">快速創造英雄</div>
+            <div class="tab-title">一般召喚</div>
+            <div class="tab-desc">N, R, SR 稀有度</div>
+            <div class="tab-cost">
+              <span class="cost-item">
+                <img src="/assets/game/gold_coin.png" alt="Gold" class="w-5 h-5" />
+                1000
+              </span>
+              <span class="cost-item">
+                <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-5 h-5" />
+                1
+              </span>
+            </div>
+            <div class="tab-rates">
+              <div class="rate-item">N: 70%</div>
+              <div class="rate-item">R: 25%</div>
+              <div class="rate-item">SR: 5%</div>
+            </div>
           </div>
-        </button>
-        <button 
-          (click)="mode = 'advanced'" 
-          [class.active]="mode==='advanced'" 
-          class="summon-tab">
+          <div class="tab-status" [class.insufficient]="!canAffordBasicSummon()">
+            {{ canAffordBasicSummon() ? '可召喚' : '資源不足' }}
+          </div>
+        </div>
+        
+        <div class="summon-tab premium" 
+             [class.active]="mode==='advanced'" 
+             (click)="mode = 'advanced'">
           <div class="tab-icon">✦</div>
           <div class="tab-content">
-            <div class="tab-title">高級召喚</div>
-            <div class="tab-desc">客製化你的英雄</div>
+            <div class="tab-title">高階召喚</div>
+            <div class="tab-desc">SR, SSR, UR 稀有度</div>
+            <div class="tab-cost">
+              <span class="cost-item">
+                <img src="/assets/game/diamond.png" alt="Diamond" class="w-5 h-5" />
+                5
+              </span>
+              <span class="cost-item">
+                <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-5 h-5" />
+                3
+              </span>
+            </div>
+            <div class="tab-rates">
+              <div class="rate-item">SR: 90%</div>
+              <div class="rate-item">SSR: 8%</div>
+              <div class="rate-item">UR: 2%</div>
+            </div>
           </div>
-        </button>
+          <div class="tab-status" [class.insufficient]="!canAffordPremiumSummon()">
+            {{ canAffordPremiumSummon() ? '可召喚' : '資源不足' }}
+          </div>
+        </div>
       </div>
+      
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- 召喚法陣 -->
         <div class="summon-circle-container">
-          <div class="summon-circle">
+          <div class="summon-circle" [class.premium]="mode==='advanced'">
             <div class="circle-outer"></div>
             <div class="circle-inner"></div>
             <div class="circle-runes">
@@ -92,123 +139,144 @@
           
           <div class="summon-form">
             <h2 class="form-title">
-              {{ mode==='normal' ? '普通召喚法陣' : '高級召喚法陣' }}
+              {{ mode==='normal' ? '一般召喚法陣' : '高階召喚法陣' }}
             </h2>
-          <!-- 普通召喚 -->
-          <ng-container *ngIf="mode==='normal'">
-            <div class="input-group">
-              <label class="magic-label">
-                <span class="label-icon">◈</span>
-                <span class="label-text">英雄名字</span>
-              </label>
-              <div class="magic-input-container">
-                <input 
-                  type="text" 
-                  [(ngModel)]="characterPrompt"
-                  placeholder="例如：炒麵戰士、Shadow Ninja..."
-                  class="magic-input"
-                  [disabled]="isGenerating">
-                <div class="input-glow"></div>
-              </div>
-              <p class="input-hint">
-                輸入你的英雄名字，讓魔法為你創造獨特的戰士
-              </p>
-            </div>
-          </ng-container>
-          <!-- 高級召喚 -->
-          <ng-container *ngIf="mode==='advanced'">
-            <div class="input-group">
-              <label class="magic-label">
-                <span class="label-icon">◈</span>
-                <span class="label-text">英雄名字</span>
-              </label>
-              <div class="magic-input-container">
-                <input 
-                  type="text" 
-                  [(ngModel)]="advancedName" 
-                  placeholder="請輸入英雄名字" 
-                  class="magic-input" 
-                  [disabled]="isGenerating">
-                <div class="input-glow"></div>
+            
+            <!-- 資源消耗提示 -->
+            <div class="cost-display">
+              <div class="cost-label">召喚消耗：</div>
+              <div class="cost-items">
+                <ng-container *ngIf="mode==='normal'">
+                  <div class="cost-item" [class.insufficient]="resources.gold < 1000">
+                    <img src="/assets/game/gold_coin.png" alt="Gold" class="cost-icon" />
+                    <span class="cost-text">1000 金幣</span>
+                  </div>
+                  <div class="cost-item" [class.insufficient]="resources.prompt_power < 1">
+                    <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="cost-icon" />
+                    <span class="cost-text">1 Prompt Power</span>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="mode==='advanced'">
+                  <div class="cost-item" [class.insufficient]="resources.diamond < 5">
+                    <img src="/assets/game/diamond.png" alt="Diamond" class="cost-icon" />
+                    <span class="cost-text">5 鑽石</span>
+                  </div>
+                  <div class="cost-item" [class.insufficient]="resources.prompt_power < 3">
+                    <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="cost-icon" />
+                    <span class="cost-text">3 Prompt Power</span>
+                  </div>
+                </ng-container>
               </div>
             </div>
-            <div class="input-group">
-              <label class="magic-label">
-                <span class="label-icon">◎</span>
-                <span class="label-text">英雄傳說</span>
-              </label>
-              <div class="magic-input-container">
-                <textarea 
-                  [(ngModel)]="advancedPrompt" 
-                  rows="4" 
-                  placeholder="描述你的英雄外觀、背景故事、特殊能力、武器裝備..." 
-                  class="magic-input magic-textarea" 
-                  [disabled]="isGenerating"></textarea>
-                <div class="input-glow"></div>
+            
+            <!-- 一般召喚 -->
+            <ng-container *ngIf="mode==='normal'">
+              <div class="input-group">
+                <label class="magic-label">
+                  <span class="label-icon">◈</span>
+                  <span class="label-text">英雄名字</span>
+                </label>
+                <div class="magic-input-container">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="characterPrompt"
+                    placeholder="例如：炒麵戰士、Shadow Ninja..."
+                    class="magic-input"
+                    [disabled]="isGenerating"
+                    maxlength="50">
+                  <div class="input-glow"></div>
+                </div>
+                <p class="input-hint">
+                  輸入你的英雄名字，魔法將為你創造獨特的戰士
+                </p>
               </div>
-              <p class="input-hint">
-                詳細描述讓AI能創造出更獨特強大的英雄
-              </p>
-            </div>
-          </ng-container>
-          <button 
-            (click)="mode==='normal' ? generateCharacter() : generateAdvancedCharacter()"
-            [disabled]="(mode==='normal' ? !characterPrompt.trim() : !advancedName.trim() || !advancedPrompt.trim()) || isGenerating"
-            class="magic-button"
-            [class.disabled]="(mode==='normal' ? !characterPrompt.trim() : !advancedName.trim() || !advancedPrompt.trim()) || isGenerating">
-            <div class="button-glow"></div>
-            <div class="button-content">
-              <span *ngIf="!isGenerating" class="button-text">
-                <span class="button-icon">{{ mode==='normal' ? '◉' : '✦' }}</span>
-                {{ mode==='normal' ? '開始召喚' : '高級召喚' }}
-              </span>
-              <span *ngIf="isGenerating" class="button-loading">
-                <span class="loading-icon">◉</span>
-                召喚進行中...
-              </span>
-            </div>
-          </button>
-          <div *ngIf="generatedCharacter && !isGenerating" class="success-notification">
-            <div class="success-content">
-              <div class="success-icon">✦</div>
-              <h3 class="success-title">英雄召喚成功！</h3>
-              <p class="success-message">
-                你的英雄已經誕生，準備踏上冒險之旅！
-              </p>
-            </div>
+            </ng-container>
+            
+            <!-- 高階召喚 -->
+            <ng-container *ngIf="mode==='advanced'">
+              <div class="input-group">
+                <label class="magic-label">
+                  <span class="label-icon">◈</span>
+                  <span class="label-text">英雄名字</span>
+                </label>
+                <div class="magic-input-container">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="advancedName" 
+                    placeholder="請輸入英雄名字" 
+                    class="magic-input" 
+                    [disabled]="isGenerating"
+                    maxlength="50">
+                  <div class="input-glow"></div>
+                </div>
+              </div>
+              <div class="input-group">
+                <label class="magic-label">
+                  <span class="label-icon">◎</span>
+                  <span class="label-text">英雄傳說</span>
+                </label>
+                <div class="magic-input-container">
+                  <textarea 
+                    [(ngModel)]="advancedPrompt" 
+                    rows="4" 
+                    placeholder="描述你的英雄外觀、背景故事、特殊能力、武器裝備..." 
+                    class="magic-input magic-textarea" 
+                    [disabled]="isGenerating"
+                    maxlength="500"></textarea>
+                  <div class="input-glow"></div>
+                </div>
+                <p class="input-hint">
+                  詳細描述讓AI能創造出更獨特強大的英雄
+                </p>
+              </div>
+            </ng-container>
+            
             <button 
-              (click)="saveCharacter()"
-              class="battle-button">
-              <div class="battle-button-bg"></div>
-              <span class="battle-button-text">
-                <span class="battle-icon">◈</span>
-                前往戰場
-              </span>
+              (click)="mode==='normal' ? generateCharacter() : generateAdvancedCharacter()"
+              [disabled]="!canSummon() || isGenerating"
+              class="magic-button"
+              [class.disabled]="!canSummon() || isGenerating"
+              [class.premium]="mode==='advanced'">
+              <div class="button-glow"></div>
+              <div class="button-content">
+                <span *ngIf="!isGenerating" class="button-text">
+                  <span class="button-icon">{{ mode==='normal' ? '◉' : '✦' }}</span>
+                  {{ mode==='normal' ? '開始召喚' : '高階召喚' }}
+                </span>
+                <span *ngIf="isGenerating" class="button-loading">
+                  <span class="loading-icon">◉</span>
+                  召喚進行中...
+                </span>
+              </div>
             </button>
-          </div>
-          <!-- 召喚指南 -->
-          <div class="guide-scroll">
-            <div class="scroll-header">
-              <span class="scroll-icon">◎</span>
-              <span class="scroll-title">召喚師指南</span>
+            
+            <div *ngIf="generatedCharacter && !isGenerating" class="success-notification">
+              <div class="success-content">
+                <div class="success-icon">✦</div>
+                <h3 class="success-title">英雄召喚成功！</h3>
+                <div class="rarity-info">
+                  <span class="rarity-badge" [style.color]="getRarityInfo(generatedCharacter.rarity).color">
+                    {{ getRarityInfo(generatedCharacter.rarity).stars }}
+                    {{ getRarityInfo(generatedCharacter.rarity).name }}級英雄
+                  </span>
+                </div>
+                <p class="success-message">
+                  你的英雄已經誕生，準備踏上冒險之旅！
+                </p>
+              </div>
+              <button 
+                (click)="saveCharacter()"
+                class="battle-button">
+                <div class="battle-button-bg"></div>
+                <span class="battle-button-text">
+                  <span class="battle-icon">◈</span>
+                  前往戰場
+                </span>
+              </button>
             </div>
-            <div class="scroll-content">
-              <div class="guide-item">
-                <span class="guide-icon">◉</span>
-                <span class="guide-text">普通召喚：快速創造隨機英雄</span>
-              </div>
-              <div class="guide-item">
-                <span class="guide-icon">✦</span>
-                <span class="guide-text">高級召喚：客製化獨特戰士</span>
-              </div>
-              <div class="guide-item">
-                <span class="guide-icon">◈</span>
-                <span class="guide-text">描述越詳細，英雄越強大</span>
-              </div>
-            </div>
-          </div>
           </div>
         </div>
+        
         <!-- 角色預覽 -->
         <div class="character-preview-container">
           <h2 class="preview-title">角色預覽</h2>
@@ -224,15 +292,57 @@
           </div>
         </div>
       </div>
-      <!-- 快速召喚 & 注意事項 -->
+      
+      <!-- 召喚資訊 & 稀有度說明 -->
       <div class="info-section">
+        <div class="rarity-guide">
+          <h3 class="section-title">稀有度說明</h3>
+          <div class="rarity-list">
+            <div class="rarity-item normal">
+              <div class="rarity-rank">★ N</div>
+              <div class="rarity-desc">
+                <div class="rarity-name">Normal - 普通</div>
+                <div class="rarity-stats">屬性範圍：30-60</div>
+              </div>
+            </div>
+            <div class="rarity-item rare">
+              <div class="rarity-rank">★★ R</div>
+              <div class="rarity-desc">
+                <div class="rarity-name">Rare - 稀有</div>
+                <div class="rarity-stats">屬性範圍：50-80</div>
+              </div>
+            </div>
+            <div class="rarity-item super-rare">
+              <div class="rarity-rank">★★★ SR</div>
+              <div class="rarity-desc">
+                <div class="rarity-name">Super Rare - 超稀有</div>
+                <div class="rarity-stats">屬性範圍：70-100</div>
+              </div>
+            </div>
+            <div class="rarity-item super-super-rare">
+              <div class="rarity-rank">★★★★ SSR</div>
+              <div class="rarity-desc">
+                <div class="rarity-name">Super Super Rare - 極稀有</div>
+                <div class="rarity-stats">屬性範圍：90-120</div>
+              </div>
+            </div>
+            <div class="rarity-item ultra-rare">
+              <div class="rarity-rank">★★★★★ UR</div>
+              <div class="rarity-desc">
+                <div class="rarity-name">Ultra Rare - 傳說</div>
+                <div class="rarity-stats">屬性範圍：110-150</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="quick-summon">
           <h3 class="section-title">快速召喚</h3>
           <p class="section-subtitle">點擊範例快速開始召喚</p>
           <div class="quick-examples">
             <button 
               *ngFor="let example of examplePrompts"
-              (click)="characterPrompt = example; mode='normal'; generateCharacter()"
+              (click)="characterPrompt = example; mode='normal'"
               class="example-button"
               [disabled]="isGenerating">
               <span class="example-emoji">{{getExampleEmoji(example)}}</span>
@@ -240,25 +350,7 @@
             </button>
           </div>
         </div>
-        
-        <div class="game-info">
-          <h3 class="section-title">遊戲說明</h3>
-          <div class="info-content">
-            <div class="info-item">
-              <span class="info-icon">◉</span>
-              <span class="info-text">每個英雄都有獨特的屬性和技能</span>
-            </div>
-            <div class="info-item">
-              <span class="info-icon">✦</span>
-              <span class="info-text">高級召喚可創造更強大的英雄</span>
-            </div>
-            <div class="info-item">
-              <span class="info-icon">◈</span>
-              <span class="info-text">英雄生成後可立即參與戰鬥</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
-</div> 
+</div>

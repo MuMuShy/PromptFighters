@@ -4,8 +4,9 @@ from rest_framework import generics, status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import Player, Character, Battle
-from .serializers import PlayerSerializer, CharacterSerializer, BattleSerializer
+from .models import Player, Character, Battle, DailyQuest, PlayerDailyQuest
+from .serializers import PlayerSerializer, CharacterSerializer, BattleSerializer, DailyStatsSerializer, ClaimRewardSerializer
+from .daily_quest_service import DailyQuestService
 from django.shortcuts import get_object_or_404
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.decorators import throttle_classes
@@ -194,12 +195,16 @@ class CharacterViewSet(viewsets.ModelViewSet):
         """
         prompt = serializer.validated_data['prompt']
         service = CharacterService()
-        character = service.create_character(
-            player=self.request.user.player,
-            name=prompt,
-            prompt=prompt
-        )
-        serializer.instance = character
+        try:
+            character = service.create_character(
+                player=self.request.user.player,
+                name=prompt,
+                prompt=prompt
+            )
+            serializer.instance = character
+        except ValueError as e:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(str(e))
 
     @action(detail=True, methods=['get'])
     def battles(self, request, pk=None):
@@ -251,8 +256,13 @@ class CharacterViewSet(viewsets.ModelViewSet):
 
         # 2. 觸發背景任務
         run_battle_task.delay(battle.id)
+        
+        # 3. 更新對戰任務進度
+        DailyQuestService.update_quest_progress(
+            request.user.player, 'battle_count', 1
+        )
 
-        # 3. 立即返回 battle_id，讓前端可以開始輪詢
+        # 4. 立即返回 battle_id，讓前端可以開始輪詢
         return Response(
             {"battle_id": battle.id, "status": battle.status},
             status=status.HTTP_202_ACCEPTED
@@ -261,19 +271,25 @@ class CharacterViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def advanced_summon(self, request):
         """
-        高級召喚：只需 prompt，隨機產生 rarity=2~5。
+        高級召喚：消耗5鑽石+3 Prompt Power，根據機率獲得SR/SSR/UR角色。
         """
         prompt = request.data.get('prompt')
         name = request.data.get('name')
         if not prompt:
             return Response({'error': 'Prompt is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not name:
+            return Response({'error': 'Name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
         service = CharacterService()
-        character = service.create_advanced_character(
-            player=request.user.player,
-            name=name,
-            prompt=prompt
-        )
-        return Response(CharacterSerializer(character).data, status=status.HTTP_201_CREATED)
+        try:
+            character = service.create_advanced_character(
+                player=request.user.player,
+                name=name,
+                prompt=prompt
+            )
+            return Response(CharacterSerializer(character).data, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class LeaderboardView(generics.ListAPIView):
     """
@@ -474,3 +490,99 @@ class Web3LoginView(APIView):
             'wallet_address': player.wallet_address,
             'login_method': player.login_method
         })
+
+
+class DailyQuestView(APIView):
+    """每日任務相關API"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """獲取玩家當日任務統計"""
+        player = request.user.player
+        
+        # 記錄登入
+        #DailyQuestService.record_player_login(player)
+        
+        # 獲取統計資料
+        stats = DailyQuestService.get_daily_stats(player)
+        serializer = DailyStatsSerializer(stats)
+        
+        return Response(serializer.data)
+    
+    def post(self, request):
+        """領取任務獎勵"""
+        player = request.user.player
+        serializer = ClaimRewardSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            quest_id = serializer.validated_data['quest_id']
+            result = DailyQuestService.claim_quest_reward(player, quest_id)
+            
+            if result['success']:
+                return Response({
+                    'success': True,
+                    'message': '獎勵領取成功！',
+                    'rewards': result['rewards']
+                })
+            else:
+                return Response({
+                    'success': False,
+                    'error': result['error']
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CheckInView(APIView):
+    """每日簽到API"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """執行每日簽到"""
+        player = request.user.player
+        
+        # 記錄登入（這會自動觸發簽到任務）
+        login_record = DailyQuestService.record_player_login(player)
+        
+        if login_record:
+            return Response({
+                'success': True,
+                'message': '簽到成功！',
+                'login_streak': DailyQuestService.get_login_streak(player)
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': '今日已簽到'
+            })
+
+
+class QuestProgressView(APIView):
+    """任務進度更新API（供內部使用）"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """手動更新任務進度（測試用）"""
+        player = request.user.player
+        quest_type = request.data.get('quest_type')
+        increment = request.data.get('increment', 1)
+        
+        if not quest_type:
+            return Response({
+                'error': 'quest_type is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        player_quest = DailyQuestService.update_quest_progress(player, quest_type, increment)
+        
+        if player_quest:
+            return Response({
+                'success': True,
+                'quest_type': quest_type,
+                'current_count': player_quest.current_count,
+                'target_count': player_quest.quest.target_count,
+                'is_completed': player_quest.is_completed
+            })
+        else:
+            return Response({
+                'error': 'Quest not found'
+            }, status=status.HTTP_404_NOT_FOUND)
