@@ -14,4 +14,6 @@ export interface Character {
     rarity: number;
     rarity_name: string;
     star_count: number;
+    player: string;
+    player_display_name: string;
 } 

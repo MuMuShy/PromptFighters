@@ -14,6 +14,11 @@ export const routes: Routes = [
     component: ProfileComponent,
     canActivate: [authGuard]
   },
+  {
+    path: 'profile/:playerId',
+    component: ProfileComponent,
+    canActivate: [authGuard]
+  },
   { 
     path: 'create', 
     component: CreateComponent,

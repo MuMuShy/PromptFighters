@@ -76,8 +76,12 @@ export class PlayerService {
     this.resourcesSubject.next(resources);
   }
 
-  getProfile(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/player/profile/`);
+  getProfile(playerId?: string): Observable<any> {
+    let url = `${this.apiUrl}/player/profile/`;
+    if (playerId) {
+      url += `?player_id=${playerId}`;
+    }
+    return this.http.get<any>(url);
   }
 
   updateNickname(nickname: string) {

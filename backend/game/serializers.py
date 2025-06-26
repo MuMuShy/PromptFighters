@@ -9,12 +9,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 class PlayerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
+    
     class Meta:
         model = Player
-        fields = ['id', 'user', 'created_at', 'last_login', 'gold', 'diamond', 'prompt_power', 'energy', 'max_energy', 'wallet_address']
+        fields = ['id', 'user', 'created_at', 'last_login', 'gold', 'diamond', 'prompt_power', 'energy', 'max_energy', 'wallet_address','nickname','nickname_changed']
 
 class CharacterSerializer(serializers.ModelSerializer):
     win_rate = serializers.SerializerMethodField()
+    player_display_name = serializers.SerializerMethodField()
     player_name = serializers.CharField(source='player.user.username', read_only=True)
     prompt = serializers.CharField(write_only=True, required=True, max_length=100)
     rarity_name = serializers.CharField(read_only=True)
@@ -33,6 +35,13 @@ class CharacterSerializer(serializers.ModelSerializer):
         if total_battles == 0:
             return 0
         return round((obj.win_count / total_battles) * 100)
+
+    def get_player_display_name(self, obj):
+        tail = str(obj.player.id)[-4:]
+        if obj.player.nickname:
+            return f"{obj.player.nickname}#{tail}"
+        else:
+            return f"player#{tail}"
 
 class BattleSerializer(serializers.ModelSerializer):
     character1 = CharacterSerializer(read_only=True)

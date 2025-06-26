@@ -52,12 +52,25 @@ class CharacterDetailView(generics.RetrieveAPIView):
 class PlayerProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        player = request.user.player  # 假設 OneToOne 關聯
-        player.update_energy()
-        player_data = PlayerSerializer(player).data
-        characters = Character.objects.filter(player=player)
-        char_data = CharacterSerializer(characters, many=True).data
-        return Response({"player": player_data, "characters": char_data})
+        player_id = request.GET.get('player_id')
+        if player_id:
+            # 僅允許查詢公開資訊
+            player = get_object_or_404(Player, id=player_id)
+            player_data = {
+                "nickname": player.nickname,
+                "display_name": player.get_display_name(),
+            }
+            characters = Character.objects.filter(player=player)
+            char_data = CharacterSerializer(characters, many=True).data
+            return Response({"player": player_data, "characters": char_data, "is_view_mode": True})
+        else:
+            # 自己看自己，回傳完整資訊
+            player = request.user.player
+            player.update_energy()
+            player_data = PlayerSerializer(player).data
+            characters = Character.objects.filter(player=player)
+            char_data = CharacterSerializer(characters, many=True).data
+            return Response({"player": player_data, "characters": char_data, "is_view_mode": False})
 
     def patch(self, request):
         player = request.user.player

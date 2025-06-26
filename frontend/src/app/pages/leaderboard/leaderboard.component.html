@@ -32,7 +32,9 @@
             <img [src]="char.image_url | mediaUrl" alt="{{ char.name }}" class="character-avatar">
             <span>{{ char.name }}</span>
           </td>
-          <td class="player">{{ char.name }}</td>
+          <td class="player">
+            <a [routerLink]="['/profile', char.player]">{{ char.player_display_name }}</a>
+          </td>
           <td class="record">{{ char.win_count }} 勝 / {{ char.loss_count }} 敗</td>
           <td class="win-rate">
             <div class="win-rate-bar-container">
