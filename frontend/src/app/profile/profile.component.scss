@@ -883,7 +883,6 @@
   height: 90px;
   border-radius: 50%;
   background: #23232b;
-  box-shadow: 0 0 0 3px #3b82f6, 0 2px 12px #0006;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -971,7 +970,6 @@
     max-width: 98vw;
   }
   .player-avatar-block {
-    flex-direction: row;
     align-items: center;
     gap: 1.2rem;
     min-width: 0;

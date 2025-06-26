@@ -62,7 +62,7 @@
         <div class="nickname-section" *ngIf="!nicknameChanged">
           <label for="nickname-input">暱稱：</label>
           <input id="nickname-input" [(ngModel)]="nickname" maxlength="32" [readonly]="nicknameChanged" placeholder="輸入你的暱稱" />
-          <button (click)="saveNickname()" class="save-nickname-btn">免費改名</button>
+          <button (click)="saveNickname()" class="save-nickname-btn">改名</button>
         </div>
       </div>
       <div class="player-info-block">
