@@ -79,4 +79,8 @@ export class PlayerService {
   getProfile(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/player/profile/`);
   }
+
+  updateNickname(nickname: string) {
+    return this.http.patch<any>(`${this.apiUrl}/player/profile/`, { nickname });
+  }
 }

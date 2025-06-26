@@ -8,11 +8,12 @@ import { Character } from '../interfaces/character.interface';
 import { AuthService } from '../services/auth.service';
 import { Battle } from '../interfaces/battle.interface';
 import { PlayerService } from '../services/player.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, CharacterCardComponent],
+  imports: [CommonModule, RouterModule, CharacterCardComponent, FormsModule],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
@@ -23,6 +24,8 @@ export class ProfileComponent implements OnInit {
   allCharacters: Character[] = [];
   selectedRarityFilter: number | null = null;
   walletAddress: string = '';
+  nickname: string = '';
+  nicknameChanged: boolean = false;
   
   rarityFilters = [
     { value: null, label: '全部', icon: '◉', count: 0 },
@@ -47,6 +50,8 @@ export class ProfileComponent implements OnInit {
     this.playerService.getProfile().subscribe({
       next: (profile: any) => {
         this.walletAddress = profile.player.wallet_address || '';
+        this.nickname = profile.player.nickname || '';
+        this.nicknameChanged = profile.player.nickname_changed || false;
       },
       error: () => {
         this.walletAddress = '';
@@ -143,5 +148,26 @@ export class ProfileComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  saveNickname() {
+    if (this.nicknameChanged) {
+      // 顯示提示：只能免費改一次
+      return;
+    }
+    this.playerService.updateNickname(this.nickname).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.nicknameChanged = true;
+          // 顯示提示：暱稱已更新
+        } else {
+          // 顯示錯誤訊息
+        }
+      }
+    });
+  }
+
+  goToBattle() {
+    window.location.href = '/battle';
   }
 }

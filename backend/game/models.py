@@ -19,6 +19,9 @@ class Player(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
     
+    nickname = models.CharField(max_length=32, null=True, blank=True, unique=False, verbose_name='暱稱')
+    nickname_changed = models.BooleanField(default=False, verbose_name='是否已改過暱稱')
+    
     # Web3 錢包相關欄位
     wallet_address = models.CharField(max_length=42, null=True, blank=True, unique=True)
     login_method = models.CharField(max_length=20, choices=LOGIN_METHOD_CHOICES, default='google')
@@ -35,6 +38,13 @@ class Player(models.Model):
     energy = models.IntegerField(default=100)
     max_energy = models.IntegerField(default=100)
     last_energy_update = models.DateTimeField(default=timezone.now)
+    
+    def save(self, *args, **kwargs):
+        if not self.nickname:
+            # 取 uuid 尾 6 碼
+            tail = str(self.id)[-6:]
+            self.nickname = f"勇者#{tail}"
+        super().save(*args, **kwargs)
 
     def __str__(self):
         if self.wallet_address:
@@ -79,7 +89,7 @@ class Player(models.Model):
             self.save()
             return True
         return False
-
+    
 class Character(models.Model):
     RARITY_CHOICES = [
         (1, 'N - Normal'),

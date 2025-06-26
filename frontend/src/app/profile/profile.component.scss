@@ -237,15 +237,18 @@
 }
 
 .player-card {
-  background: rgba(42, 42, 74, 0.9);
-  border: 2px solid #444;
+  background: #232347;
+  border: 1.5px solid #2e2e4d;
   border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px #0002;
+  padding: 1.2rem 1.5rem;
+  font-family: 'Poppins', 'Noto Sans TC', Arial, sans-serif;
+  min-width: 320px;
+  max-width: 480px;
   display: flex;
-  align-items: center;
-  gap: 2rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .player-avatar {
@@ -286,31 +289,41 @@
 }
 
 .player-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  display: flex;
+  gap: 0.7rem;
+  margin-bottom: 0.5rem;
 }
 
 .stat-item {
+  flex: 1 1 0;
+  min-width: 60px;
+  max-width: 90px;
   text-align: center;
-  padding: 1rem;
-  background: rgba(20, 20, 40, 0.6);
-  border: 1px solid #555;
-  border-radius: 12px;
+  padding: 0.7rem 0.2rem;
+  background: #22243a;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px #0001;
+  margin: 0;
 }
 
 .stat-value {
-  display: block;
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #87ceeb;
-  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 0.2rem;
+  letter-spacing: 0.5px;
 }
 
 .stat-label {
   font-size: 0.9rem;
-  color: #ccc;
+  color: #bfc6d1;
+  opacity: 0.95;
 }
+
+.stat-item:nth-child(1)::before { content: '🦸'; font-size: 1.3rem; display: block; }
+.stat-item:nth-child(2)::before { content: '⚔️'; font-size: 1.3rem; display: block; }
+.stat-item:nth-child(3)::before { content: '🏆'; font-size: 1.3rem; display: block; }
+.stat-item:nth-child(4)::before { content: '👑'; font-size: 1.3rem; display: block; }
 
 // 選中角色面板
 .selected-character-panel {
@@ -697,26 +710,27 @@
   }
 }
 
-.wallet-address-row {
+.wallet-address-row, .nickname-section {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #23232b;
-  border-radius: 10px;
-  padding: 0.5em 1.2em;
-  margin: 1.1em auto 0.5em auto;
-  font-size: 1.08rem;
-  max-width: 420px;
-  min-width: 220px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-  gap: 0.5em;
-  user-select: text;
+  background: #23243a;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px #0001;
+  padding: 0.4em 1em;
+  margin: 0.3em 0 0.3em 0;
+  font-size: 1.05rem;
+  gap: 0.7em;
+  min-width: 0;
+  max-width: 100%;
+  font-family: 'Poppins', 'Noto Sans TC', Arial, sans-serif;
 }
+
 .wallet-label {
   color: #ffd700;
   font-weight: bold;
   margin-right: 0.5em;
 }
+
 .wallet-value {
   color: #3b82f6;
   font-family: 'JetBrains Mono', 'Fira Mono', monospace;
@@ -728,6 +742,7 @@
   cursor: pointer;
   transition: max-width 0.2s;
 }
+
 .wallet-value:hover {
   max-width: 100vw;
   background: #18181b;
@@ -736,6 +751,7 @@
   white-space: normal;
   word-break: break-all;
 }
+
 @media (max-width: 600px) {
   .wallet-address-row {
     max-width: 98vw;
@@ -745,5 +761,227 @@
   }
   .wallet-value {
     max-width: 110px;
+  }
+}
+
+.nickname-section {
+  label {
+    color: #3b82f6;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-right: 0.3rem;
+    font-size: 1.05rem;
+  }
+  input {
+    background: #23243a;
+    border: 1.5px solid #bfc6d1;
+    border-radius: 6px;
+    color: #e6eaf3;
+    font-size: 1.05rem;
+    padding: 0.3rem 0.7rem;
+    outline: none;
+    transition: border 0.2s;
+    min-width: 100px;
+    max-width: 150px;
+    box-shadow: 0 1px 4px #0001;
+    font-family: inherit;
+    &:focus {
+      border-color: #3b82f6;
+      background: #23243a;
+    }
+    &:read-only {
+      background: #23243a;
+      color: #aaa;
+      border-style: dashed;
+    }
+  }
+  .save-nickname-btn {
+    background: linear-gradient(90deg, #3b82f6 60%, #60a5fa 100%);
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    padding: 0.3rem 1.1rem;
+    font-size: 1.01rem;
+    box-shadow: 0 1px 4px #0001;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    &:hover {
+      background: linear-gradient(90deg, #60a5fa 60%, #3b82f6 100%);
+      box-shadow: 0 2px 8px #3b82f633;
+    }
+  }
+  .hint {
+    color: #bfc6d1;
+    font-size: 0.95rem;
+    margin-left: 0.5rem;
+    letter-spacing: 0.5px;
+    font-family: inherit;
+  }
+}
+
+.mini-overlay-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 20, 20, 0.72);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px #0008;
+  padding: 1.2rem 2.2rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-btn-mini {
+  background: linear-gradient(90deg, #ef4444 60%, #dc2626 100%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 2.2rem;
+  font-size: 1.15rem;
+  box-shadow: 0 2px 8px #0003;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  letter-spacing: 1px;
+  outline: none;
+}
+.battle-btn-mini:hover {
+  background: linear-gradient(90deg, #dc2626 60%, #ef4444 100%);
+  box-shadow: 0 4px 16px #ef444488;
+}
+
+.profile-header.horizontal-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  background: linear-gradient(135deg, #23232b 60%, #18181b 100%);
+  border-radius: 22px;
+  box-shadow: 0 8px 32px #000a;
+  padding: 2.2rem 2.8rem 2.2rem 2.2rem;
+  gap: 3.2rem;
+  min-width: 340px;
+  max-width: 900px;
+  margin: 0 auto 2.5rem auto;
+  font-family: 'Poppins', 'Montserrat', 'Noto Sans TC', Arial, sans-serif;
+}
+
+.player-avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  min-width: 120px;
+}
+.player-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #23232b;
+  box-shadow: 0 0 0 3px #3b82f6, 0 2px 12px #0006;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nickname-row {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.edit-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 0.2em 0.4em;
+  transition: background 0.2s;
+}
+.edit-btn:hover {
+  background: #3b82f622;
+}
+
+.player-info-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: flex-start;
+  min-width: 0;
+}
+.wallet-row {
+  font-size: 1.05rem;
+  color: #bfc6d1;
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.player-stats.horizontal-stats {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.stat-item {
+  background: #23232b;
+  border-radius: 14px;
+  box-shadow: 0 1px 6px #0002;
+  padding: 1.1rem 1.2rem 0.7rem 1.2rem;
+  min-width: 110px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  box-sizing: border-box;
+}
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 0.1rem;
+}
+.stat-label {
+  font-size: 0.95rem;
+  color: #bfc6d1;
+  opacity: 0.95;
+}
+
+@media (max-width: 900px) {
+  .profile-header.horizontal-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2rem;
+    padding: 1.2rem 0.8rem 1.2rem 0.8rem;
+    max-width: 98vw;
+  }
+  .player-avatar-block {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.2rem;
+    min-width: 0;
+  }
+  .player-info-block {
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .player-stats.horizontal-stats {
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 }

@@ -59,6 +59,19 @@ class PlayerProfileView(APIView):
         char_data = CharacterSerializer(characters, many=True).data
         return Response({"player": player_data, "characters": char_data})
 
+    def patch(self, request):
+        player = request.user.player
+        nickname = request.data.get('nickname')
+        if nickname is not None:
+            if not player.nickname_changed:
+                player.nickname = nickname
+                player.nickname_changed = True
+                player.save()
+                return Response({'success': True, 'nickname': player.nickname, 'free_change': False})
+            else:
+                return Response({'success': False, 'error': '只能免費修改一次暱稱'}, status=400)
+        return Response({'success': False, 'error': 'No nickname provided'}, status=400)
+
 class BattleCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request):
