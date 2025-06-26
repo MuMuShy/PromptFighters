@@ -11,7 +11,8 @@
 <p align="center">
   <img src="snapshot/1.jpg" alt="遊戲截圖 1 - 角色創建" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
   <img src="snapshot/2.jpg" alt="遊戲截圖 2 - 戰鬥場景" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
-  <img src="snapshot/3.jpg" alt="遊戲截圖 3 - 戰鬥結果" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+  <img src="snapshot/battle_new.jpg" alt="遊戲截圖 3 - 戰鬥結果" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
+  <img src="snapshot/profile.jpg" alt="遊戲截圖 3 - 個人資料" style="max-width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin: 10px;" />
 </p>
 
 ## ✨ 主要功能
