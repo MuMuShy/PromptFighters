@@ -62,7 +62,7 @@ export class ProfileComponent implements OnInit {
           this.displayName = profile.player.nickname || profile.player.display_name || '';
         }
         this.allCharacters = profile.characters;
-        if (profile.characters.length > 0) {
+        if (profile.characters.length > 0 && !this.isViewMode) {
           const initialCharacter = profile.characters[0];
           this.currentCharacter = initialCharacter;
           this.characterService.saveCharacter(initialCharacter);
@@ -91,6 +91,7 @@ export class ProfileComponent implements OnInit {
   }
 
   selectCharacter(character: Character): void {
+    if(this.isViewMode) return;
     this.currentCharacter = character;
     this.characterService.saveCharacter(character);
     const token = this.authService.getToken() || '';
