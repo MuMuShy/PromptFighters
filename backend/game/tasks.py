@@ -238,18 +238,12 @@ def run_battle_task(battle_id):
         
         if battle.winner == player:
             player.win_count += 1
-            opponent.loss_count += 1
             # 更新玩家勝利任務進度
             DailyQuestService.update_quest_progress(
                 player.player, 'battle_win', 1
             )
-        # else:
-        #     player.loss_count += 1
-        #     opponent.win_count += 1
-        #     # 更新對手勝利任務進度（如果對手也是玩家）
-        #     DailyQuestService.update_quest_progress(
-        #         opponent.player, 'battle_win', 1
-        #     )
+        else:
+            player.loss_count += 1
         
         player.save()
         opponent.save()
