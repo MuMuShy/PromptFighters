@@ -12,8 +12,9 @@ export interface DailyQuest {
   quest_type_display: string;
   target_count: number;
   reward_gold: number;
-  reward_diamond: number;
+  reward_prompt: number;
   reward_prompt_power: number;
+  reward_exp_potion: number;
   reward_energy: number;
   is_active: boolean;
 }
@@ -45,8 +46,9 @@ export interface ClaimRewardResponse {
   error?: string;
   rewards?: {
     gold: number;
-    diamond: number;
+    prompt: number;
     prompt_power: number;
+    exp_potion: number;
     energy: number;
   };
 }
@@ -138,11 +140,14 @@ export class DailyQuestService {
     if (quest.reward_gold > 0) {
       rewards.push({ type: 'gold', amount: quest.reward_gold });
     }
-    if (quest.reward_diamond > 0) {
-      rewards.push({ type: 'diamond', amount: quest.reward_diamond });
+    if (quest.reward_prompt > 0) {
+      rewards.push({ type: 'prompt', amount: quest.reward_prompt });
     }
     if (quest.reward_prompt_power > 0) {
       rewards.push({ type: 'prompt_power', amount: quest.reward_prompt_power });
+    }
+    if (quest.reward_exp_potion > 0) {
+      rewards.push({ type: 'exp_potion', amount: quest.reward_exp_potion });
     }
     if (quest.reward_energy > 0) {
       rewards.push({ type: 'energy', amount: quest.reward_energy });

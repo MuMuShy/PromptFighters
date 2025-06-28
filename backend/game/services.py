@@ -8,6 +8,7 @@ from django.db import transaction
 from google import genai
 
 from .models import Player, Character, Battle
+from .configs import LEVEL_CONFIGS
 
 
 class GeminiService:
@@ -179,11 +180,11 @@ class CharacterService:
         高階召喚：檢查資源，根據機率決定稀有度，用AI生成屬性。
         """
         # 檢查資源
-        if not player.can_afford(diamond_cost=5, prompt_power_cost=3):
-            raise ValueError("資源不足：需要5鑽石和3 Prompt Power")
+        if not player.can_afford(prompt_cost=5, prompt_power_cost=3):
+            raise ValueError("資源不足：需要5 $PROMPT和3 Prompt Power")
         
         # 消耗資源
-        player.spend_resources(diamond_cost=5, prompt_power_cost=3)
+        player.spend_resources(prompt_cost=5, prompt_power_cost=3)
         
         # 根據高階召喚機率決定稀有度
         rarity = self._generate_rarity_by_probability('premium')
@@ -207,4 +208,78 @@ class CharacterService:
         # 更新召喚任務進度
         DailyQuestService.update_quest_progress(player, 'character_summon', 1)
         
+        return character 
+
+class CharacterGrowthService:
+    """
+    處理與角色成長（等級、經驗值）相關的業務邏輯。
+    """
+    @staticmethod
+    def add_experience(character: Character, amount: int):
+        """
+        為角色增加經驗值。
+        在我們的模型中，經驗值是透過消耗「經驗藥水」道具獲得的。
+        這個方法應該在玩家使用經驗藥水時被呼叫。
+        """
+        if character.level >= 50:
+            return # 滿級後不再增加經驗
+
+        character.experience += amount
+        character.save(update_fields=['experience'])
+        # 注意：這裡只增加經驗值，升級檢查和操作在 level_up 中進行。
+
+    @staticmethod
+    def get_required_exp_for_level_up(character: Character) -> int:
+        """
+        獲取角色升到下一級所需的經驗值。
+        """
+        if character.level >= 50:
+            return 0
+        
+        level_info = LEVEL_CONFIGS.get(character.level)
+        return level_info.get("experience_needed", 0) if level_info else 0
+
+    @staticmethod
+    def can_level_up(character: Character) -> bool:
+        """
+        檢查角色當前的經驗值是否滿足升級條件。
+        """
+        if character.level >= 50:
+            return False
+        
+        required_exp = CharacterGrowthService.get_required_exp_for_level_up(character)
+        return character.experience >= required_exp
+
+    @staticmethod
+    @transaction.atomic
+    def level_up(character: Character):
+        """
+        執行升級操作。
+        這是一個原子操作，會同時檢查經驗值、金幣，並更新角色和玩家的狀態。
+        """
+        if not CharacterGrowthService.can_level_up(character):
+            raise ValueError("經驗值不足，無法升級。")
+
+        player = character.player
+        level_info = LEVEL_CONFIGS.get(character.level)
+        
+        if not level_info:
+            raise ValueError(f"找不到等級 {character.level} 的設定。")
+
+        gold_cost = level_info.get("gold_cost", 0)
+        required_exp = level_info.get("experience_needed", 0)
+
+        # 檢查玩家是否有足夠的金幣
+        if not player.can_afford(gold_cost=gold_cost):
+            raise ValueError(f"資源不足：升級需要 {gold_cost} 金幣。")
+
+        # 消耗資源和經驗值
+        player.spend_resources(gold_cost=gold_cost)
+        character.experience -= required_exp
+        character.level += 1
+        
+        # 保存變更
+        player.save()
+        character.save(update_fields=['level', 'experience'])
+
         return character 

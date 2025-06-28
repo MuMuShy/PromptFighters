@@ -4,7 +4,7 @@ from .models import Player, Character, Battle, DailyQuest, PlayerDailyQuest, Pla
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ['user', 'wallet_address', 'login_method', 'gold', 'diamond', 'prompt_power', 'energy', 'created_at']
+    list_display = ['user', 'wallet_address', 'login_method', 'gold', 'prompt', 'prompt_power', 'energy', 'created_at']
     list_filter = ['login_method', 'created_at']
     search_fields = ['user__username', 'user__email', 'wallet_address']
     readonly_fields = ['id', 'created_at']
@@ -38,7 +38,7 @@ class DailyQuestAdmin(admin.ModelAdmin):
             'fields': ('name', 'description', 'quest_type', 'target_count', 'is_active')
         }),
         ('獎勵設定', {
-            'fields': ('reward_gold', 'reward_diamond', 'reward_prompt_power', 'reward_energy'),
+            'fields': ('reward_gold', 'reward_prompt', 'reward_prompt_power', 'reward_exp_potion', 'reward_energy'),
             'classes': ('collapse',)
         }),
         ('系統資訊', {
@@ -51,10 +51,12 @@ class DailyQuestAdmin(admin.ModelAdmin):
         rewards = []
         if obj.reward_gold > 0:
             rewards.append(f"金幣{obj.reward_gold}")
-        if obj.reward_diamond > 0:
-            rewards.append(f"鑽石{obj.reward_diamond}")
+        if obj.reward_prompt > 0:
+            rewards.append(f"$PROMPT{obj.reward_prompt}")
         if obj.reward_prompt_power > 0:
-            rewards.append(f"能量{obj.reward_prompt_power}")
+            rewards.append(f"Prompt Power{obj.reward_prompt_power}")
+        if obj.reward_exp_potion > 0:
+            rewards.append(f"經驗藥水{obj.reward_exp_potion}")
         if obj.reward_energy > 0:
             rewards.append(f"體力{obj.reward_energy}")
         return " | ".join(rewards) if rewards else "無獎勵"

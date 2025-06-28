@@ -137,6 +137,7 @@
 .stat.strength { color: #ff4d4f; }
 .stat.agility { color: #40a9ff; }
 .stat.luck { color: #ffd700; }
+.stat.level { color: #5bcb3c; }
 
 .skill-bar {
   background: rgba(108,52,131,0.95);
@@ -243,15 +244,65 @@
   align-items: center;
 }
 .character-name-bar {
-  width: 100%;
-  text-align: center;
-  margin: 0.5rem 0 0.2rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 4px;
 }
 .character-name {
   font-size: 1.25rem;
   font-weight: bold;
-  color: #ffd700;
-  letter-spacing: 1.5px;
+  color: #ffe066;
+  letter-spacing: 1px;
   text-shadow: 0 2px 8px #000a;
-  display: inline-block;
 } 
+
+.level-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 22px;
+  padding: 0 10px;
+  margin-left: 4px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #232946 60%, #3fd0ff 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 1.5px solid #6ee7ff;
+  box-shadow:
+    0 2px 8px #3fd0ff33,
+    0 0 0 2px #232946;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 4px #3fd0ff99;
+  filter: drop-shadow(0 2px 4px #0002);
+  line-height: 1.2;
+  transition: background 0.2s;
+}
+
+.level-medal::before {
+  content: "★";
+  color: #ffe066;
+  font-size: 1rem;
+  margin-right: 4px;
+  filter: drop-shadow(0 0 2px #ffe066cc);
+}
+
+@media (max-width: 600px) {
+  .character-name-bar {
+    gap: 4px;
+  }
+  .level-medal {
+    min-width: 28px;
+    height: 18px;
+    padding: 0 6px;
+    font-size: 0.8rem;
+  }
+  .level-medal::before {
+    font-size: 0.9rem;
+    margin-right: 2px;
+  }
+}

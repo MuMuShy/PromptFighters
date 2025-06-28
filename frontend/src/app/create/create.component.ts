@@ -26,8 +26,9 @@ export class CreateComponent implements OnInit, OnDestroy {
   showSuccessModal = false;
   resources: PlayerResources = {
     gold: 0,
-    diamond: 0,
+    prompt: 0,
     prompt_power: 0,
+    exp_potion: 0,
     energy: 0,
     max_energy: 100
   };
@@ -113,7 +114,7 @@ export class CreateComponent implements OnInit, OnDestroy {
     
     // 檢查資源是否足夠
     if (!this.canAffordPremiumSummon()) {
-      alert('資源不足！需要 5 鑽石和 3 Prompt Power');
+      alert('資源不足！需要 5 $PROMPT 和 3 Prompt Power');
       return;
     }
     
@@ -147,7 +148,7 @@ export class CreateComponent implements OnInit, OnDestroy {
   }
 
   canAffordPremiumSummon(): boolean {
-    return this.resources.diamond >= 5 && this.resources.prompt_power >= 3;
+    return this.resources.prompt >= 5 && this.resources.prompt_power >= 3;
   }
 
   // 檢查是否可以召喚

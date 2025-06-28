@@ -66,7 +66,7 @@ export class ProfileComponent implements OnInit {
           const initialCharacter = profile.characters[0];
           this.currentCharacter = initialCharacter;
           this.characterService.saveCharacter(initialCharacter);
-          this.fetchBattlesForCharacter(initialCharacter.id, this.authService.getToken() || '');
+          //this.fetchBattlesForCharacter(initialCharacter.id, this.authService.getToken() || '');
         }
         this.isLoading = false;
       },

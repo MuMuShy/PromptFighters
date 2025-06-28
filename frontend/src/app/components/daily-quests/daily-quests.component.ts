@@ -145,12 +145,16 @@ export class DailyQuestsComponent implements OnInit, OnDestroy {
     return this.lastClaimedReward?.rewards?.gold || 0;
   }
 
-  get rewardDiamond(): number {
-    return this.lastClaimedReward?.rewards?.diamond || 0;
+  get rewardPrompt(): number {
+    return this.lastClaimedReward?.rewards?.prompt || 0;
   }
 
   get rewardPromptPower(): number {
     return this.lastClaimedReward?.rewards?.prompt_power || 0;
+  }
+
+  get rewardExpPotion(): number {
+    return this.lastClaimedReward?.rewards?.exp_potion || 0;
   }
 
   get rewardEnergy(): number {

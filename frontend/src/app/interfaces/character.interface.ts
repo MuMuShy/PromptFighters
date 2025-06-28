@@ -16,4 +16,6 @@ export interface Character {
     star_count: number;
     player: string;
     player_display_name: string;
+    experience: number;
+    level: number;
 } 

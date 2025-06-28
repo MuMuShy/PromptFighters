@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CharacterViewSet, BattleViewSet, PlayerProfileView, SocialLoginView, 
     LeaderboardView, Web3LoginView, Web3NonceView, health_check, 
-    PlayerResourceView, SpendResourceView, DailyQuestView, CheckInView, QuestProgressView
+    PlayerResourceView, SpendResourceView, DailyQuestView, CheckInView, QuestProgressView,
+    CharacterGrowthAPIView
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ urlpatterns = [
     path('daily-quests/', DailyQuestView.as_view(), name='daily-quests'),
     path('checkin/', CheckInView.as_view(), name='checkin'),
     path('quest-progress/', QuestProgressView.as_view(), name='quest-progress'),
+    path('characters/<uuid:character_id>/<str:action>/', CharacterGrowthAPIView.as_view(), name='character-growth'),
     path('', include(router.urls)),
     path('health/', health_check, name='health_check'),
     path('characters/advanced_summon/', CharacterViewSet.as_view({'post': 'advanced_summon'}), name='advanced_summon'),

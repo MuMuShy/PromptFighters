@@ -100,7 +100,7 @@
             <div class="tab-desc">SR, SSR, UR 稀有度</div>
             <div class="tab-cost">
               <span class="cost-item">
-                <img src="/assets/game/diamond.png" alt="Diamond" class="w-5 h-5" />
+                <img src="/assets/game/prompt.png" alt="Prompt" class="w-5 h-5" />
                 5
               </span>
               <span class="cost-item">
@@ -157,9 +157,9 @@
                   </div>
                 </ng-container>
                 <ng-container *ngIf="mode==='advanced'">
-                  <div class="cost-item" [class.insufficient]="resources.diamond < 5">
-                    <img src="/assets/game/diamond.png" alt="Diamond" class="cost-icon" />
-                    <span class="cost-text">5 鑽石</span>
+                  <div class="cost-item" [class.insufficient]="resources.prompt < 5">
+                    <img src="/assets/game/prompt.png" alt="Prompt" class="cost-icon" />
+                    <span class="cost-text">5 $PROMPT</span>
                   </div>
                   <div class="cost-item" [class.insufficient]="resources.prompt_power < 3">
                     <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="cost-icon" />

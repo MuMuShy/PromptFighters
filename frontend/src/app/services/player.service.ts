@@ -6,16 +6,18 @@ import { environment } from '../../environments/environment';
 
 export interface PlayerResources {
   gold: number;
-  diamond: number;
+  prompt: number;
   prompt_power: number;
+  exp_potion: number;
   energy: number;
   max_energy: number;
 }
 
 interface SpendResourcesRequest {
   gold_cost?: number;
-  diamond_cost?: number;
+  prompt_cost?: number;
   prompt_power_cost?: number;
+  exp_potion_cost?: number;
   energy_cost?: number;
 }
 
@@ -23,8 +25,9 @@ interface SpendResourcesResponse {
   success: boolean;
   error?: string;
   gold?: number;
-  diamond?: number;
+  prompt?: number;
   prompt_power?: number;
+  exp_potion?: number;
   energy?: number;
   max_energy?: number;
 }
@@ -36,8 +39,9 @@ export class PlayerService {
   private apiUrl = environment.backendBaseUrl + '/api';
   private resourcesSubject = new BehaviorSubject<PlayerResources>({
     gold: 0,
-    diamond: 0,
+    prompt: 0,
     prompt_power: 0,
+    exp_potion: 0,
     energy: 0,
     max_energy: 100
   });
@@ -58,8 +62,9 @@ export class PlayerService {
         if (response.success && response.gold !== undefined) {
           this.resourcesSubject.next({
             gold: response.gold!,
-            diamond: response.diamond!,
+            prompt: response.prompt!,
             prompt_power: response.prompt_power!,
+            exp_potion: response.exp_potion!,
             energy: response.energy!,
             max_energy: response.max_energy!
           });

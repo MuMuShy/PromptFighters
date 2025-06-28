@@ -11,13 +11,17 @@
           <img src="/assets/game/gold_coin.png" alt="Gold" class="reward-icon" />
           <span class="reward-amount">+{{ rewardGold | number }}</span>
         </div>
-        <div *ngIf="rewardDiamond > 0" class="reward-item">
-          <img src="/assets/game/diamond.png" alt="Diamond" class="reward-icon" />
-          <span class="reward-amount">+{{ rewardDiamond }}</span>
+        <div *ngIf="rewardPrompt > 0" class="reward-item">
+          <img src="/assets/game/prompt.png" alt="Prompt" class="reward-icon" />
+          <span class="reward-amount">+{{ rewardPrompt }}</span>
         </div>
         <div *ngIf="rewardPromptPower > 0" class="reward-item">
           <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="reward-icon" />
           <span class="reward-amount">+{{ rewardPromptPower }}</span>
+        </div>
+        <div *ngIf="rewardExpPotion > 0" class="reward-item">
+          <img src="/assets/game/exp_potion.png" alt="Exp Potion" class="reward-icon" />
+          <span class="reward-amount">+{{ rewardExpPotion }}</span>
         </div>
         <div *ngIf="rewardEnergy > 0" class="reward-item">
           <img src="/assets/game/stamina.png" alt="Energy" class="reward-icon" />
@@ -164,8 +168,9 @@
             <div class="reward-items">
               <div *ngFor="let reward of formatRewards(quest)" class="reward-tag">
                 <img *ngIf="reward.type === 'gold'" src="/assets/game/gold_coin.png" alt="Gold" class="reward-icon" />
-                <img *ngIf="reward.type === 'diamond'" src="/assets/game/diamond.png" alt="Diamond" class="reward-icon" />
+                <img *ngIf="reward.type === 'prompt'" src="/assets/game/prompt.png" alt="Prompt" class="reward-icon" />
                 <img *ngIf="reward.type === 'prompt_power'" src="/assets/game/prompt_power.png" alt="Prompt Power" class="reward-icon" />
+                <img *ngIf="reward.type === 'exp_potion'" src="/assets/game/exp_potion.png" alt="Exp Potion" class="reward-icon" />
                 <img *ngIf="reward.type === 'energy'" src="/assets/game/stamina.png" alt="Energy" class="reward-icon" />
                 <span class="reward-amount">+{{ reward.amount }}</span>
               </div>

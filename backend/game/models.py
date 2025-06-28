@@ -31,10 +31,12 @@ class Player(models.Model):
     thirdweb_user_id = models.CharField(max_length=100, null=True, blank=True)
     social_provider = models.CharField(max_length=20, null=True, blank=True)  # facebook, twitter, apple 等
     
-    # 遊戲資源
-    gold = models.IntegerField(default=1000)
-    diamond = models.IntegerField(default=10)
-    prompt_power = models.IntegerField(default=5)
+    # 遊戲資源 (根據新經濟模型調整)
+    gold = models.PositiveIntegerField(default=1000, verbose_name='金幣')
+    prompt = models.PositiveIntegerField(default=10, verbose_name='$PROMPT 代幣')
+    prompt_power = models.PositiveIntegerField(default=5, verbose_name='Prompt Power')
+    exp_potion = models.PositiveIntegerField(default=100, verbose_name='經驗藥水')
+    
     energy = models.IntegerField(default=100)
     max_energy = models.IntegerField(default=100)
     last_energy_update = models.DateTimeField(default=timezone.now)
@@ -72,19 +74,21 @@ class Player(models.Model):
                 self.last_energy_update = now
                 self.save()
     
-    def can_afford(self, gold_cost=0, diamond_cost=0, prompt_power_cost=0, energy_cost=0):
+    def can_afford(self, gold_cost=0, prompt_cost=0, prompt_power_cost=0, exp_potion_cost=0, energy_cost=0):
         """檢查玩家是否有足夠資源"""
         return (self.gold >= gold_cost and 
-                self.diamond >= diamond_cost and 
-                self.prompt_power >= prompt_power_cost and 
+                self.prompt >= prompt_cost and 
+                self.prompt_power >= prompt_power_cost and
+                self.exp_potion >= exp_potion_cost and
                 self.energy >= energy_cost)
     
-    def spend_resources(self, gold_cost=0, diamond_cost=0, prompt_power_cost=0, energy_cost=0):
+    def spend_resources(self, gold_cost=0, prompt_cost=0, prompt_power_cost=0, exp_potion_cost=0, energy_cost=0):
         """消耗資源"""
-        if self.can_afford(gold_cost, diamond_cost, prompt_power_cost, energy_cost):
+        if self.can_afford(gold_cost, prompt_cost, prompt_power_cost, exp_potion_cost, energy_cost):
             self.gold -= gold_cost
-            self.diamond -= diamond_cost
+            self.prompt -= prompt_cost
             self.prompt_power -= prompt_power_cost
+            self.exp_potion -= exp_potion_cost
             self.energy -= energy_cost
             self.save()
             return True
@@ -112,17 +116,30 @@ class Character(models.Model):
     name = models.CharField(max_length=100)
     image_url = models.URLField(blank=True, null=True)
     prompt = models.TextField()
+    
+    # 核心屬性
     strength = models.IntegerField()
     agility = models.IntegerField()
     luck = models.IntegerField()
+    
+    # 成長相關
+    level = models.PositiveIntegerField(default=1, verbose_name='等級')
+    experience = models.PositiveIntegerField(default=0, verbose_name='目前經驗值')
+    rarity = models.IntegerField(choices=RARITY_CHOICES, default=1)
+
+    # 統計與技能
     skill_description = models.TextField()
     win_count = models.IntegerField(default=0)
     loss_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    rarity = models.IntegerField(choices=RARITY_CHOICES, default=1)
+    
+    # NFT 相關欄位
+    is_minted = models.BooleanField(default=False, verbose_name='是否已鑄造為 NFT')
+    nft_token_id = models.PositiveIntegerField(null=True, blank=True, help_text="NFT 的 Token ID")
+    nft_transaction_hash = models.CharField(max_length=255, null=True, blank=True, help_text="鑄造交易的雜湊值")
 
     def __str__(self):
-        return self.name
+        return f"{self.name} (Lv.{self.level})"
     
     @property
     def rarity_name(self):
@@ -169,10 +186,11 @@ class DailyQuest(models.Model):
     quest_type = models.CharField(max_length=20, choices=QUEST_TYPE_CHOICES, verbose_name='任務類型')
     target_count = models.IntegerField(default=1, verbose_name='目標數量')
     
-    # 獎勵內容
+    # 獎勵內容 (根據新經濟模型調整)
     reward_gold = models.IntegerField(default=0, verbose_name='金幣獎勵')
-    reward_diamond = models.IntegerField(default=0, verbose_name='鑽石獎勵') 
+    reward_prompt = models.IntegerField(default=0, verbose_name='$PROMPT 代幣獎勵') 
     reward_prompt_power = models.IntegerField(default=0, verbose_name='Prompt Power獎勵')
+    reward_exp_potion = models.IntegerField(default=0, verbose_name='經驗藥水獎勵')
     reward_energy = models.IntegerField(default=0, verbose_name='體力獎勵')
     
     is_active = models.BooleanField(default=True, verbose_name='是否啟用')
@@ -223,8 +241,9 @@ class PlayerDailyQuest(models.Model):
         if self.is_completed and not self.is_claimed:
             player = self.player
             player.gold += self.quest.reward_gold
-            player.diamond += self.quest.reward_diamond
+            player.prompt += self.quest.reward_prompt
             player.prompt_power += self.quest.reward_prompt_power
+            player.exp_potion += self.quest.reward_exp_potion
             player.energy = min(player.max_energy, player.energy + self.quest.reward_energy)
             player.save()
             

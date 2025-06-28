@@ -12,7 +12,7 @@ class PlayerSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Player
-        fields = ['id', 'user', 'created_at', 'last_login', 'gold', 'diamond', 'prompt_power', 'energy', 'max_energy', 'wallet_address','nickname','nickname_changed']
+        fields = ['id', 'user', 'created_at', 'last_login', 'gold', 'prompt', 'prompt_power', 'exp_potion', 'energy', 'max_energy', 'wallet_address','nickname','nickname_changed']
 
 class CharacterSerializer(serializers.ModelSerializer):
     win_rate = serializers.SerializerMethodField()
@@ -60,8 +60,8 @@ class DailyQuestSerializer(serializers.ModelSerializer):
         model = DailyQuest
         fields = [
             'id', 'name', 'description', 'quest_type', 'quest_type_display',
-            'target_count', 'reward_gold', 'reward_diamond', 'reward_prompt_power', 
-            'reward_energy', 'is_active'
+            'target_count', 'reward_gold', 'reward_prompt', 'reward_prompt_power', 
+            'reward_exp_potion', 'reward_energy', 'is_active'
         ]
 
 

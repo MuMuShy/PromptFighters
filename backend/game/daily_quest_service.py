@@ -16,12 +16,13 @@ class DailyQuestService:
         default_quests = [
             {
                 'name': '每日簽到',
-                'description': '完成每日簽到，獲得豐厚獎勵！',
+                'description': '測試階段，完成每日簽到，獲得豐厚獎勵！ 免費贈送 $PROMPT 代幣(測試鏈)',
                 'quest_type': 'daily_checkin',
                 'target_count': 1,
                 'reward_gold': 0,
-                'reward_diamond': 10,
+                'reward_prompt': 10,
                 'reward_prompt_power': 10,
+                'reward_exp_potion': 50,
                 'reward_energy': 0,
             },
             {
@@ -30,8 +31,9 @@ class DailyQuestService:
                 'quest_type': 'battle_count',
                 'target_count': 3,
                 'reward_gold': 500,
-                'reward_diamond': 0,
+                'reward_prompt': 0,
                 'reward_prompt_power': 2,
+                'reward_exp_potion': 20,
                 'reward_energy': 10,
             },
             {
@@ -40,8 +42,9 @@ class DailyQuestService:
                 'quest_type': 'battle_win',
                 'target_count': 1,
                 'reward_gold': 1000,
-                'reward_diamond': 2,
+                'reward_prompt': 2,
                 'reward_prompt_power': 3,
+                'reward_exp_potion': 30,
                 'reward_energy': 0,
             },
             {
@@ -50,8 +53,9 @@ class DailyQuestService:
                 'quest_type': 'character_summon',
                 'target_count': 2,
                 'reward_gold': 0,
-                'reward_diamond': 5,
+                'reward_prompt': 5,
                 'reward_prompt_power': 5,
+                'reward_exp_potion': 100,
                 'reward_energy': 20,
             },
         ]
@@ -168,8 +172,9 @@ class DailyQuestService:
                     'quest': player_quest,
                     'rewards': {
                         'gold': player_quest.quest.reward_gold,
-                        'diamond': player_quest.quest.reward_diamond,
+                        'prompt': player_quest.quest.reward_prompt,
                         'prompt_power': player_quest.quest.reward_prompt_power,
+                        'exp_potion': player_quest.quest.reward_exp_potion,
                         'energy': player_quest.quest.reward_energy,
                     }
                 }

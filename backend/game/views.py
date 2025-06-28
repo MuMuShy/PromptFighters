@@ -31,7 +31,7 @@ import re
 from django.http import JsonResponse
 
 # 匯入新的服務
-from .services import CharacterService
+from .services import CharacterService, CharacterGrowthService
 
 # --- Web3 錢包登入驗證 ---
 from django.core.cache import cache
@@ -357,8 +357,9 @@ class PlayerResourceView(APIView):
         player.update_energy()
         return Response({
             'gold': player.gold,
-            'diamond': player.diamond,
+            'prompt': player.prompt,
             'prompt_power': player.prompt_power,
+            'exp_potion': player.exp_potion,
             'energy': player.energy,
             'max_energy': player.max_energy
         })
@@ -373,15 +374,15 @@ class SpendResourceView(APIView):
         player.update_energy()
         
         gold_cost = request.data.get('gold_cost', 0)
-        diamond_cost = request.data.get('diamond_cost', 0)
+        prompt_cost = request.data.get('prompt_cost', 0)
         prompt_power_cost = request.data.get('prompt_power_cost', 0)
         energy_cost = request.data.get('energy_cost', 0)
         
-        if player.spend_resources(gold_cost, diamond_cost, prompt_power_cost, energy_cost):
+        if player.spend_resources(gold_cost, prompt_cost, prompt_power_cost, energy_cost):
             return Response({
                 'success': True,
                 'gold': player.gold,
-                'diamond': player.diamond,
+                'prompt': player.prompt,
                 'prompt_power': player.prompt_power,
                 'energy': player.energy,
                 'max_energy': player.max_energy
@@ -612,3 +613,40 @@ class QuestProgressView(APIView):
             return Response({
                 'error': 'Quest not found'
             }, status=status.HTTP_404_NOT_FOUND)
+
+class CharacterGrowthAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, character_id, action):
+        character = get_object_or_404(Character, id=character_id, player=request.user.player)
+        
+        if action == 'add-exp':
+            amount = request.data.get('amount', 0)
+            if not isinstance(amount, int) or amount <= 0:
+                return Response({'error': 'Amount must be a positive integer.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            player = request.user.player
+            if not player.can_afford(exp_potion_cost=amount):
+                return Response({'error': '經驗藥水不足。'}, status=status.HTTP_400_BAD_REQUEST)
+
+            player.spend_resources(exp_potion_cost=amount)
+            CharacterGrowthService.add_experience(character, amount)
+            
+            return Response({
+                'success': True, 
+                'message': f'成功為 {character.name} 增加了 {amount} 點經驗值。',
+                'character': CharacterSerializer(character).data
+            })
+
+        elif action == 'level-up':
+            try:
+                CharacterGrowthService.level_up(character)
+                return Response({
+                    'success': True, 
+                    'message': f'{character.name} 成功升級至 Lv.{character.level}！',
+                    'character': CharacterSerializer(character).data
+                })
+            except ValueError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'error': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)

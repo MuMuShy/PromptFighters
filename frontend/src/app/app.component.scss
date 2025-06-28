@@ -56,4 +56,308 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 珍貴的 PROMPT 代幣顯示樣式 */
+.premium-prompt-display {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.prompt-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 40, 0.95));
+  backdrop-filter: blur(10px);
+  border: 2px solid;
+  border-image: linear-gradient(45deg, #00d4ff, #0099cc, #0066ff, #00d4ff) 1;
+  border-radius: 20px;
+  padding: 12px 16px;
+  box-shadow: 
+    0 0 20px rgba(0, 212, 255, 0.3),
+    0 0 40px rgba(0, 212, 255, 0.1),
+    inset 0 0 20px rgba(0, 212, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  animation: promptGlow 3s ease-in-out infinite alternate;
+}
+
+.prompt-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prompt-icon {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.8));
+  animation: promptPulse 2s ease-in-out infinite;
+}
+
+.prompt-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.prompt-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.prompt-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #00d4ff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(0, 212, 255, 0.8);
+}
+
+.prompt-amount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 
+    0 0 10px rgba(0, 212, 255, 0.8),
+    0 0 20px rgba(0, 212, 255, 0.4);
+  font-family: 'Courier New', monospace;
+}
+
+.prompt-sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #00d4ff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.8);
+}
+
+.sparkle-1 {
+  top: 20%;
+  left: 10%;
+  animation: sparkle1 3s ease-in-out infinite;
+}
+
+.sparkle-2 {
+  top: 60%;
+  right: 15%;
+  animation: sparkle2 4s ease-in-out infinite;
+}
+
+.sparkle-3 {
+  bottom: 30%;
+  left: 20%;
+  animation: sparkle3 3.5s ease-in-out infinite;
+}
+
+/* 動畫效果 */
+@keyframes promptGlow {
+  0% { 
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1); 
+  }
+  100% { 
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.5), 0 0 60px rgba(0, 212, 255, 0.2); 
+  }
+}
+
+@keyframes promptPulse {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.1); 
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% { 
+    opacity: 0.3; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.6; 
+    transform: scale(1.2); 
+  }
+}
+
+@keyframes sparkle1 {
+  0%, 100% { 
+    opacity: 0; 
+    transform: scale(0) rotate(0deg); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1) rotate(180deg); 
+  }
+}
+
+@keyframes sparkle2 {
+  0%, 100% { 
+    opacity: 0; 
+    transform: scale(0) rotate(0deg); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1) rotate(-180deg); 
+  }
+}
+
+@keyframes sparkle3 {
+  0%, 100% { 
+    opacity: 0; 
+    transform: scale(0) rotate(0deg); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1) rotate(90deg); 
+  }
+}
+
+/* 手機版 PROMPT 顯示 */
+@media (max-width: 768px) {
+  .premium-prompt-display {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .prompt-container {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  
+  .prompt-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .prompt-label {
+    font-size: 8px;
+  }
+  
+  .prompt-amount {
+    font-size: 14px;
+  }
+}
+
+/* 應用程式容器樣式 */
+.app-container {
+  @apply min-h-screen bg-gradient-to-br from-rpg-dark via-rpg-purple to-rpg-blue;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex-grow: 1; /* This makes the main content fill the rest of the vertical space */
+  display: flex;
+  flex-direction: column;
+}
+
+/* This ensures the component rendered inside router-outlet also grows */
+.main-content:not(.battle-main) > *:first-child {
+  flex-grow: 1;
+}
+
+/* Fix router-outlet for battle page */
+.battle-main > router-outlet {
+  display: contents;
+}
+
+.contained-view {
+  @apply max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8;
+}
+
+/* Battle page specific styles */
+.battle-main {
+  height: 100vh;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.battle-main > * {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 導航連結樣式 */
+.nav-link { 
+  @apply text-white hover:text-rpg-gold transition-colors px-3 py-2 rounded-md text-sm font-medium; 
+}
+
+.logout-btn { 
+  @apply ml-4 px-3 py-2 rounded-md bg-rpg-gold text-black font-bold hover:bg-yellow-400 transition-colors; 
+}
+
+.mobile-menu-btn { 
+  @apply inline-flex items-center justify-center p-2 rounded-md text-rpg-gold hover:text-white hover:bg-white/10 focus:outline-none; 
+}
+
+.mobile-nav-link { 
+  @apply text-white hover:text-rpg-gold block px-3 py-2 rounded-md text-base font-medium; 
+}
+
+.prompt-rare {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(0, 212, 255, 0.08);
+  box-shadow: 0 0 6px 0 rgba(0, 212, 255, 0.12) inset;
+  display: flex;
+  align-items: center;
+  .prompt-icon {
+    filter: drop-shadow(0 0 4px #00d4ffcc);
+    animation: promptPulse 2s ease-in-out infinite;
+  }
+  .prompt-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #00d4ff;
+    margin: 0 2px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 4px #00d4ff99;
+  }
+  .prompt-amount {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 8px #00d4ff88;
+    font-family: 'Courier New', monospace;
+  }
+}
+
+@keyframes promptPulse {
+  0%, 100% { transform: scale(1);}
+  50% { transform: scale(1.08);}
+}
+
+/* 手機版微調 */
+@media (max-width: 768px) {
+  .prompt-rare {
+    margin-left: 4px;
+    padding: 2px 4px;
+    .prompt-icon { width: 20px; height: 20px; }
+    .prompt-label { font-size: 8px; }
+    .prompt-amount { font-size: 14px; }
+  }
 } 
