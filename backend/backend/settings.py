@@ -215,8 +215,8 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
 ]
 REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'anon': '100/day',
-    'user': '1000/day',
-    'ai_generation': '10/day',  # AI 生成限制
+    'user': '10000/day',
+    'ai_generation': '30/day',  # AI 生成限制
 }
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
