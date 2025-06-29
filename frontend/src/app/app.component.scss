@@ -125,15 +125,7 @@
   text-shadow: 0 0 5px rgba(0, 212, 255, 0.8);
 }
 
-.prompt-amount {
-  font-size: 18px;
-  font-weight: 800;
-  color: #ffffff;
-  text-shadow: 
-    0 0 10px rgba(0, 212, 255, 0.8),
-    0 0 20px rgba(0, 212, 255, 0.4);
-  font-family: 'Courier New', monospace;
-}
+
 
 .prompt-sparkles {
   position: absolute;
@@ -340,8 +332,10 @@
   .prompt-amount {
     font-size: 18px;
     font-weight: 800;
-    color: #fff;
-    text-shadow: 0 0 8px #00d4ff88;
+    color: #00d4ff;
+    text-shadow: 
+      0 0 10px rgba(0, 212, 255, 0.8),
+      0 0 20px rgba(0, 212, 255, 0.4);
     font-family: 'Courier New', monospace;
   }
 }

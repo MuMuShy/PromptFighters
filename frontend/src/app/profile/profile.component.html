@@ -116,6 +116,7 @@
             <!-- Overlay: 選中時顯示，正中間小小透明按鈕 -->
             <div *ngIf="!isViewMode && character.id === currentCharacter?.id" class="mini-overlay-center">
               <button class="battle-btn-mini" (click)="$event.stopPropagation(); $event.preventDefault(); goToBattle()">前往戰鬥</button>
+              <button class="battle-btn-mini info-btn" (click)="$event.stopPropagation(); $event.preventDefault(); goToCharacterDetail(character)">前往資訊</button>
             </div>
           </div>
         </div>

@@ -94,8 +94,8 @@ export class ProfileComponent implements OnInit {
     if(this.isViewMode) return;
     this.currentCharacter = character;
     this.characterService.saveCharacter(character);
-    const token = this.authService.getToken() || '';
-    this.fetchBattlesForCharacter(character.id, token);
+    //const token = this.authService.getToken() || '';
+    //this.fetchBattlesForCharacter(character.id, token);
   }
 
   get totalCharacters(): number {
@@ -177,5 +177,9 @@ export class ProfileComponent implements OnInit {
 
   goToBattle() {
     this.router.navigate(['/battle']);
+  }
+
+  goToCharacterDetail(character: Character) {
+    this.router.navigate(['/character', character.id]);
   }
 }

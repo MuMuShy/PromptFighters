@@ -1,0 +1,48 @@
+<div *ngIf="character" class="character-detail-page" [ngClass]="'rarity-' + character.rarity">
+  <div class="character-art">
+    <img [src]="character.image_url | mediaUrl" [alt]="character.name" />
+    <div class="rarity-badge">{{ character.rarity_name }}</div>
+  </div>
+  <div class="character-info">
+    <div class="character-name-bar">
+      <span class="character-name">{{ character.name }}</span>
+      <span class="level-medal">Lv.{{ character.level }}</span>
+    </div>
+    <div class="stats-row">
+      <span class="stat strength">💪 {{ character.strength }}</span>
+      <span class="stat agility">⚡ {{ character.agility }}</span>
+      <span class="stat luck">🍀 {{ character.luck }}</span>
+    </div>
+    <div class="exp-row">
+      EXP: {{ character.experience | number }}
+      <span class="exp-potion-info">
+        <img src="/assets/game/exp_potion.png" alt="EXP藥水" class="exp-potion-icon" />
+        <span class="exp-potion-amount">x{{ expPotion | number }}</span>
+      </span>
+    </div>
+    <div class="exp-bar-wrapper">
+      <div class="exp-bar-bg">
+        <div class="exp-bar-fill" [style.width.%]="expPercent"></div>
+        <div class="exp-bar-label">{{ character.experience | number }} / {{ maxExp | number }}</div>
+      </div>
+    </div>
+    <div class="skill-bar" *ngIf="character.skill_description">
+      <span>{{ character.skill_description }}</span>
+    </div>
+    <div class="battle-stats-row">
+      <div class="footer-item">
+        <div class="footer-value win">{{ character.win_count }}</div>
+        <div class="footer-label">勝場</div>
+      </div>
+      <div class="footer-item">
+        <div class="footer-value loss">{{ character.loss_count }}</div>
+        <div class="footer-label">敗場</div>
+      </div>
+      <div class="footer-item">
+        <div class="footer-value rate">{{ character.win_rate }}%</div>
+        <div class="footer-label">勝率</div>
+      </div>
+    </div>
+    <button (click)="levelUp()">升級</button>
+  </div>
+</div>

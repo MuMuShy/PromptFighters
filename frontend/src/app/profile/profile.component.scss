@@ -855,6 +855,15 @@
   box-shadow: 0 4px 16px #ef444488;
 }
 
+.battle-btn-mini.info-btn {
+  background: linear-gradient(90deg, #3b82f6 60%, #60a5fa 100%);
+  color: #fff;
+  margin-left: 1rem;
+}
+.battle-btn-mini.info-btn:hover {
+  background: linear-gradient(90deg, #60a5fa 60%, #3b82f6 100%);
+}
+
 .profile-header.horizontal-header {
   display: flex;
   flex-direction: row;
