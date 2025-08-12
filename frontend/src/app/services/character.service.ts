@@ -79,4 +79,34 @@ export class CharacterService {
       { headers }
     );
   }
+
+  // 角色升級相關方法
+  getUpgradeInfo(characterId: string, token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    return this.http.get<any>(`${environment.backendBaseUrl}/api/characters/${characterId}/info/`, { headers });
+  }
+
+  addExperience(characterId: string, amount: number, token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    return this.http.post<any>(
+      `${environment.backendBaseUrl}/api/characters/${characterId}/add-exp/`,
+      { amount },
+      { headers }
+    );
+  }
+
+  levelUpCharacter(characterId: string, token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    return this.http.post<any>(
+      `${environment.backendBaseUrl}/api/characters/${characterId}/level-up/`,
+      {},
+      { headers }
+    );
+  }
 }

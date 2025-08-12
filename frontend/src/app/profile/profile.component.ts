@@ -178,4 +178,10 @@ export class ProfileComponent implements OnInit {
   goToBattle() {
     this.router.navigate(['/battle']);
   }
+
+  goToUpgrade(character: Character, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.router.navigate(['/upgrade', character.id]);
+  }
 }

@@ -240,6 +240,17 @@ class CharacterGrowthService:
         return level_info.get("experience_needed", 0) if level_info else 0
 
     @staticmethod
+    def get_required_gold_for_level_up(character: Character) -> int:
+        """
+        獲取角色升到下一級所需的金幣。
+        """
+        if character.level >= 50:
+            return 0
+        
+        level_info = LEVEL_CONFIGS.get(character.level)
+        return level_info.get("gold_cost", 0) if level_info else 0
+
+    @staticmethod
     def can_level_up(character: Character) -> bool:
         """
         檢查角色當前的經驗值是否滿足升級條件。
@@ -249,6 +260,47 @@ class CharacterGrowthService:
         
         required_exp = CharacterGrowthService.get_required_exp_for_level_up(character)
         return character.experience >= required_exp
+
+    @staticmethod
+    def get_upgrade_info(character: Character) -> Dict[str, Any]:
+        """
+        獲取角色升級相關信息。
+        """
+        if character.level >= 50:
+            return {
+                "can_level_up": False,
+                "is_max_level": True,
+                "current_level": character.level,
+                "current_experience": character.experience,
+                "required_experience": 0,
+                "required_gold": 0,
+                "experience_progress": 100.0,
+                "total_gold_to_max": 0
+            }
+        
+        required_exp = CharacterGrowthService.get_required_exp_for_level_up(character)
+        required_gold = CharacterGrowthService.get_required_gold_for_level_up(character)
+        can_upgrade = CharacterGrowthService.can_level_up(character)
+        
+        # 計算經驗進度百分比
+        progress = (character.experience / required_exp * 100) if required_exp > 0 else 0
+        
+        # 計算升至滿級所需總金幣
+        total_gold_to_max = 0
+        for level in range(character.level, 50):
+            level_config = LEVEL_CONFIGS.get(level, {})
+            total_gold_to_max += level_config.get("gold_cost", 0)
+        
+        return {
+            "can_level_up": can_upgrade,
+            "is_max_level": False,
+            "current_level": character.level,
+            "current_experience": character.experience,
+            "required_experience": required_exp,
+            "required_gold": required_gold,
+            "experience_progress": min(100.0, progress),
+            "total_gold_to_max": total_gold_to_max
+        }
 
     @staticmethod
     @transaction.atomic

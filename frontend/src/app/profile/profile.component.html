@@ -113,9 +113,14 @@
                [class.selected]="character.id === currentCharacter?.id"
                [class.rarity-glow]="'rarity-' + character.rarity">
             <app-character-card [character]="character"></app-character-card>
-            <!-- Overlay: 選中時顯示，正中間小小透明按鈕 -->
-            <div *ngIf="!isViewMode && character.id === currentCharacter?.id" class="mini-overlay-center">
-              <button class="battle-btn-mini" (click)="$event.stopPropagation(); $event.preventDefault(); goToBattle()">前往戰鬥</button>
+            <!-- Overlay: 選中時顯示動作按鈕 -->
+            <div *ngIf="!isViewMode && character.id === currentCharacter?.id" class="action-overlay">
+              <button class="action-btn upgrade-btn" (click)="goToUpgrade(character, $event)">
+                ⬆️ 升級
+              </button>
+              <button class="action-btn battle-btn" (click)="$event.stopPropagation(); $event.preventDefault(); goToBattle()">
+                ⚔️ 戰鬥
+              </button>
             </div>
           </div>
         </div>

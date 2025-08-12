@@ -404,6 +404,7 @@ def health_check(request):
 
 # --- Web3 錢包登入驗證 ---
 class Web3NonceView(APIView):
+    authentication_classes = []  # 不需要任何認證
     permission_classes = [permissions.AllowAny]
     def get(self, request):
         address = request.GET.get('address')
@@ -416,6 +417,7 @@ class Web3NonceView(APIView):
         return Response({'nonce': nonce, 'message': message})
 
 class Web3LoginView(APIView):
+    authentication_classes = []  # 不需要任何認證
     permission_classes = [permissions.AllowAny]
     def post(self, request):
         address = request.data.get('address')
@@ -617,6 +619,32 @@ class QuestProgressView(APIView):
 class CharacterGrowthAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    def get(self, request, character_id, action):
+        character = get_object_or_404(Character, id=character_id, player=request.user.player)
+        
+        if action == 'info':
+            # 獲取角色升級信息
+            upgrade_info = CharacterGrowthService.get_upgrade_info(character)
+            
+            # 獲取玩家資源
+            player = request.user.player
+            player.update_energy()
+            
+            return Response({
+                'character': CharacterSerializer(character).data,
+                'upgrade_info': upgrade_info,
+                'player_resources': {
+                    'gold': player.gold,
+                    'prompt': player.prompt,
+                    'prompt_power': player.prompt_power,
+                    'exp_potion': player.exp_potion,
+                    'energy': player.energy,
+                    'max_energy': player.max_energy
+                }
+            })
+        
+        return Response({'error': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request, character_id, action):
         character = get_object_or_404(Character, id=character_id, player=request.user.player)
         
@@ -632,19 +660,47 @@ class CharacterGrowthAPIView(APIView):
             player.spend_resources(exp_potion_cost=amount)
             CharacterGrowthService.add_experience(character, amount)
             
+            # 更新資源數據
+            player.refresh_from_db()
+            upgrade_info = CharacterGrowthService.get_upgrade_info(character)
+            
             return Response({
                 'success': True, 
                 'message': f'成功為 {character.name} 增加了 {amount} 點經驗值。',
-                'character': CharacterSerializer(character).data
+                'character': CharacterSerializer(character).data,
+                'upgrade_info': upgrade_info,
+                'player_resources': {
+                    'gold': player.gold,
+                    'prompt': player.prompt,
+                    'prompt_power': player.prompt_power,
+                    'exp_potion': player.exp_potion,
+                    'energy': player.energy,
+                    'max_energy': player.max_energy
+                }
             })
 
         elif action == 'level-up':
             try:
                 CharacterGrowthService.level_up(character)
+                
+                # 更新資源數據
+                player = request.user.player
+                player.refresh_from_db()
+                upgrade_info = CharacterGrowthService.get_upgrade_info(character)
+                
                 return Response({
                     'success': True, 
                     'message': f'{character.name} 成功升級至 Lv.{character.level}！',
-                    'character': CharacterSerializer(character).data
+                    'character': CharacterSerializer(character).data,
+                    'upgrade_info': upgrade_info,
+                    'player_resources': {
+                        'gold': player.gold,
+                        'prompt': player.prompt,
+                        'prompt_power': player.prompt_power,
+                        'exp_potion': player.exp_potion,
+                        'energy': player.energy,
+                        'max_energy': player.max_energy
+                    }
                 })
             except ValueError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

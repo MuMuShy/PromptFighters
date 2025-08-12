@@ -44,6 +44,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/daily-quests/daily-quests.component').then(m => m.DailyQuestsComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'upgrade/:characterId',
+    loadComponent: () => import('./upgrade/upgrade.component').then(m => m.UpgradeComponent),
+    canActivate: [authGuard]
+  },
   { path: '', component: LandingComponent },
   {
     path: 'privacy',

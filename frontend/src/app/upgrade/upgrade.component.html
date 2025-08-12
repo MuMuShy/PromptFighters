@@ -1,0 +1,207 @@
+<div *ngIf="isLoading" class="loading-overlay">
+  <div class="magical-portal">
+    <div class="magic-circle">
+      <div class="inner-circle"></div>
+      <div class="runes">✦ ✧ ✦ ✧ ✦ ✧</div>
+    </div>
+    <div class="energy-particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+    <div class="overlay-text">
+      <span class="text-glow">正在載入角色升級資訊...</span>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!isLoading && character" class="upgrade-container">
+  <div class="upgrade-header">
+    <button (click)="goBack()" class="back-button">
+      <span>←</span> 返回角色列表
+    </button>
+    <h1 class="upgrade-title">角色升級</h1>
+  </div>
+
+  <!-- 訊息顯示區 -->
+  <div *ngIf="message" class="message-bar" [ngClass]="messageType">
+    <span>{{ message }}</span>
+    <button (click)="message = ''" class="close-message">×</button>
+  </div>
+
+  <div class="upgrade-content">
+    <!-- 左側：角色資訊 -->
+    <div class="character-info-panel">
+      <div class="character-card-large" [ngClass]="'rarity-' + character.rarity">
+        <div class="character-header">
+          <h2 class="character-name">{{ character.name }}</h2>
+          <div class="rarity-badge" [ngClass]="'rarity-' + character.rarity">
+            {{ getRarityLabel(character.rarity) }}
+          </div>
+        </div>
+        
+        <div class="character-image-section">
+          <div class="character-portrait">
+            <img 
+              *ngIf="!character.image_url.includes('placeholder')" 
+              [src]="getFullImageUrl(character.image_url)" 
+              [alt]="character.name" 
+              class="character-image"
+            />
+            <div *ngIf="character.image_url.includes('placeholder')" class="image-loading">
+              <div class="spinner"></div>
+              <div class="loading-text">圖片生成中...</div>
+            </div>
+          </div>
+          
+          <div class="level-display">
+            <div class="current-level">Lv.{{ character.level }}</div>
+            <div class="next-level" *ngIf="!upgradeInfo.is_max_level && expAmount > 0 && levelUpResults.finalLevel > character.level">→ Lv.{{ levelUpResults.finalLevel }}</div>
+            <div class="max-level-indicator" *ngIf="upgradeInfo.is_max_level">已達滿級</div>
+          </div>
+          
+          <!-- 經驗值進度條 -->
+          <div class="exp-bar-container" *ngIf="!upgradeInfo.is_max_level">
+            <div class="exp-bar">
+              <div class="exp-fill" [style.width.%]="upgradeInfo.experience_progress"></div>
+              <div class="exp-fill-preview" *ngIf="expAmount > 0" [style.width.%]="Math.min(100, (upgradeInfo.current_experience + expAmount) / upgradeInfo.required_experience * 100)"></div>
+              <div class="exp-text">
+                <span *ngIf="expAmount <= 0">{{ upgradeInfo.current_experience }} / {{ upgradeInfo.required_experience }}</span>
+                <span *ngIf="expAmount > 0">{{ upgradeInfo.current_experience + expAmount }} / {{ upgradeInfo.required_experience }}</span>
+              </div>
+            </div>
+            <div class="gold-cost-preview" *ngIf="expAmount > 0 && levelUpResults.totalGoldCost > 0">
+              <img src="/assets/game/gold_coin.png" alt="Gold" class="gold-icon" />
+              <span>{{ levelUpResults.totalGoldCost | number }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="character-stats">
+          <div class="stat-item">
+            <span class="stat-icon">💪</span>
+            <span class="stat-value">{{ character.strength }}</span>
+            <span class="stat-label">力量</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-icon">⚡</span>
+            <span class="stat-value">{{ character.agility }}</span>
+            <span class="stat-label">敏捷</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-icon">🍀</span>
+            <span class="stat-value">{{ character.luck }}</span>
+            <span class="stat-label">幸運</span>
+          </div>
+        </div>
+
+        <div class="character-skill">
+          <h3>技能描述</h3>
+          <p>{{ character.skill_description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側：升級操作 -->
+    <div class="upgrade-panel">
+      <!-- 玩家資源顯示 -->
+      <div class="resources-section">
+        <h3>擁有資源</h3>
+        <div class="resource-grid">
+          <div class="resource-item gold">
+            <img src="/assets/game/gold_coin.png" alt="Gold" class="resource-icon" />
+            <span class="resource-amount">{{ playerResources.gold | number }}</span>
+            <span class="resource-label">金幣</span>
+          </div>
+          <div class="resource-item exp-potion">
+            <img src="/assets/game/exp_potion.png" alt="Exp Potion" class="resource-icon" />
+            <span class="resource-amount">{{ playerResources.exp_potion | number }}</span>
+            <span class="resource-label">經驗藥水</span>
+          </div>
+          <div class="resource-item prompt">
+            <img src="/assets/game/prompt.png" alt="PROMPT" class="resource-icon" />
+            <span class="resource-amount">{{ playerResources.prompt | number }}</span>
+            <span class="resource-label">$PROMPT</span>
+          </div>
+          <div class="resource-item prompt-power">
+            <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="resource-icon" />
+            <span class="resource-amount">{{ playerResources.prompt_power | number }}</span>
+            <span class="resource-label">Prompt Power</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 增加經驗值區域 -->
+      <div class="add-exp-section" *ngIf="!upgradeInfo.is_max_level">
+        <h3>增加經驗值</h3>
+        <div class="exp-input-group">
+          <div class="exp-amount-selector">
+            <img src="/assets/game/energy.png" alt="Exp Potion" class="exp-potion-icon" />
+            <span class="selector-label">使用經驗藥水:</span>
+            
+            <div class="amount-controls">
+              <button 
+                (click)="decreaseExpAmount()" 
+                class="control-button minus"
+                [disabled]="expAmount <= 0"
+              >
+                −
+              </button>
+              
+              <input 
+                type="number" 
+                [(ngModel)]="expAmount"
+                (ngModelChange)="setExpAmount($event)"
+                [min]="0" 
+                [max]="maxExpAmount"
+                class="exp-input"
+              />
+              
+              <button 
+                (click)="increaseExpAmount()" 
+                class="control-button plus"
+                [disabled]="expAmount >= maxExpAmount"
+              >
+                +
+              </button>
+            </div>
+            
+            <button 
+              (click)="setMaxExpAmount()" 
+              class="max-button"
+              [disabled]="maxExpAmount === 0"
+            >
+              最大 ({{ maxExpAmount }})
+            </button>
+          </div>
+
+          <button 
+            (click)="upgradeCharacter()" 
+            class="upgrade-button"
+            [disabled]="isProcessing || expAmount <= 0 || expAmount > playerResources.exp_potion || (levelUpResults.totalGoldCost > 0 && !levelUpResults.canAfford)"
+            [ngClass]="{ 'can-upgrade': expAmount > 0 && levelUpResults.canAfford }"
+          >
+            <span *ngIf="!isProcessing" class="button-content">
+              <img src="/assets/game/exp_potion.png" alt="Exp Potion" class="button-icon" />
+              <span *ngIf="expAmount > 0">投入</span>
+              <span *ngIf="expAmount <= 0">請選擇經驗藥水數量</span>
+            </span>
+            <span *ngIf="isProcessing">處理中...</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 滿級顯示 -->
+      <div class="max-level-section" *ngIf="upgradeInfo.is_max_level">
+        <div class="max-level-display">
+          <div class="max-level-icon">👑</div>
+          <h3>已達滿級</h3>
+          <p>恭喜！{{ character.name }} 已經達到最高等級 Lv.50</p>
+          <p>現在可以考慮將角色鑄造成 NFT 來永久保存！</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
