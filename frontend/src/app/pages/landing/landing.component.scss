@@ -114,24 +114,19 @@
     @apply absolute inset-0;
     background: radial-gradient(circle at center, rgba(11, 17, 32, 0.7) 0%, rgba(11, 17, 32, 0.95) 100%);
   }
-}
-
-.animated-bg {
-  @apply absolute inset-0 overflow-hidden;
-}
-
-.floating-particles {
-  @apply absolute w-2 h-2 bg-rpg-gold rounded-full opacity-30;
-  animation: float linear infinite;
   
-  &:nth-child(odd) {
-    background: #FF6B6B;
-  }
-  
-  &:nth-child(even) {
-    background: #4ECDC4;
+  // Mobile responsive fixes
+  @media (max-width: 768px) {
+    background-attachment: scroll;
+    background-size: cover;
+    background-position: center center;
+    
+    &::before {
+      background: radial-gradient(circle at center, rgba(11, 17, 32, 0.8) 0%, rgba(11, 17, 32, 0.95) 100%);
+    }
   }
 }
+
 
 .game-logo {
   @apply mb-8;
@@ -183,7 +178,7 @@
 }
 
 .scroll-indicator {
-  @apply absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center text-gray-400;
+  @apply absolute left-1/2 transform -translate-x-1/2 text-center text-gray-400;
   animation: fadeInUp 1s ease-out 1s both;
   
   .scroll-arrow {
@@ -537,6 +532,13 @@
   background-position: center;
   background-attachment: fixed;
   opacity: 0.1;
+  
+  // Mobile responsive fixes
+  @media (max-width: 768px) {
+    background-attachment: scroll;
+    background-size: cover;
+    background-position: center center;
+  }
 }
 
 .cta-title { 
@@ -660,6 +662,24 @@
   .battle-header {
     @apply flex-col gap-4 text-center;
   }
+  
+  .game-logo {
+    .hero-title {
+      @apply text-4xl md:text-6xl;
+    }
+  }
+  
+  .hero-content {
+    @apply px-4;
+  }
+  
+  .hero-buttons {
+    @apply px-4;
+  }
+  
+  .section-content {
+    @apply px-4;
+  }
 }
 
 // --- Performance Optimizations ---
@@ -669,9 +689,6 @@
   will-change: transform, opacity;
 }
 
-.floating-particles {
-  will-change: transform;
-}
 
 // --- Accessibility Improvements ---
 .btn-primary:focus,

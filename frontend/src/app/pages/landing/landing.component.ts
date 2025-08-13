@@ -11,14 +11,8 @@ import { Meta, Title } from '@angular/platform-browser';
     <div class="landing-container">
       <!-- 1. Hero Section with Animated Background -->
       <section class="hero-section">
-        <div class="animated-bg">
-          <div class="floating-particles" *ngFor="let particle of particles; let i = index" 
-               [style.left.%]="particle.x" 
-               [style.animation-delay.s]="particle.delay"
-               [style.animation-duration.s]="particle.duration"></div>
-        </div>
         
-        <div class="hero-content">
+        <div class="hero-content relative z-10">
           <div class="game-logo">
             <h1 class="hero-title">PromptFighters</h1>
             <div class="logo-subtitle">AI 英雄對戰</div>
@@ -179,7 +173,7 @@ import { Meta, Title } from '@angular/platform-browser';
           
           <div class="economy-grid">
             <div class="economy-card" *ngFor="let token of economyTokens">
-              <div class="token-icon">{{ token.icon }}</div>
+              <div class="token-icon"><img src="{{ token.icon }}" alt="{{ token.name }}" /></div>
               <h3>{{ token.name }}</h3>
               <p>{{ token.description }}</p>
               <div class="token-uses">
@@ -219,11 +213,11 @@ import { Meta, Title } from '@angular/platform-browser';
           
           <div class="social-proof">
             <p>已有 <strong>{{ totalPlayers }}+</strong> 玩家加入戰鬥</p>
-            <div class="social-links">
+            <!-- <div class="social-links">
               <a href="#" class="social-link">Discord</a>
               <a href="#" class="social-link">Twitter</a>
               <a href="#" class="social-link">Telegram</a>
-            </div>
+            </div> -->
           </div>
         </div>
       </section>
@@ -243,12 +237,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
   isPlaying = false;
   private battleInterval: any;
   
-  // 浮动粒子
-  particles = Array.from({length: 20}, (_, i) => ({
-    x: Math.random() * 100,
-    delay: Math.random() * 10,
-    duration: 15 + Math.random() * 10
-  }));
 
   features = [
     {
@@ -321,21 +309,21 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   economyTokens = [
     {
-      icon: '🪙',
+      icon: '/assets/game/prompt.png',
       name: '$PROMPT',
       description: '鏈上價值代幣，用於 NFT 鑄造和高階遊戲內消耗',
       uses: ['NFT 鑄造', '高階召喚', '治理投票']
     },
     {
-      icon: '💰',
+      icon: '/assets/game/gold_coin.png',
       name: '$GOLD',
       description: '遊戲內通用貨幣，用於角色升級和日常消耗',
       uses: ['角色升級', '標準召喚', '日常交易']
     },
     {
-      icon: '⚡',
+      icon: '/assets/game/prompt_power.png',
       name: 'Prompt Power',
-      description: '召喚系統的准入券，控制新角色的產出速率',
+      description: '召喚系統的初始道具，使用AI咒力創建角色',
       uses: ['角色召喚', '活動參與', '特殊獎勵']
     }
   ];
@@ -383,8 +371,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
     // 初始化滚动动画
     this.setupScrollAnimations();
     
-    // 初始化粒子动画
-    this.setupParticleAnimations();
   }
 
   private setupScrollAnimations() {
@@ -407,14 +393,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private setupParticleAnimations() {
-    // 粒子动画逻辑
-    setInterval(() => {
-      this.particles.forEach(particle => {
-        particle.x = (particle.x + 0.1) % 100;
-      });
-    }, 100);
-  }
 
   playBattleDemo() {
     if (this.isPlaying) {
