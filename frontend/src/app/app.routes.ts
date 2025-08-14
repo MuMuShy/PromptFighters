@@ -5,10 +5,21 @@ import { CreateComponent } from './create/create.component';
 import { OAuthCallbackComponent } from './auth/oauth-callback.component';
 import { authGuard } from './guards/auth.guard';
 import { LandingComponent } from './pages/landing/landing.component';
+import { BattlesIntroComponent } from './pages/intro/battles-intro.component';
+import { GameGuideComponent } from './pages/intro/game-guide.component';
+import { AboutComponent } from './pages/intro/about.component';
+import { HeroesIntroComponent } from './pages/intro/heroes-intro.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'auth/:provider/callback', component: OAuthCallbackComponent },
+  
+  // 介绍页面 - 无需登录
+  { path: 'intro/heroes', component: HeroesIntroComponent },
+  { path: 'intro/battles', component: BattlesIntroComponent },
+  { path: 'intro/guide', component: GameGuideComponent },
+  { path: 'intro/about', component: AboutComponent },
+  
   { 
     path: 'profile', 
     component: ProfileComponent,

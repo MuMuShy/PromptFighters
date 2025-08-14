@@ -46,6 +46,29 @@ import { Meta, Title } from '@angular/platform-browser';
             </button>
           </div>
           
+          <!-- 新增介绍页面导航 -->
+          <div class="intro-navigation">
+            <p class="nav-label">探索更多內容：</p>
+            <div class="nav-links">
+              <a (click)="goToIntroPage('heroes')" class="nav-link">
+                <span class="link-icon">🎭</span>
+                <span>英雄展示</span>
+              </a>
+              <a (click)="goToIntroPage('battles')" class="nav-link">
+                <span class="link-icon">⚔️</span>
+                <span>戰鬥記錄</span>
+              </a>
+              <a (click)="goToIntroPage('guide')" class="nav-link">
+                <span class="link-icon">📖</span>
+                <span>遊戲指南</span>
+              </a>
+              <a (click)="goToIntroPage('about')" class="nav-link">
+                <span class="link-icon">ℹ️</span>
+                <span>關於我們</span>
+              </a>
+            </div>
+          </div>
+          
           <div class="scroll-indicator">
             <div class="scroll-arrow"></div>
             <span>向下滾動探索更多</span>
@@ -479,5 +502,9 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   scrollToFeatures() {
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  goToIntroPage(page: string) {
+    this.router.navigate([`/intro/${page}`]);
   }
 } 

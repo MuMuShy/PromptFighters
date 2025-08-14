@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Allow: /intro/
+Allow: /intro/heroes
+Allow: /intro/battles
+Allow: /intro/guide
+Allow: /intro/about
+Allow: /privacy
+Allow: /terms
+
+Disallow: /login
+Disallow: /profile
+Disallow: /create
+Disallow: /battle
+Disallow: /history
+Disallow: /upgrade
+Disallow: /daily-quests
+Disallow: /leaderboard
+Disallow: /auth/
+
+Sitemap: https://promptfighters.app/sitemap.xml

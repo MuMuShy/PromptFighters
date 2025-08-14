@@ -91,6 +91,58 @@
   }
 }
 
+// 介绍页面导航样式
+.intro-navigation {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+
+  .nav-label {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .nav-links {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    color: #e2e8f0;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(251, 191, 36, 0.5);
+      color: #fbbf24;
+      transform: translateY(-2px);
+    }
+
+    .link-icon {
+      font-size: 1.1rem;
+    }
+  }
+}
+
 .btn-secondary {
   @apply px-8 py-3 border-2 border-gray-600 text-gray-200 font-bold rounded-lg;
   @apply hover:bg-gray-700 hover:border-gray-500 transition-all duration-300;
