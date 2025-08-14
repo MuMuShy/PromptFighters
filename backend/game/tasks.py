@@ -238,12 +238,55 @@ def run_battle_task(battle_id):
         
         if battle.winner == player:
             player.win_count += 1
+            player_user = player.player
+            
+            # 戰鬥勝利獎勵
+            base_gold_reward = 500
+            base_exp_reward = 5
+            
+            # 根據對手稀有度調整獎勵
+            rarity_multiplier = {1: 1.0, 2: 1.2, 3: 1.5, 4: 2.0, 5: 3.0}
+            multiplier = rarity_multiplier.get(opponent.rarity, 1.0)
+            
+            gold_reward = int(base_gold_reward * multiplier)
+            exp_reward = int(base_exp_reward * multiplier)
+            
+            # 發放獎勵
+            player_user.gold += gold_reward
+            player_user.exp_potion += exp_reward
+            player_user.save()
+            
+            # 將獎勵信息加入戰鬥日誌
+            battle_result['battle_rewards'] = {
+                'gold': gold_reward,
+                'exp_potion': exp_reward,
+                'rarity_bonus': multiplier,
+                'victory': True
+            }
+            
             # 更新玩家勝利任務進度
             DailyQuestService.update_quest_progress(
                 player.player, 'battle_win', 1
             )
         else:
             player.loss_count += 1
+            # 失敗也給少量安慰獎勵
+            player_user = player.player
+            consolation_gold = 100
+            player_user.gold += consolation_gold
+            player_user.save()
+            
+            # 將獎勵信息加入戰鬥日誌
+            battle_result['battle_rewards'] = {
+                'gold': consolation_gold,
+                'exp_potion': 0,
+                'rarity_bonus': 1.0,
+                'victory': False
+            }
+        
+        # 更新戰鬥日誌包含獎勵信息
+        battle.battle_log = battle_result
+        battle.save()
         
         player.save()
         opponent.save()

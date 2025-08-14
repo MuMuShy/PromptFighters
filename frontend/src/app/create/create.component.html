@@ -1,21 +1,29 @@
-<div *ngIf="isGenerating" class="overlay-loading">
-  <div class="magical-portal">
-    <div class="magic-circle">
-      <div class="inner-circle"></div>
-      <div class="runes">✦ ✧ ✦ ✧ ✦ ✧</div>
+<!-- 改進的進度顯示 - 不使用全屏overlay -->
+<div *ngIf="isGenerating" class="generation-progress">
+  <div class="progress-container">
+    <div class="progress-header">
+      <div class="progress-icon">✦</div>
+      <h3 class="progress-title">英雄創造中</h3>
     </div>
-    <div class="energy-particles">
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-    </div>
-    <div class="overlay-text">
-      <span class="text-glow">召喚魔法進行中...</span>
-      <div class="progress-dots">
-        <span>●</span><span>●</span><span>●</span>
+    
+    <div class="progress-bar-container">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progressPercent"></div>
+        <div class="progress-glow" [style.width.%]="progressPercent"></div>
       </div>
+      <div class="progress-text">{{ progressPercent.toFixed(0) }}%</div>
+    </div>
+    
+    <div class="phase-info">
+      <div class="phase-text">{{ currentPhaseText }}</div>
+      <div class="encouragement-text">{{ currentEncouragement }}</div>
+    </div>
+    
+    <div class="magic-particles">
+      <div class="particle particle-1"></div>
+      <div class="particle particle-2"></div>
+      <div class="particle particle-3"></div>
+      <div class="particle particle-4"></div>
     </div>
   </div>
 </div>
@@ -24,7 +32,7 @@
   <div class="modal-content">
     <h2 class="modal-title">
       <span class="success-icon">✦</span>
-      英雄召喚成功！
+      英雄創建成功！
     </h2>
     <div *ngIf="generatedCharacter" class="rarity-announcement">
       <div class="rarity-badge" [style.color]="getRarityInfo(generatedCharacter.rarity).color">
@@ -52,23 +60,15 @@
   
 
   <div class="container mx-auto px-4 py-8">
-    <div class="title-section">
-      <h1 class="magical-title">
-        <span class="title-text">英雄召喚祭壇</span>
-        <div class="title-underline"></div>
-      </h1>
-      <p class="title-subtitle">運用古老的召喚魔法，賦予你的英雄生命與力量</p>
-    </div>
     
     <div class="max-w-6xl mx-auto">
       <!-- 召喚方式選擇 -->
       <div class="summon-tabs">
-        <div class="summon-tab" 
+        <div class="summon-tab standard" 
              [class.active]="mode==='normal'" 
              (click)="mode = 'normal'">
-          <div class="tab-icon">◉</div>
           <div class="tab-content">
-            <div class="tab-title">一般召喚</div>
+            <div class="tab-title">標準創建</div>
             <div class="tab-desc">N, R, SR 稀有度</div>
             <div class="tab-cost">
               <span class="cost-item">
@@ -87,16 +87,15 @@
             </div>
           </div>
           <div class="tab-status" [class.insufficient]="!canAffordBasicSummon()">
-            {{ canAffordBasicSummon() ? '可召喚' : '資源不足' }}
+            {{ canAffordBasicSummon() ? '可創建' : '資源不足' }}
           </div>
         </div>
         
         <div class="summon-tab premium" 
              [class.active]="mode==='advanced'" 
              (click)="mode = 'advanced'">
-          <div class="tab-icon">✦</div>
           <div class="tab-content">
-            <div class="tab-title">高階召喚</div>
+            <div class="tab-title">高級創建</div>
             <div class="tab-desc">SR, SSR, UR 稀有度</div>
             <div class="tab-cost">
               <span class="cost-item">
@@ -115,36 +114,27 @@
             </div>
           </div>
           <div class="tab-status" [class.insufficient]="!canAffordPremiumSummon()">
-            {{ canAffordPremiumSummon() ? '可召喚' : '資源不足' }}
+            {{ canAffordPremiumSummon() ? '可創建' : '資源不足' }}
           </div>
         </div>
       </div>
       
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- 召喚法陣 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+        <!-- 召喚表單卡片 -->
         <div class="summon-circle-container">
-          <div class="summon-circle" [class.premium]="mode==='advanced'">
-            <div class="circle-outer"></div>
-            <div class="circle-inner"></div>
-            <div class="circle-runes">
-              <div class="rune">✦</div>
-              <div class="rune">◉</div>
-              <div class="rune">✧</div>
-              <div class="rune">◈</div>
-            </div>
-            <div class="circle-center">
-              <div class="center-icon">{{ mode==='normal' ? '◉' : '✦' }}</div>
-            </div>
+          <!-- 簡潔的狀態指示器 -->
+          <div class="summon-indicator" [class.generating]="isGenerating">
+            {{ mode==='normal' ? '◉' : '✦' }}
           </div>
           
           <div class="summon-form">
             <h2 class="form-title">
-              {{ mode==='normal' ? '一般召喚法陣' : '高階召喚法陣' }}
+              {{ mode==='normal' ? '創建英雄' : '高級創建' }}
             </h2>
             
             <!-- 資源消耗提示 -->
             <div class="cost-display">
-              <div class="cost-label">召喚消耗：</div>
+              <div class="cost-label">創建消耗：</div>
               <div class="cost-items">
                 <ng-container *ngIf="mode==='normal'">
                   <div class="cost-item" [class.insufficient]="resources.gold < 1000">
@@ -241,11 +231,11 @@
               <div class="button-content">
                 <span *ngIf="!isGenerating" class="button-text">
                   <span class="button-icon">{{ mode==='normal' ? '◉' : '✦' }}</span>
-                  {{ mode==='normal' ? '開始召喚' : '高階召喚' }}
+                  {{ mode==='normal' ? '創建英雄' : '高級創建' }}
                 </span>
                 <span *ngIf="isGenerating" class="button-loading">
                   <span class="loading-icon">◉</span>
-                  召喚進行中...
+                  創建中...
                 </span>
               </div>
             </button>
@@ -253,7 +243,7 @@
             <div *ngIf="generatedCharacter && !isGenerating" class="success-notification">
               <div class="success-content">
                 <div class="success-icon">✦</div>
-                <h3 class="success-title">英雄召喚成功！</h3>
+                <h3 class="success-title">英雄創建成功！</h3>
                 <div class="rarity-info">
                   <span class="rarity-badge" [style.color]="getRarityInfo(generatedCharacter.rarity).color">
                     {{ getRarityInfo(generatedCharacter.rarity).stars }}
@@ -283,10 +273,55 @@
           <div class="preview-content">
             <div *ngIf="!generatedCharacter" class="empty-preview">
               <div class="empty-icon">◉</div>
-              <h3>等待召喚</h3>
-              <p>完成召喚後，你的英雄將在此顯現</p>
+              <h3>等待創建</h3>
+              <p>完成創建後，你的英雄將在此顯現</p>
             </div>
-            <div *ngIf="generatedCharacter" class="character-display">
+            
+            <!-- 生成中的神秘預覽 -->
+            <div *ngIf="generatedCharacter && isGenerating" class="generating-preview">
+              <div class="mystery-card">
+                <div class="mystery-image">
+                  <div class="mystery-placeholder">
+                    <div class="mystery-icon">?</div>
+                    <div class="magic-sparkles">
+                      <div class="sparkle sparkle-1">✦</div>
+                      <div class="sparkle sparkle-2">✧</div>
+                      <div class="sparkle sparkle-3">✦</div>
+                      <div class="sparkle sparkle-4">✧</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mystery-info">
+                  <div class="mystery-name">{{ generatedCharacter.name }}</div>
+                  <div class="mystery-rarity">
+                    <span class="mystery-stars">★ ★ ★ ★ ★</span>
+                    <span class="mystery-text">稀有度計算中...</span>
+                  </div>
+                  <div class="mystery-stats">
+                    <div class="mystery-stat">
+                      <span class="stat-label">力量</span>
+                      <span class="stat-mystery">???</span>
+                    </div>
+                    <div class="mystery-stat">
+                      <span class="stat-label">敏捷</span>
+                      <span class="stat-mystery">???</span>
+                    </div>
+                    <div class="mystery-stat">
+                      <span class="stat-label">幸運</span>
+                      <span class="stat-mystery">???</span>
+                    </div>
+                  </div>
+                  <div class="mystery-description">
+                    <div class="mystery-text-line"></div>
+                    <div class="mystery-text-line short"></div>
+                    <div class="mystery-text-line"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 完成後的角色展示 -->
+            <div *ngIf="generatedCharacter && !isGenerating" class="character-display">
               <app-character-card [character]="generatedCharacter"></app-character-card>
             </div>
           </div>
@@ -337,8 +372,8 @@
         </div>
         
         <div class="quick-summon">
-          <h3 class="section-title">快速召喚</h3>
-          <p class="section-subtitle">點擊範例快速開始召喚</p>
+          <h3 class="section-title">快速創建</h3>
+          <p class="section-subtitle">點擊範例快速開始創建英雄</p>
           <div class="quick-examples">
             <button 
               *ngFor="let example of examplePrompts"

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, interval } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -47,8 +47,16 @@ export class PlayerService {
   });
 
   public resources$ = this.resourcesSubject.asObservable();
+  private energyTimer: any;
+  private energyRecoverySubject = new BehaviorSubject<{nextRecoveryMinutes: number, isRecovering: boolean}>({
+    nextRecoveryMinutes: 0,
+    isRecovering: false
+  });
+  public energyRecovery$ = this.energyRecoverySubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.startEnergyRecoveryTimer();
+  }
 
   getResources(): Observable<PlayerResources> {
     return this.http.get<PlayerResources>(`${this.apiUrl}/player/resources/`).pipe(
@@ -91,5 +99,49 @@ export class PlayerService {
 
   updateNickname(nickname: string) {
     return this.http.patch<any>(`${this.apiUrl}/player/profile/`, { nickname });
+  }
+
+  private startEnergyRecoveryTimer(): void {
+    // 每分鐘檢查一次體力恢復
+    this.energyTimer = interval(60000).subscribe(() => {
+      this.updateEnergyRecoveryStatus();
+    });
+    
+    // 立即檢查一次
+    this.updateEnergyRecoveryStatus();
+  }
+
+  private updateEnergyRecoveryStatus(): void {
+    const resources = this.resourcesSubject.value;
+    if (resources.energy < resources.max_energy) {
+      // 計算到下次體力恢復還有幾分鐘
+      const now = Date.now();
+      const nextRecovery = Math.ceil(10 - ((now / 60000) % 10));
+      
+      this.energyRecoverySubject.next({
+        nextRecoveryMinutes: nextRecovery,
+        isRecovering: true
+      });
+
+      // 自動更新資源（每10分鐘呼叫一次API更新）
+      if (nextRecovery === 10) {
+        this.getResources().subscribe();
+      }
+    } else {
+      this.energyRecoverySubject.next({
+        nextRecoveryMinutes: 0,
+        isRecovering: false
+      });
+    }
+  }
+
+  getEnergyRecoveryInfo(): {nextRecoveryMinutes: number, isRecovering: boolean} {
+    return this.energyRecoverySubject.value;
+  }
+
+  ngOnDestroy(): void {
+    if (this.energyTimer) {
+      this.energyTimer.unsubscribe();
+    }
   }
 }

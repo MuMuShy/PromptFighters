@@ -52,6 +52,24 @@
   margin-top: 1rem;
 }
 
+/* Energy Recovery Tooltip */
+.energy-recovery-tooltip {
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.9;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

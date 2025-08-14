@@ -4,7 +4,8 @@ import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CharacterService } from '../services/character.service';
-import { BattleService, BattleStartResponse } from '../services/battle.service';
+import { BattleService, BattleStartResponse, BattleError } from '../services/battle.service';
+import { PlayerService } from '../services/player.service';
 import { Character } from '../interfaces/character.interface';
 import { Battle } from '../interfaces/battle.interface';
 import { CharacterCardComponent } from '../shared/character-card.component';
@@ -62,6 +63,11 @@ export class BattleComponent implements OnInit, OnDestroy {
   isOpponentBeingAttacked = false;
   isBattleLogComplete = false;
   
+  // 體力和錯誤處理
+  energyError: string | null = null;
+  showRewards = false;
+  battleRewards: any = null;
+  
   // 戰鬥進度動畫相關
   battleProgressStep = 0;
   currentBattlePhase = '初始化戰鬥...';
@@ -81,7 +87,8 @@ export class BattleComponent implements OnInit, OnDestroy {
 
   constructor(
     private characterService: CharacterService,
-    private battleService: BattleService
+    private battleService: BattleService,
+    private playerService: PlayerService
   ) {}
 
   ngOnInit(): void {
@@ -123,8 +130,10 @@ export class BattleComponent implements OnInit, OnDestroy {
   startBattle(): void {
     if (!this.playerCharacter || !this.opponent) return;
 
+    this.energyError = null;
     this.battleStarted = true;
     this.showResultOverlay = false;
+    this.showRewards = false;
     this.currentRound = 0;
     this.isBattleLogComplete = false;
     this.resetHealth();
@@ -135,11 +144,23 @@ export class BattleComponent implements OnInit, OnDestroy {
 
     this.battleService.startBattle(this.playerCharacter.id, this.opponent.id).subscribe({
       next: (response: BattleStartResponse) => {
+        // 戰鬥開始後立即更新資源（消耗體力）
+        this.playerService.getResources().subscribe();
         this.pollForBattleResult(response.battle_id);
       },
-      error: (error) => {
-        console.error('啟動戰鬥失敗:', error);
+      error: (errorResponse) => {
+        console.error('啟動戰鬥失敗:', errorResponse);
         this.battleStarted = false;
+        
+        // 處理體力不足錯誤
+        if (errorResponse.error && errorResponse.error.error === 'Energy insufficient') {
+          const error: BattleError = errorResponse.error;
+          this.energyError = `體力不足！需要 ${error.required_energy} 點體力，目前剩餘 ${error.current_energy} 點。${Math.ceil(error.next_recovery_minutes)} 分鐘後恢復 1 點體力。`;
+        } else {
+          this.energyError = '戰鬥啟動失敗，請重試';
+        }
+        // 更新資源以反映最新狀態
+        this.playerService.getResources().subscribe();
       }
     });
   }
@@ -167,6 +188,11 @@ export class BattleComponent implements OnInit, OnDestroy {
             }
             this.battleResult = battle as any;
             
+            // 提取戰鬥獎勵
+            if (this.battleResult?.battle_log?.battle_rewards) {
+              this.battleRewards = this.battleResult.battle_log.battle_rewards;
+            }
+            
             if (this.battleResult?.battle_log) {
                 const battleLog = this.battleResult.battle_log.battle_log;
                 const totalRounds = battleLog.length;
@@ -181,8 +207,14 @@ export class BattleComponent implements OnInit, OnDestroy {
                   } else {
                       // All logs are finished, now we can show overlays
                       this.isBattleLogComplete = true; 
+                      
+                      // 立即更新玩家資源
+                      this.playerService.getResources().subscribe();
+                      
                       setTimeout(() => {
                         this.showResultOverlay = true;
+                        // 直接顯示獎勵，不要延遲
+                        this.showRewards = true;
                       }, 800);
                   }
                 };
@@ -231,6 +263,9 @@ export class BattleComponent implements OnInit, OnDestroy {
     this.battleResult = null;
     this.battleStarted = false;
     this.showResultOverlay = false;
+    this.showRewards = false;
+    this.battleRewards = null;
+    this.energyError = null;
     this.currentRound = 0;
     this.isBattleLogComplete = false;
     this.battleProgressStep = 0;

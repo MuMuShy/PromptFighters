@@ -61,9 +61,13 @@
                 <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-7 h-7" />
                 <span class="text-purple-300 font-bold text-base">{{ promptPower }}</span>
               </div>
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1 relative">
                 <img src="/assets/game/stamina.png" alt="Energy" class="w-7 h-7" />
-                <span class="text-red-200 font-bold text-base">{{ energy }}/100</span>
+                <span class="text-red-200 font-bold text-base">{{ energy }}/{{ maxEnergy }}</span>
+                <span *ngIf="energyRecoveryInfo.isRecovering && energy < maxEnergy" 
+                      class="text-xs text-gray-400 ml-1">
+                  ({{ energyRecoveryInfo.nextRecoveryMinutes }}m)
+                </span>
               </div>
               <!-- $PROMPT 放在最右側，特別樣式 -->
               <div class="flex items-center gap-1 prompt-rare">
@@ -110,7 +114,11 @@
       </div>
       <div class="flex items-center gap-1">
         <img src="/assets/game/stamina.png" alt="Energy" class="w-6 h-6" />
-        <span class="text-red-200 font-bold text-sm">{{ energy }}/100</span>
+        <span class="text-red-200 font-bold text-sm">{{ energy }}/{{ maxEnergy }}</span>
+        <span *ngIf="energyRecoveryInfo.isRecovering && energy < maxEnergy" 
+              class="text-xs text-gray-400">
+          ({{ energyRecoveryInfo.nextRecoveryMinutes }}m)
+        </span>
       </div>
       <!-- $PROMPT 放最後，特別樣式 -->
       <div class="flex items-center gap-1 prompt-rare">

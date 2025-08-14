@@ -26,6 +26,8 @@ export class AppComponent implements OnInit {
   promptPower = 0;
   expPotion = 0;
   energy = 0;
+  maxEnergy = 100;
+  energyRecoveryInfo = { nextRecoveryMinutes: 0, isRecovering: false };
 
   constructor(
     private healthCheckService: HealthCheckService,
@@ -58,6 +60,12 @@ export class AppComponent implements OnInit {
       this.promptPower = resources.prompt_power;
       this.expPotion = resources.exp_potion;
       this.energy = resources.energy;
+      this.maxEnergy = resources.max_energy;
+    });
+
+    // 訂閱體力恢復狀態
+    this.playerService.energyRecovery$.subscribe(recoveryInfo => {
+      this.energyRecoveryInfo = recoveryInfo;
     });
     
     // 只要已登入且不在 /profile 就自動導向 /profile

@@ -18,6 +18,16 @@ export interface BattleAction {
 export interface BattleStartResponse {
   battle_id: string;
   status: string;
+  energy_consumed?: number;
+  remaining_energy?: number;
+}
+
+export interface BattleError {
+  error: string;
+  message: string;
+  current_energy: number;
+  required_energy: number;
+  next_recovery_minutes: number;
 }
 
 @Injectable({

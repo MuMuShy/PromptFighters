@@ -24,6 +24,32 @@ export class CreateComponent implements OnInit, OnDestroy {
   generatedCharacter: Character | null = null;
   isGenerating = false;
   showSuccessModal = false;
+  
+  // 進度系統
+  currentPhase = 0;
+  currentPhaseText = '';
+  progressPercent = 0;
+  
+  // 隨機提示和階段
+  phases = [
+    { text: '分析英雄特質中...', percent: 20 },
+    { text: '計算屬性數值...', percent: 40 },
+    { text: '編織英雄故事...', percent: 60 },
+    { text: '繪製英雄形象...', percent: 80 },
+    { text: '注入靈魂之力...', percent: 100 }
+  ];
+  
+  encouragingTexts = [
+    '每位英雄都有獨特的命運',
+    '強大的力量正在覺醒',
+    '傳奇即將誕生',
+    '古老魔法正在運作',
+    '你的英雄將是獨一無二的',
+    '稀有度由命運決定',
+    '期待即將到來的驚喜'
+  ];
+  
+  currentEncouragement = '';
   resources: PlayerResources = {
     gold: 0,
     prompt: 0,
@@ -85,7 +111,7 @@ export class CreateComponent implements OnInit, OnDestroy {
       return;
     }
     
-    this.isGenerating = true;
+    this.startGeneratingAnimation();
     const token = this.authService.getToken() || '';
     this.characterService.createCharacter(this.characterPrompt.trim(), token).subscribe({
       next: (char) => {
@@ -95,8 +121,7 @@ export class CreateComponent implements OnInit, OnDestroy {
         const sub = this.characterService.pollCharacterImage(char.id, token).subscribe(updatedChar => {
           this.generatedCharacter = updatedChar;
           if (!updatedChar.image_url.includes('placeholder')) {
-            this.isGenerating = false;
-            this.showSuccessModal = true;
+            this.completeGeneration();
             sub.unsubscribe();
           }
         });
@@ -104,7 +129,7 @@ export class CreateComponent implements OnInit, OnDestroy {
       error: (err) => {
         const errorMsg = err.error?.error || err.error?.detail || '建立失敗';
         alert(errorMsg);
-        this.isGenerating = false;
+        this.resetGeneration();
       }
     });
   }
@@ -118,7 +143,7 @@ export class CreateComponent implements OnInit, OnDestroy {
       return;
     }
     
-    this.isGenerating = true;
+    this.startGeneratingAnimation();
     const token = this.authService.getToken() || '';
     this.characterService.advancedSummonCharacter(this.advancedName.trim(), this.advancedPrompt.trim(), token).subscribe({
       next: (char) => {
@@ -128,8 +153,7 @@ export class CreateComponent implements OnInit, OnDestroy {
         const sub = this.characterService.pollCharacterImage(char.id, token).subscribe(updatedChar => {
           this.generatedCharacter = updatedChar;
           if (!updatedChar.image_url.includes('placeholder')) {
-            this.isGenerating = false;
-            this.showSuccessModal = true;
+            this.completeGeneration();
             sub.unsubscribe();
           }
         });
@@ -137,7 +161,7 @@ export class CreateComponent implements OnInit, OnDestroy {
       error: (err) => {
         const errorMsg = err.error?.error || err.error?.detail || '建立失敗';
         alert(errorMsg);
-        this.isGenerating = false;
+        this.resetGeneration();
       }
     });
   }
@@ -197,5 +221,69 @@ export class CreateComponent implements OnInit, OnDestroy {
 
   closeModal(): void {
     this.showSuccessModal = false;
+  }
+
+  // 進度動畫控制
+  startGeneratingAnimation(): void {
+    this.isGenerating = true;
+    this.currentPhase = 0;
+    this.progressPercent = 0;
+    this.currentEncouragement = this.encouragingTexts[Math.floor(Math.random() * this.encouragingTexts.length)];
+    
+    this.animateProgress();
+  }
+
+  private animateProgress(): void {
+    const progressPhase = () => {
+      if (this.currentPhase < this.phases.length && this.isGenerating) {
+        const phase = this.phases[this.currentPhase];
+        this.currentPhaseText = phase.text;
+        
+        // 動畫進度條
+        const targetPercent = phase.percent;
+        const currentPercent = this.progressPercent;
+        const increment = (targetPercent - currentPercent) / 20; // 20步完成
+        
+        const animateBar = () => {
+          if (this.progressPercent < targetPercent && this.isGenerating) {
+            this.progressPercent = Math.min(this.progressPercent + increment, targetPercent);
+            setTimeout(animateBar, 100);
+          } else {
+            // 這個階段完成，準備下一階段
+            setTimeout(() => {
+              this.currentPhase++;
+              if (this.currentPhase < this.phases.length) {
+                // 隨機更換鼓勵文字
+                if (Math.random() > 0.6) {
+                  this.currentEncouragement = this.encouragingTexts[Math.floor(Math.random() * this.encouragingTexts.length)];
+                }
+                progressPhase();
+              }
+            }, 800 + Math.random() * 1200); // 隨機停留時間
+          }
+        };
+        animateBar();
+      }
+    };
+    
+    progressPhase();
+  }
+
+  completeGeneration(): void {
+    this.progressPercent = 100;
+    this.currentPhaseText = '召喚完成！';
+    
+    setTimeout(() => {
+      this.isGenerating = false;
+      this.showSuccessModal = true;
+    }, 500);
+  }
+
+  resetGeneration(): void {
+    this.isGenerating = false;
+    this.currentPhase = 0;
+    this.progressPercent = 0;
+    this.currentPhaseText = '';
+    this.currentEncouragement = '';
   }
 }

@@ -259,13 +259,31 @@ class CharacterViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def battle(self, request):
         """
-        異步啟動一場戰鬥。
+        異步啟動一場戰鬥，包含體力消耗機制。
         """
         player_id = request.data.get('player_character')
         opponent_id = request.data.get('opponent_character')
+        
+        # 獲取玩家並更新體力
+        player_user = request.user.player
+        player_user.update_energy()
+
+        # 檢查體力是否足夠（戰鬥消耗10體力）
+        BATTLE_ENERGY_COST = 10
+        if player_user.energy < BATTLE_ENERGY_COST:
+            return Response(
+                {
+                    "error": "Energy insufficient", 
+                    "message": "體力不足，無法進行戰鬥",
+                    "current_energy": player_user.energy,
+                    "required_energy": BATTLE_ENERGY_COST,
+                    "next_recovery_minutes": 10 - ((timezone.now() - player_user.last_energy_update).total_seconds() // 60) % 10
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            player = Character.objects.get(id=player_id, player=request.user.player)
+            player_character = Character.objects.get(id=player_id, player=player_user)
             opponent = Character.objects.get(id=opponent_id)
         except Character.DoesNotExist:
             return Response(
@@ -273,9 +291,13 @@ class CharacterViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # 消耗體力
+        player_user.energy -= BATTLE_ENERGY_COST
+        player_user.save()
+
         # 1. 立即創建一個 PENDING 狀態的 Battle 實例
         battle = Battle.objects.create(
-            character1=player,
+            character1=player_character,
             character2=opponent,
             status='PENDING'
         )
@@ -285,12 +307,17 @@ class CharacterViewSet(viewsets.ModelViewSet):
         
         # 3. 更新對戰任務進度
         DailyQuestService.update_quest_progress(
-            request.user.player, 'battle_count', 1
+            player_user, 'battle_count', 1
         )
 
         # 4. 立即返回 battle_id，讓前端可以開始輪詢
         return Response(
-            {"battle_id": battle.id, "status": battle.status},
+            {
+                "battle_id": battle.id, 
+                "status": battle.status,
+                "energy_consumed": BATTLE_ENERGY_COST,
+                "remaining_energy": player_user.energy
+            },
             status=status.HTTP_202_ACCEPTED
         )
 

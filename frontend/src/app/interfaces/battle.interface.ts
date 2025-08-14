@@ -15,6 +15,13 @@ export interface BattleResult {
     battle_description: string;
 }
 
+export interface BattleRewards {
+    gold: number;
+    exp_potion: number;
+    rarity_bonus: number;
+    victory: boolean;
+}
+
 export interface Battle {
     id: string;
     character1: Character;
@@ -31,6 +38,7 @@ export interface Battle {
             remaining_hp: number;
         }[];
         battle_description: string;
+        battle_rewards?: BattleRewards;
     };
     created_at: string;
     status: 'PENDING' | 'COMPLETED' | 'ERROR';
