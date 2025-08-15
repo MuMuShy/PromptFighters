@@ -323,6 +323,23 @@
   @apply text-white hover:text-rpg-gold transition-colors px-3 py-2 rounded-md text-sm font-medium; 
 }
 
+.arena-link {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  font-weight: 700 !important;
+  position: relative;
+  
+  &:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    transform: translateY(-1px);
+  }
+}
+
 .logout-btn { 
   @apply ml-4 px-3 py-2 rounded-md bg-rpg-gold text-black font-bold hover:bg-yellow-400 transition-colors; 
 }

@@ -273,3 +273,246 @@ class PlayerLoginRecord(models.Model):
         verbose_name = '玩家登入記錄'
         verbose_name_plural = '玩家登入記錄'
         unique_together = ['player', 'login_date']
+
+
+class LadderSeason(models.Model):
+    """天梯賽季"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, verbose_name='賽季名稱')
+    start_date = models.DateTimeField(verbose_name='開始時間')
+    end_date = models.DateTimeField(verbose_name='結束時間')
+    is_active = models.BooleanField(default=True, verbose_name='是否激活')
+    prize_pool = models.PositiveIntegerField(default=0, verbose_name='獎金池')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.start_date.strftime('%Y-%m-%d')})"
+    
+    class Meta:
+        verbose_name = '天梯賽季'
+        verbose_name_plural = '天梯賽季'
+
+
+class LadderRank(models.Model):
+    """天梯排名"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    season = models.ForeignKey(LadderSeason, on_delete=models.CASCADE, related_name='rankings')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='ladder_ranks')
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='ladder_ranks')
+    
+    # 排名數據
+    rank_points = models.IntegerField(default=1000, verbose_name='排名積分')
+    wins = models.PositiveIntegerField(default=0, verbose_name='勝場')
+    losses = models.PositiveIntegerField(default=0, verbose_name='敗場')
+    current_rank = models.PositiveIntegerField(default=999999, verbose_name='當前排名')
+    
+    # 參戰資格
+    is_eligible = models.BooleanField(default=True, verbose_name='是否有參戰資格')
+    last_battle_at = models.DateTimeField(null=True, blank=True, verbose_name='最後參戰時間')
+    
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    @property
+    def win_rate(self):
+        total = self.wins + self.losses
+        return round((self.wins / total) * 100, 1) if total > 0 else 0
+    
+    def __str__(self):
+        return f"{self.character.name} - Rank #{self.current_rank} ({self.rank_points}pts)"
+    
+    class Meta:
+        verbose_name = '天梯排名'
+        verbose_name_plural = '天梯排名'
+        unique_together = ['season', 'player', 'character']
+        ordering = ['current_rank']
+
+
+class ScheduledBattle(models.Model):
+    """定時天梯戰鬥"""
+    STATUS_CHOICES = [
+        ('scheduled', '已排程'),
+        ('betting_open', '開放下注'),
+        ('betting_closed', '下注截止'),
+        ('in_progress', '戰鬥中'),
+        ('completed', '已完成'),
+        ('cancelled', '已取消'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    season = models.ForeignKey(LadderSeason, on_delete=models.CASCADE, related_name='battles')
+    
+    # 戰鬥對手
+    fighter1 = models.ForeignKey(LadderRank, on_delete=models.CASCADE, related_name='battles_as_fighter1')
+    fighter2 = models.ForeignKey(LadderRank, on_delete=models.CASCADE, related_name='battles_as_fighter2')
+    
+    # 時間安排
+    scheduled_time = models.DateTimeField(verbose_name='預定戰鬥時間')
+    betting_start_time = models.DateTimeField(verbose_name='下注開始時間')
+    betting_end_time = models.DateTimeField(verbose_name='下注截止時間')
+    
+    # 戰鬥狀態
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
+    winner = models.ForeignKey(LadderRank, on_delete=models.SET_NULL, null=True, blank=True, 
+                              related_name='won_battles', verbose_name='勝利者')
+    
+    # 下注統計
+    total_bets_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='總下注金額')
+    fighter1_bets_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='選手1下注金額')
+    fighter2_bets_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='選手2下注金額')
+    
+    # 賠率
+    fighter1_odds = models.DecimalField(max_digits=5, decimal_places=2, default=2.0, verbose_name='選手1賠率')
+    fighter2_odds = models.DecimalField(max_digits=5, decimal_places=2, default=2.0, verbose_name='選手2賠率')
+    
+    # 戰鬥結果
+    battle_log = models.JSONField(null=True, blank=True, verbose_name='戰鬥記錄')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def calculate_odds(self):
+        """動態計算賠率"""
+        if self.fighter1_bets_amount == 0 and self.fighter2_bets_amount == 0:
+            # 沒有下注時，根據排名計算基礎賠率
+            rank_diff = abs(self.fighter1.current_rank - self.fighter2.current_rank)
+            if self.fighter1.current_rank < self.fighter2.current_rank:
+                # fighter1排名更高（數字更小）
+                self.fighter1_odds = max(1.2, 2.0 - (rank_diff * 0.1))
+                self.fighter2_odds = min(5.0, 2.0 + (rank_diff * 0.1))
+            else:
+                self.fighter1_odds = min(5.0, 2.0 + (rank_diff * 0.1))
+                self.fighter2_odds = max(1.2, 2.0 - (rank_diff * 0.1))
+        else:
+            # 根據下注金額動態調整賠率
+            from decimal import Decimal
+            total = self.fighter1_bets_amount + self.fighter2_bets_amount
+            if total > 0:
+                fighter1_percentage = self.fighter1_bets_amount / total
+                fighter2_percentage = self.fighter2_bets_amount / total
+                
+                # 賠率與下注比例成反比
+                self.fighter1_odds = max(Decimal('1.1'), min(Decimal('10.0'), Decimal('1.0') / max(Decimal('0.1'), fighter1_percentage)))
+                self.fighter2_odds = max(Decimal('1.1'), min(Decimal('10.0'), Decimal('1.0') / max(Decimal('0.1'), fighter2_percentage)))
+        
+        self.save(update_fields=['fighter1_odds', 'fighter2_odds'])
+    
+    @property
+    def time_until_battle(self):
+        """距離戰鬥開始的時間"""
+        return self.scheduled_time - timezone.now()
+    
+    @property
+    def time_until_betting_ends(self):
+        """距離下注截止的時間"""
+        return self.betting_end_time - timezone.now()
+    
+    def __str__(self):
+        return f"{self.fighter1.character.name} vs {self.fighter2.character.name} - {self.scheduled_time.strftime('%Y-%m-%d %H:%M')}"
+    
+    class Meta:
+        verbose_name = '定時戰鬥'
+        verbose_name_plural = '定時戰鬥'
+        ordering = ['-scheduled_time']
+
+
+class BattleBet(models.Model):
+    """下注記錄"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    battle = models.ForeignKey(ScheduledBattle, on_delete=models.CASCADE, related_name='bets')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='battle_bets')
+    
+    # 下注詳情
+    chosen_fighter = models.ForeignKey(LadderRank, on_delete=models.CASCADE, verbose_name='選擇的選手')
+    bet_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='下注金額')
+    odds_at_bet = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='下注時賠率')
+    
+    # 結算
+    is_winner = models.BooleanField(null=True, blank=True, verbose_name='是否獲勝')
+    payout_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='獲利金額')
+    is_settled = models.BooleanField(default=False, verbose_name='是否已結算')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    settled_at = models.DateTimeField(null=True, blank=True, verbose_name='結算時間')
+    
+    @property
+    def potential_payout(self):
+        """潛在獲利 - 基於當前賠率的估算（實際獲利將根據獎池分配）"""
+        return self.bet_amount * self.odds_at_bet
+    
+    @property
+    def estimated_pool_payout(self):
+        """基於獎池機制的預估獲利"""
+        if not self.battle or self.battle.total_bets_amount == 0:
+            return self.bet_amount
+        
+        # 簡單估算：假設獲勝方和失敗方下注相等
+        total_pool = float(self.battle.total_bets_amount)
+        house_edge = 0.05
+        estimated_prize_pool = total_pool * 0.5 * (1 - house_edge)  # 假設失敗方佔50%
+        estimated_winner_pool = total_pool * 0.5  # 假設獲勝方佔50%
+        
+        if estimated_winner_pool > 0:
+            win_share = float(self.bet_amount) / estimated_winner_pool
+            prize_share = estimated_prize_pool * win_share
+            return self.bet_amount + prize_share
+        
+        return self.bet_amount
+    
+    def settle_bet(self):
+        """結算下注 - 注意：這個方法現在只標記結果，實際獎金分配由 settle_all_bets_with_pool 處理"""
+        if self.is_settled:
+            return
+        
+        if self.battle.winner == self.chosen_fighter:
+            self.is_winner = True
+            # 獎金金額將由獎池分配邏輯計算
+            self.payout_amount = 0  # 暫時設為0，稍後計算
+        else:
+            self.is_winner = False
+            self.payout_amount = 0
+        
+        self.is_settled = True
+        self.settled_at = timezone.now()
+        self.save()
+    
+    def __str__(self):
+        return f"{self.player.user.username} bets {self.bet_amount} on {self.chosen_fighter.character.name}"
+    
+    class Meta:
+        verbose_name = '下注記錄'
+        verbose_name_plural = '下注記錄'
+        unique_together = ['battle', 'player']  # 每場戰鬥每個玩家只能下注一次
+
+
+class BettingStats(models.Model):
+    """下注統計"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    player = models.OneToOneField(Player, on_delete=models.CASCADE, related_name='betting_stats')
+    
+    # 統計數據
+    total_bets = models.PositiveIntegerField(default=0, verbose_name='總下注次數')
+    total_bet_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='總下注金額')
+    total_winnings = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='總獲利')
+    win_count = models.PositiveIntegerField(default=0, verbose_name='獲勝次數')
+    
+    # 連勝記錄
+    current_streak = models.IntegerField(default=0, verbose_name='當前連勝')
+    best_streak = models.PositiveIntegerField(default=0, verbose_name='最佳連勝')
+    
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    @property
+    def win_rate(self):
+        return round((self.win_count / self.total_bets) * 100, 1) if self.total_bets > 0 else 0
+    
+    @property
+    def net_profit(self):
+        return self.total_winnings - self.total_bet_amount
+    
+    def __str__(self):
+        return f"{self.player.user.username} - {self.win_count}/{self.total_bets} ({self.win_rate}%)"
+    
+    class Meta:
+        verbose_name = '下注統計'
+        verbose_name_plural = '下注統計'

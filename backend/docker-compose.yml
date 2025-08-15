@@ -36,5 +36,15 @@ services:
     depends_on:
       - db
       - redis
+  celery-beat:
+    build: .
+    command: celery -A backend beat -l info
+    volumes:
+      - .:/code
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+      - redis
 volumes:
   postgres_data: 

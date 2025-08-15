@@ -1647,137 +1647,41 @@
   justify-content: center;
 }
 
-// 動畫定義
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.1); }
-}
-
-@keyframes floatOrb {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-30px) rotate(180deg); }
-}
-
+// 簡化的動畫定義
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-@keyframes hitShake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-8px); }
-  40%, 80% { transform: translateX(8px); }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.1); }
-}
-
-@keyframes auraGlow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-@keyframes effectAppear {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-@keyframes criticalPulse {
-  0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
-}
-
-@keyframes expandRing {
-  0% { transform: scale(0.5); opacity: 1; }
-  100% { transform: scale(1.5); opacity: 0; }
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-10px); }
-  60% { transform: translateY(-5px); }
-}
-
-// 戰鬥動畫
-@keyframes playerBattleMove {
-  0%, 100% { transform: translateX(0) translateY(0) scale(1); }
-  25% { transform: translateX(20px) translateY(-5px) scale(1.05); }
-  50% { transform: translateX(0) translateY(0) scale(1); }
-  75% { transform: translateX(-5px) translateY(3px) scale(0.98); }
-}
-
-@keyframes opponentBattleMove {
-  0%, 100% { transform: translateX(0) translateY(0) scale(1); }
-  25% { transform: translateX(-20px) translateY(-5px) scale(1.05); }
-  50% { transform: translateX(0) translateY(0) scale(1); }
-  75% { transform: translateX(5px) translateY(3px) scale(0.98); }
-}
-
-@keyframes characterAttack {
-  0% { transform: translateX(0) scale(1); }
-  50% { transform: translateX(25px) scale(1.1); }
-  100% { transform: translateX(0) scale(1); }
-}
-
-@keyframes battleAuraGlow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-@keyframes impactBlast {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
-}
-
-@keyframes waveExpand {
-  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-}
-
-@keyframes fragmentScatter {
-  0% { 
-    opacity: 1; 
-    transform: translate(0, 0) rotate(0deg) scale(1); 
-  }
-  70% { 
-    opacity: 0.8; 
-    transform: translate(var(--random-x, 60px), var(--random-y, -40px)) rotate(180deg) scale(0.8); 
-  }
-  100% { 
+@keyframes slideUp {
+  from { 
     opacity: 0; 
-    transform: translate(var(--random-x, 100px), var(--random-y, -80px)) rotate(360deg) scale(0); 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
   }
 }
 
-@keyframes lightningStrike {
-  0%, 90%, 100% { opacity: 0; transform: scaleY(0); }
-  5%, 15% { opacity: 1; transform: scaleY(1); }
-  10% { opacity: 0.8; transform: scaleY(0.8); }
+// 簡化的戰鬥動畫
+@keyframes battlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
 
-@keyframes coreImpactPulse {
-  0%, 100% { 
-    transform: translate(-50%, -50%) scale(1); 
-    box-shadow: 0 0 30px rgba(255,215,0,1); 
-  }
-  50% { 
-    transform: translate(-50%, -50%) scale(1.3); 
-    box-shadow: 0 0 50px rgba(255,215,0,1), 0 0 80px rgba(255,215,0,0.5); 
-  }
+@keyframes battleShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
-@keyframes stepPulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,215,0,0.5); }
-  50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255,215,0,0.8); }
-}
+
 
 // 響應式設計
 @media (max-width: 1024px) {

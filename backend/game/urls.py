@@ -6,6 +6,11 @@ from .views import (
     PlayerResourceView, SpendResourceView, DailyQuestView, CheckInView, QuestProgressView,
     CharacterGrowthAPIView
 )
+from .betting_views import (
+    get_ladder_rankings, get_upcoming_battles, get_current_betting_battle,
+    place_bet, get_my_bets, get_betting_stats, get_battle_details, join_ladder,
+    get_battle_history, create_test_battle
+)
 
 router = DefaultRouter()
 router.register(r'characters', CharacterViewSet, basename='character')
@@ -26,4 +31,16 @@ urlpatterns = [
     path('auth/web3-nonce/', Web3NonceView.as_view(), name='web3-nonce'),
     path('auth/web3-login/', Web3LoginView.as_view(), name='web3-login'),
     path('player/profile/', PlayerProfileView.as_view(), name='player-profile'),
+    
+    # 天梯下注系統
+    path('ladder/rankings/', get_ladder_rankings, name='ladder-rankings'),
+    path('ladder/battles/upcoming/', get_upcoming_battles, name='upcoming-battles'),
+    path('ladder/battles/current/', get_current_betting_battle, name='current-betting-battle'),
+    path('ladder/battles/<uuid:battle_id>/', get_battle_details, name='battle-details'),
+    path('ladder/bet/', place_bet, name='place-bet'),
+    path('ladder/my-bets/', get_my_bets, name='my-bets'),
+    path('ladder/stats/', get_betting_stats, name='betting-stats'),
+    path('ladder/join/', join_ladder, name='join-ladder'),
+    path('ladder/battles/history/', get_battle_history, name='battle-history'),
+    path('ladder/create-test-battle/', create_test_battle, name='create-test-battle'),
 ]  

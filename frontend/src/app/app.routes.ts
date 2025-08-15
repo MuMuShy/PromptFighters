@@ -60,6 +60,36 @@ export const routes: Routes = [
     loadComponent: () => import('./upgrade/upgrade.component').then(m => m.UpgradeComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'arena',
+    loadComponent: () => import('./pages/arena/arena.component').then(m => m.ArenaComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'ladder',
+    loadComponent: () => import('./pages/ladder/ladder.component').then(m => m.LadderComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'my-bets',
+    loadComponent: () => import('./pages/my-bets/my-bets.component').then(m => m.MyBetsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'upcoming-battles',
+    loadComponent: () => import('./pages/upcoming-battles/upcoming-battles.component').then(m => m.UpcomingBattlesComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'battle-history',
+    loadComponent: () => import('./pages/battle-history/battle-history.component').then(m => m.BattleHistoryComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'battle-details/:id',
+    loadComponent: () => import('./pages/battle-details/battle-details.component').then(m => m.BattleDetailsComponent),
+    canActivate: [authGuard]
+  },
   { path: '', component: LandingComponent },
   {
     path: 'privacy',
