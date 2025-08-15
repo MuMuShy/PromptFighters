@@ -37,7 +37,9 @@ export class AppComponent implements OnInit {
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       const url = event.urlAfterRedirects;
-      this.isLandingPage = (url === '/');
+      // 扩展 isLandingPage 的概念，包含介绍页面和静态页面
+      const publicPaths = ['/', '/intro/heroes', '/intro/battles', '/intro/guide', '/intro/about', '/privacy', '/terms'];
+      this.isLandingPage = publicPaths.includes(url);
       this.isBattlePage = (url === '/battle');
       
       // 當導航到非 landing page 且已登入時，載入資源

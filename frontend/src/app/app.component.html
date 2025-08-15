@@ -1,4 +1,4 @@
-<!-- 維護中畫面: 只有在非 Landing Page 且伺服器離線時顯示 -->
+<!-- 維護中畫面: 只有在非公開頁面且伺服器離線時顯示 -->
 <div *ngIf="!isLandingPage && !(isServerOnline$ | async)" class="maintenance-overlay">
   <div class="maintenance-content">
     <img src="/assets/og_image.png" alt="Logo" class="logo">
@@ -8,10 +8,10 @@
   </div>
 </div>
 
-<!-- 主要應用程式內容: 永遠顯示 Landing Page，或在伺服器在線時顯示其他頁面 -->
+<!-- 主要應用程式內容: 永遠顯示公開頁面，或在伺服器在線時顯示其他頁面 -->
 <ng-container *ngIf="isLandingPage || (isServerOnline$ | async)">
   
-  <!-- Landing Page 的 router-outlet 是獨立的 -->
+  <!-- 公開頁面的 router-outlet 是獨立的 -->
   <router-outlet *ngIf="isLandingPage"></router-outlet>
   
   <!-- 其他頁面的佈局 -->
