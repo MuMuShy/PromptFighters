@@ -1,0 +1,654 @@
+// Upcoming Battles Page Styles
+.upcoming-battles-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  position: relative;
+  overflow-x: hidden;
+  padding: 20px;
+}
+
+// 背景效果
+.battles-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.sword-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.sword-particle {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0.1;
+  animation: swordFloat 12s ease-in-out infinite;
+}
+
+@keyframes swordFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+  50% { transform: translateY(-50px) rotate(45deg); opacity: 0.3; }
+}
+
+// 頁面標題
+.battles-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.battles-title {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 8px rgba(251, 191, 36, 0.3);
+  margin-bottom: 10px;
+}
+
+.battles-subtitle {
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+// 戰鬥時間軸
+.battles-timeline {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  margin-bottom: 40px;
+  position: relative;
+  
+  &.next-battle {
+    .battle-card {
+      border-color: rgba(251, 191, 36, 0.6);
+      box-shadow: 0 25px 50px -12px rgba(251, 191, 36, 0.2);
+      transform: scale(1.02);
+    }
+    
+    .timeline-node .node-icon {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #1e293b;
+      font-size: 1.5rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+  }
+  
+  &.betting-open {
+    .battle-card {
+      border-left: 4px solid #22c55e;
+      background: rgba(34, 197, 94, 0.05);
+    }
+  }
+  
+  &.betting-closed {
+    .battle-card {
+      border-left: 4px solid #ef4444;
+      background: rgba(239, 68, 68, 0.05);
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.timeline-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.node-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 2px solid rgba(100, 116, 139, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #cbd5e1;
+  z-index: 2;
+}
+
+.timeline-line {
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to bottom, rgba(100, 116, 139, 0.5), transparent);
+  margin-top: 10px;
+}
+
+// 戰鬥卡片
+.battle-card {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.battle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.1);
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.battle-status {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  
+  &.scheduled { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+  &.betting_open { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+  &.betting_closed { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+  &.in_progress { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+  &.completed { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+}
+
+.battle-time {
+  text-align: right;
+}
+
+.scheduled-time {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 5px;
+}
+
+.countdown {
+  font-size: 0.9rem;
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+// 對戰雙方
+.fighters-matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 25px;
+  padding: 25px;
+  align-items: center;
+}
+
+.fighter-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  
+  &.right {
+    .fighter-info {
+      text-align: center;
+    }
+  }
+}
+
+.fighter-avatar {
+  position: relative;
+  
+  img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid rgba(251, 191, 36, 0.5);
+    object-fit: cover;
+  }
+}
+
+.rank-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1e293b;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.rarity-indicator {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.fighter-info {
+  text-align: center;
+  min-width: 200px;
+}
+
+.fighter-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 5px;
+}
+
+.fighter-owner {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-bottom: 5px;
+}
+
+.fighter-level {
+  font-size: 0.9rem;
+  color: #fbbf24;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.fighter-stats {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-icon {
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.fighter-record {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+// 下注信息
+.betting-info {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+  min-width: 120px;
+}
+
+.odds {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #22c55e;
+  margin-bottom: 8px;
+}
+
+.bet-amount {
+  font-size: 1rem;
+  color: #fbbf24;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.bet-percentage {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+// VS區域
+.vs-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.vs-icon {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ef4444;
+  text-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.battle-info {
+  text-align: center;
+}
+
+.total-pool {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.pool-label {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  margin-bottom: 5px;
+}
+
+.pool-amount {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.betting-countdown {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+}
+
+.countdown-label {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  margin-bottom: 5px;
+}
+
+.countdown-time {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+// 戰鬥操作
+.battle-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px 25px;
+  border-top: 1px solid rgba(100, 116, 139, 0.1);
+  background: rgba(30, 41, 59, 0.2);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  
+  &.watch {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    
+    &:hover {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      transform: translateY(-2px);
+    }
+  }
+  
+  &.details {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.3);
+    
+    &:hover {
+      background: rgba(59, 130, 246, 0.3);
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+  }
+  
+  &.notify {
+    background: rgba(100, 116, 139, 0.2);
+    color: #cbd5e1;
+    border-color: rgba(100, 116, 139, 0.3);
+    
+    &:hover {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+    
+    &.active {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.5);
+    }
+  }
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+.btn-text {
+  font-size: 0.9rem;
+}
+
+// 空狀態
+.empty-battles {
+  text-align: center;
+  padding: 80px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.empty-battles h2 {
+  color: #f1f5f9;
+  margin-bottom: 15px;
+}
+
+.empty-battles p {
+  color: #94a3b8;
+  margin-bottom: 30px;
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-2px);
+  }
+}
+
+// 載入中
+.loading-section {
+  text-align: center;
+  padding: 50px;
+  color: #cbd5e1;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(251, 191, 36, 0.3);
+  border-top: 4px solid #fbbf24;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// 返回導航
+.back-nav {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+}
+
+.back-btn {
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(10px);
+  color: #cbd5e1;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  
+  &:hover {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.5);
+    color: #fbbf24;
+    transform: translateX(-3px);
+  }
+}
+
+// 響應式設計
+@media (max-width: 1024px) {
+  .fighters-matchup {
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .fighter-info {
+    min-width: 150px;
+  }
+  
+  .fighter-avatar img {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .action-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .upcoming-battles-page {
+    padding: 15px;
+  }
+  
+  .battles-title {
+    font-size: 2rem;
+  }
+  
+  .timeline-item {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .timeline-node {
+    order: -1;
+  }
+  
+  .timeline-line {
+    display: none;
+  }
+  
+  .fighters-matchup {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    text-align: center;
+  }
+  
+  .vs-section {
+    order: -1;
+  }
+  
+  .battle-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .battle-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .action-btn {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+  
+  .back-nav {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fighter-avatar img {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .fighter-info {
+    min-width: 120px;
+  }
+  
+  .fighter-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .battle-card {
+    margin: 0 -10px;
+  }
+  
+  .action-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}

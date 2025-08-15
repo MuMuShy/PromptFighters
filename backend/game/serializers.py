@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Player, Character, Battle, DailyQuest, PlayerDailyQuest, PlayerLoginRecord
+from .models import (
+    Player, Character, Battle, DailyQuest, PlayerDailyQuest, PlayerLoginRecord,
+    LadderSeason, LadderRank, ScheduledBattle, BattleBet, BettingStats
+)
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -87,4 +90,73 @@ class DailyStatsSerializer(serializers.Serializer):
 
 
 class ClaimRewardSerializer(serializers.Serializer):
-    quest_id = serializers.UUIDField() 
+    quest_id = serializers.UUIDField()
+
+
+# 天梯系統序列化器
+
+class LadderSeasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LadderSeason
+        fields = ['id', 'name', 'start_date', 'end_date', 'is_active', 'prize_pool', 'created_at']
+
+
+class LadderRankSerializer(serializers.ModelSerializer):
+    player = PlayerSerializer()
+    character = CharacterSerializer()
+    win_rate = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = LadderRank
+        fields = [
+            'id', 'player', 'character', 'rank_points', 'wins', 'losses', 
+            'current_rank', 'win_rate', 'is_eligible', 'last_battle_at', 
+            'updated_at', 'created_at'
+        ]
+
+
+class ScheduledBattleSerializer(serializers.ModelSerializer):
+    fighter1 = LadderRankSerializer()
+    fighter2 = LadderRankSerializer()
+    winner = LadderRankSerializer(allow_null=True)
+    time_until_battle = serializers.ReadOnlyField()
+    time_until_betting_ends = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = ScheduledBattle
+        fields = [
+            'id', 'fighter1', 'fighter2', 'scheduled_time', 'betting_start_time', 
+            'betting_end_time', 'status', 'winner', 'total_bets_amount', 
+            'fighter1_bets_amount', 'fighter2_bets_amount', 'fighter1_odds', 
+            'fighter2_odds', 'battle_log', 'time_until_battle', 'time_until_betting_ends',
+            'created_at', 'updated_at'
+        ]
+
+
+class BattleBetSerializer(serializers.ModelSerializer):
+    player = PlayerSerializer()
+    chosen_fighter = LadderRankSerializer()
+    battle = serializers.StringRelatedField()
+    potential_payout = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = BattleBet
+        fields = [
+            'id', 'battle', 'player', 'chosen_fighter', 'bet_amount', 
+            'odds_at_bet', 'potential_payout', 'is_winner', 'payout_amount', 
+            'is_settled', 'created_at', 'settled_at'
+        ]
+
+
+class BettingStatsSerializer(serializers.ModelSerializer):
+    player = PlayerSerializer()
+    win_rate = serializers.ReadOnlyField()
+    net_profit = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = BettingStats
+        fields = [
+            'id', 'player', 'total_bets', 'total_bet_amount', 'total_winnings', 
+            'win_count', 'win_rate', 'net_profit', 'current_streak', 'best_streak', 
+            'updated_at'
+        ] 

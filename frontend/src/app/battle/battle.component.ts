@@ -8,8 +8,8 @@ import { BattleService, BattleStartResponse, BattleError } from '../services/bat
 import { PlayerService } from '../services/player.service';
 import { Character } from '../interfaces/character.interface';
 import { Battle } from '../interfaces/battle.interface';
-import { CharacterCardComponent } from '../shared/character-card.component';
-import { BattleLogComponent } from '../components/battle-log/battle-log.component';
+
+
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MediaUrlPipe } from '../pipes/media-url.pipe';
 import { Subscription, timer } from 'rxjs';
@@ -31,8 +31,8 @@ interface BattleLogEntry {
     RouterModule,
     MatButtonModule,
     MatIconModule,
-    CharacterCardComponent,
-    BattleLogComponent,
+
+
     MediaUrlPipe
   ],
   templateUrl: './battle.component.html',

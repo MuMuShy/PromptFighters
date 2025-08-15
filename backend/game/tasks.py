@@ -1,13 +1,16 @@
 from celery import shared_task
+from celery.schedules import crontab
 from google import genai
 from google.genai import types
 from django.conf import settings
-from .models import Character, Battle
+from .models import Character, Battle, ScheduledBattle
 import os
 import json
 import re
 import random
 from django.db import transaction
+from django.utils import timezone
+from datetime import timedelta
 
 @shared_task
 def generate_character_image(character_id):
@@ -300,4 +303,144 @@ def run_battle_task(battle_id):
             battle.battle_log = {'error': str(e)}
             battle.save()
         except Battle.DoesNotExist:
-            print(f"Battle with id {battle_id} not found when trying to log error.") 
+            print(f"Battle with id {battle_id} not found when trying to log error.")
+
+
+# 天梯系統定時任務
+
+@shared_task
+def schedule_hourly_battles():
+    """每小時排程戰鬥"""
+    from .ladder_service import LadderService
+    
+    try:
+        battle = LadderService.schedule_next_battle()
+        if battle:
+            print(f"Scheduled battle: {battle}")
+            return f"Battle scheduled: {battle.id}"
+        else:
+            print("No battle could be scheduled")
+            return "No battle scheduled"
+    except Exception as e:
+        print(f"Error scheduling battle: {e}")
+        return f"Error: {e}"
+
+
+@shared_task
+def open_betting():
+    """開放下注（戰鬥前30分鐘）"""
+    from .ladder_service import LadderService
+    
+    now = timezone.now()
+    battles_to_open = ScheduledBattle.objects.filter(
+        betting_start_time__lte=now,
+        status='scheduled'
+    )
+    
+    opened_count = 0
+    for battle in battles_to_open:
+        battle.status = 'betting_open'
+        battle.save()
+        opened_count += 1
+        print(f"Opened betting for battle: {battle}")
+    
+    return f"Opened betting for {opened_count} battles"
+
+
+@shared_task
+def close_betting():
+    """關閉下注（戰鬥前5分鐘）"""
+    now = timezone.now()
+    battles_to_close = ScheduledBattle.objects.filter(
+        betting_end_time__lte=now,
+        status='betting_open'
+    )
+    
+    closed_count = 0
+    for battle in battles_to_close:
+        battle.status = 'betting_closed'
+        battle.save()
+        closed_count += 1
+        print(f"Closed betting for battle: {battle}")
+    
+    return f"Closed betting for {closed_count} battles"
+
+
+@shared_task
+def start_scheduled_battles():
+    """開始已排程的戰鬥"""
+    from .ladder_service import LadderService
+    
+    now = timezone.now()
+    battles_to_start = ScheduledBattle.objects.filter(
+        scheduled_time__lte=now,
+        status='betting_closed'
+    )
+    
+    started_count = 0
+    for battle in battles_to_start:
+        actual_battle = LadderService.start_battle(battle)
+        if actual_battle:
+            started_count += 1
+            print(f"Started battle: {battle}")
+    
+    return f"Started {started_count} battles"
+
+
+@shared_task
+def check_completed_battles():
+    """檢查並結算已完成的戰鬥"""
+    from .ladder_service import LadderService
+    
+    # 查找進行中但實際戰鬥已完成的戰鬥
+    in_progress_battles = ScheduledBattle.objects.filter(status='in_progress')
+    
+    completed_count = 0
+    for battle in in_progress_battles:
+        # 查找對應的實際戰鬥記錄
+        actual_battle = Battle.objects.filter(
+            character1=battle.fighter1.character,
+            character2=battle.fighter2.character,
+            created_at__gte=battle.scheduled_time - timedelta(minutes=10),
+            status='COMPLETED'
+        ).first()
+        
+        if actual_battle:
+            LadderService.complete_battle(battle, actual_battle)
+            completed_count += 1
+            print(f"Completed and settled battle: {battle}")
+    
+    return f"Completed {completed_count} battles"
+
+
+@shared_task
+def update_ladder_rankings():
+    """更新天梯排名（每小時）"""
+    from .ladder_service import LadderService
+    from .models import LadderSeason
+    
+    active_seasons = LadderSeason.objects.filter(is_active=True)
+    
+    updated_count = 0
+    for season in active_seasons:
+        LadderService.update_rankings(season)
+        updated_count += 1
+        print(f"Updated rankings for season: {season}")
+    
+    return f"Updated rankings for {updated_count} seasons"
+
+
+@shared_task
+def cleanup_old_battles():
+    """清理舊的戰鬥記錄（保留最近7天）"""
+    cutoff_date = timezone.now() - timedelta(days=7)
+    
+    old_battles = ScheduledBattle.objects.filter(
+        created_at__lt=cutoff_date,
+        status='completed'
+    )
+    
+    count = old_battles.count()
+    old_battles.delete()
+    
+    return f"Cleaned up {count} old battles" 
