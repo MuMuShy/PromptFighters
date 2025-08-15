@@ -159,8 +159,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.3rem;
+  gap: 1rem;
   margin-bottom: 0;
+  flex-wrap: wrap;
 }
 .wallet-grid:first-child {
   flex-direction: row;
@@ -210,10 +211,10 @@
 }
 .wallet-btn .wallet-icon,
 .wallet-btn img.wallet-icon {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
   object-fit: contain;
   display: block;
 }
@@ -568,26 +569,26 @@
   }
   .wallet-grid:first-child {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.1rem 1.1rem;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.8rem;
     margin-bottom: 1.2rem;
     width: 100%;
-    max-width: 340px;
+    max-width: 320px;
     margin-left: auto;
     margin-right: auto;
     justify-content: center;
   }
   .wallet-btn:not(.long) {
-    width: 48px !important;
-    height: 48px !important;
+    width: 44px !important;
+    height: 44px !important;
     border-radius: 50% !important;
     justify-self: center;
     margin: 0 auto;
     padding: 0;
     min-width: 0;
     min-height: 0;
-    max-width: 48px;
-    max-height: 48px;
+    max-width: 44px;
+    max-height: 44px;
     box-sizing: border-box;
   }
   .wallet-grid:last-child {
@@ -676,5 +677,34 @@
     p {
       font-size: 0.8rem;
     }
+  }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 400px) {
+  .wallet-grid:first-child {
+    max-width: 280px;
+    gap: 0.6rem;
+  }
+  
+  .wallet-btn:not(.long) {
+    width: 40px !important;
+    height: 40px !important;
+    max-width: 40px;
+    max-height: 40px;
+  }
+  
+  .wallet-btn .wallet-icon,
+  .wallet-btn img.wallet-icon {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+  }
+  
+  .wallet-btn.long {
+    width: 95vw;
+    max-width: 280px;
+    padding: 0.75rem 1rem;
   }
 }

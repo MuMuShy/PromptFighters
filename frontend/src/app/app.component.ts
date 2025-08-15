@@ -69,7 +69,9 @@ export class AppComponent implements OnInit {
     });
     
     // 只要已登入且不在 /profile 就自動導向 /profile
-    if (this.isLoggedIn && this.router.url !== '/profile') {
+    // 但排除介绍页面和首页
+    const publicPaths = ['/', '/intro/heroes', '/intro/battles', '/intro/guide', '/intro/about', '/privacy', '/terms'];
+    if (this.isLoggedIn && !publicPaths.includes(this.router.url)) {
       this.router.navigate(['/profile']);
     }
   }

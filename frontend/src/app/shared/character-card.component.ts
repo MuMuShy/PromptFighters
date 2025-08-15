@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 export class CharacterCardComponent implements OnInit {
   @Input() character!: Character;
   @Input() token: string = '';
+  @Input() isDirectImageUrl: boolean = false;
 
   constructor(private characterService: CharacterService) {}
 
@@ -26,6 +27,7 @@ export class CharacterCardComponent implements OnInit {
 
   getFullImageUrl(imageUrl: string): string {
     if (!imageUrl) return '';
+    if (this.isDirectImageUrl) return imageUrl;
     if (imageUrl.startsWith('http')) return imageUrl;
     return environment.backendBaseUrl + imageUrl;
   }

@@ -38,7 +38,7 @@ import { Meta, Title } from '@angular/platform-browser';
             </div>
             <div class="intro-image">
               <div class="image-placeholder">
-                <span class="placeholder-text">AI 遊戲概念圖</span>
+                <span class="placeholder-text"><img src="/assets/og_image.png" alt="AI 遊戲概念圖"></span>
               </div>
             </div>
           </div>
@@ -196,8 +196,8 @@ import { Meta, Title } from '@angular/platform-browser';
                 <span>GitHub: github.com/MuMuShy/PromptFighters</span>
               </div>
               <div class="contact-method">
-                <span class="method-icon">📖</span>
-                <span>文檔: docs.promptfighters.app</span>
+                <span class="method-icon">Email</span>
+                <span>help&#64;promptfighters.app</span>
               </div>
             </div>
           </div>

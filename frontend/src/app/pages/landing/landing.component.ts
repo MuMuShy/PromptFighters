@@ -12,7 +12,7 @@ import { Meta, Title } from '@angular/platform-browser';
       <!-- 1. Hero Section with Animated Background -->
       <section class="hero-section">
         
-        <div class="hero-content relative z-10">
+        <div class="hero-content relative z-10 w-full max-w-5xl mx-auto">
           <div class="game-logo">
             <h1 class="hero-title">PromptFighters</h1>
             <div class="logo-subtitle">AI 英雄對戰</div>
@@ -46,25 +46,25 @@ import { Meta, Title } from '@angular/platform-browser';
             </button>
           </div>
           
-          <!-- 新增介绍页面导航 -->
+          <!-- 游戏导航区域 -->
           <div class="intro-navigation">
-            <p class="nav-label">探索更多內容：</p>
+            <p class="nav-label">Game Menu</p>
             <div class="nav-links">
               <a (click)="goToIntroPage('heroes')" class="nav-link">
                 <span class="link-icon">🎭</span>
-                <span>英雄展示</span>
+                <span>英雄圖鑑</span>
               </a>
               <a (click)="goToIntroPage('battles')" class="nav-link">
                 <span class="link-icon">⚔️</span>
-                <span>戰鬥記錄</span>
+                <span>戰鬥系統</span>
               </a>
               <a (click)="goToIntroPage('guide')" class="nav-link">
                 <span class="link-icon">📖</span>
-                <span>遊戲指南</span>
+                <span>新手指南</span>
               </a>
               <a (click)="goToIntroPage('about')" class="nav-link">
-                <span class="link-icon">ℹ️</span>
-                <span>關於我們</span>
+                <span class="link-icon">✨</span>
+                <span>關於遊戲</span>
               </a>
             </div>
           </div>
