@@ -18,4 +18,4 @@ Disallow: /daily-quests
 Disallow: /leaderboard
 Disallow: /auth/
 
-Sitemap: https://promptfighters.app/sitemap.xml
+Sitemap: https://promptfighters.app/assets/sitemap.xml
