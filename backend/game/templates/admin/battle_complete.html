@@ -1,0 +1,187 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />
+  <style>
+    .battle-complete {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .battle-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .fighter-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 15px 0;
+      padding: 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+    }
+    .fighter-info.winner {
+      border-color: #28a745;
+      background: #d4edda;
+    }
+    .fighter-details {
+      flex: 1;
+    }
+    .fighter-name {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .fighter-stats {
+      color: #6c757d;
+      font-size: 0.9em;
+    }
+    .winner-radio {
+      margin-left: 20px;
+    }
+    .form-actions {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .btn {
+      padding: 12px 24px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #0056b3;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #545b62;
+    }
+    .battle-status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .status-in-progress {
+      background: #e74c3c;
+      color: white;
+    }
+    .battle-time {
+      color: #6c757d;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="battle-complete">
+  <h1>⚔️ 完成战斗</h1>
+  
+  <div class="battle-info">
+    <h3>战斗信息</h3>
+    <div class="battle-time">
+      <strong>排程时间:</strong> {{ battle.scheduled_time|date:"Y-m-d H:i" }}
+    </div>
+    <div class="battle-status status-{{ battle.status }}">
+      {% if battle.status == 'in_progress' %}战斗中
+      {% elif battle.status == 'betting_closed' %}下注截止
+      {% else %}{{ battle.status }}{% endif %}
+    </div>
+    
+    <div class="fighter-info" id="fighter1-info">
+      <div class="fighter-details">
+        <div class="fighter-name">{{ battle.fighter1.character.name }}</div>
+        <div class="fighter-stats">
+          玩家: {{ battle.fighter1.player.user.username }} | 
+          排名: #{{ battle.fighter1.current_rank }} | 
+          积分: {{ battle.fighter1.rank_points }} | 
+          战绩: {{ battle.fighter1.wins }}胜{{ battle.fighter1.losses }}负
+        </div>
+      </div>
+      <div class="winner-radio">
+        <input type="radio" name="winner" value="{{ battle.fighter1.id }}" id="winner1">
+        <label for="winner1">选择为胜利者</label>
+      </div>
+    </div>
+    
+    <div class="fighter-info" id="fighter2-info">
+      <div class="fighter-details">
+        <div class="fighter-name">{{ battle.fighter2.character.name }}</div>
+        <div class="fighter-stats">
+          玩家: {{ battle.fighter2.player.user.username }} | 
+          排名: #{{ battle.fighter2.current_rank }} | 
+          积分: {{ battle.fighter2.rank_points }} | 
+          战绩: {{ battle.fighter2.wins }}胜{{ battle.fighter2.losses }}负
+        </div>
+      </div>
+      <div class="winner-radio">
+        <input type="radio" name="winner" value="{{ battle.fighter2.id }}" id="winner2">
+        <label for="winner2">选择为胜利者</label>
+      </div>
+    </div>
+  </div>
+  
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" onclick="return confirmComplete()">
+        确认完成战斗
+      </button>
+      <a href="{% url 'admin:game_scheduledbattle_changelist' %}" class="btn btn-secondary">
+        返回战斗列表
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+// 选择胜利者时高亮显示
+document.querySelectorAll('input[name="winner"]').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    // 移除所有高亮
+    document.querySelectorAll('.fighter-info').forEach(function(info) {
+      info.classList.remove('winner');
+    });
+    
+    // 高亮选中的胜利者
+    if (this.checked) {
+      if (this.value === '{{ battle.fighter1.id }}') {
+        document.getElementById('fighter1-info').classList.add('winner');
+      } else {
+        document.getElementById('fighter2-info').classList.add('winner');
+      }
+    }
+  });
+});
+
+function confirmComplete() {
+  const selectedWinner = document.querySelector('input[name="winner"]:checked');
+  if (!selectedWinner) {
+    alert('请选择胜利者');
+    return false;
+  }
+  
+  return confirm('确定要完成这场战斗吗？此操作不可撤销，将影响排名和下注结算。');
+}
+</script>
+{% endblock %}

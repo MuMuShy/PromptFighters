@@ -130,6 +130,45 @@ def fix_battle_result(battle_result, player, opponent):
         print(f"修正戰鬥結果時發生錯誤：{e}")
         return battle_result
 
+
+@shared_task
+def sync_ladder_rankings_task():
+    """定時同步天梯排名的任務"""
+    print(f"[{timezone.now()}] 開始執行定時同步天梯排名任務")
+    
+    try:
+        # 同步所有活躍賽季的排名（避免循環導入）
+        from .ladder_service import LadderService
+        LadderService.sync_all_active_seasons()
+        print(f"[{timezone.now()}] 定時同步天梯排名任務完成")
+        return True
+    except Exception as e:
+        print(f"[{timezone.now()}] 定時同步天梯排名任務失敗: {e}")
+        return False
+
+
+@shared_task
+def sync_specific_season_rankings_task(season_id):
+    """同步指定賽季排名的任務"""
+    print(f"[{timezone.now()}] 開始執行同步賽季 {season_id} 排名任務")
+    
+    try:
+        # 避免循環導入
+        from .models import LadderSeason
+        from .ladder_service import LadderService
+        
+        season = LadderSeason.objects.get(id=season_id)
+        LadderService.sync_season_rankings(season)
+        print(f"[{timezone.now()}] 同步賽季 {season.name} 排名任務完成")
+        return True
+    except LadderSeason.DoesNotExist:
+        print(f"[{timezone.now()}] 賽季 {season_id} 不存在")
+        return False
+    except Exception as e:
+        print(f"[{timezone.now()}] 同步賽季 {season_id} 排名任務失敗: {e}")
+        return False
+
+
 @shared_task
 def run_battle_task(battle_id):
     try:
@@ -304,6 +343,7 @@ def run_battle_task(battle_id):
             battle.save()
         except Battle.DoesNotExist:
             print(f"Battle with id {battle_id} not found when trying to log error.")
+
 
 
 # 天梯系統定時任務

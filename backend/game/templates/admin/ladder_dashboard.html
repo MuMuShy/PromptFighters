@@ -1,0 +1,249 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />
+  <style>
+    .ladder-dashboard {
+      padding: 20px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+    .rankings-section, .battles-section {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .section-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+    }
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ecf0f1;
+    }
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+    .rank-number {
+      font-weight: bold;
+      color: #e74c3c;
+      min-width: 40px;
+    }
+    .character-name {
+      flex: 1;
+      margin-left: 15px;
+    }
+    .player-name {
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+    .rank-points {
+      font-weight: bold;
+      color: #27ae60;
+    }
+    .battle-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ecf0f1;
+    }
+    .battle-item:last-child {
+      border-bottom: none;
+    }
+    .battle-time {
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+    .battle-status {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    .status-scheduled { background: #f39c12; color: white; }
+    .status-betting { background: #3498db; color: white; }
+    .status-progress { background: #e74c3c; color: white; }
+    .status-completed { background: #27ae60; color: white; }
+    .quick-actions {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .action-btn:hover {
+      background: #2980b9;
+    }
+    .action-btn.success { background: #27ae60; }
+    .action-btn.success:hover { background: #229954; }
+    .action-btn.warning { background: #f39c12; }
+    .action-btn.warning:hover { background: #e67e22; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="ladder-dashboard">
+  <h1>🏆 天梯系统管理仪表板</h1>
+  
+  {% if current_season %}
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ total_players }}</div>
+        <div class="stat-label">参与玩家数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ total_battles }}</div>
+        <div class="stat-label">总战斗场数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ completed_battles }}</div>
+        <div class="stat-label">已完成战斗</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ total_bets|floatformat:0 }}</div>
+        <div class="stat-label">总下注金额</div>
+      </div>
+    </div>
+
+    <div class="rankings-section">
+      <div class="section-title">🏅 当前赛季节排名 ({{ current_season.name }})</div>
+      {% if top_rankings %}
+        {% for ranking in top_rankings %}
+          <div class="ranking-item">
+            <div class="rank-number">#{{ ranking.current_rank }}</div>
+            <div class="character-name">
+              {{ ranking.character.name }}
+              <div class="player-name">{{ ranking.player.user.username }}</div>
+            </div>
+            <div class="rank-points">{{ ranking.rank_points }} pts</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>暂无排名数据</p>
+      {% endif %}
+    </div>
+
+    <div class="battles-section">
+      <div class="section-title">⚔️ 即将到来的战斗</div>
+      {% if upcoming_battles %}
+        {% for battle in upcoming_battles %}
+          <div class="battle-item">
+            <div>
+              <strong>{{ battle.fighter1.character.name }} vs {{ battle.fighter2.character.name }}</strong>
+              <div class="battle-time">{{ battle.scheduled_time|date:"m-d H:i" }}</div>
+            </div>
+            <span class="battle-status status-{{ battle.status }}">
+              {% if battle.status == 'scheduled' %}已排程
+              {% elif battle.status == 'betting_open' %}开放下注
+              {% elif battle.status == 'betting_closed' %}下注截止
+              {% elif battle.status == 'in_progress' %}战斗中
+              {% else %}{{ battle.status }}{% endif %}
+            </span>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>暂无即将到来的战斗</p>
+      {% endif %}
+    </div>
+
+    <div class="quick-actions">
+      <div class="section-title">⚡ 快速操作</div>
+      <div class="action-buttons">
+        <a href="{% url 'admin:game_ladderseason_changelist' %}" class="action-btn">管理赛季节</a>
+        <a href="{% url 'admin:game_ladderrank_changelist' %}" class="action-btn">查看排名</a>
+        <a href="{% url 'admin:game_scheduledbattle_changelist' %}" class="action-btn">管理战斗</a>
+        <a href="{% url 'admin:game_battlebet_changelist' %}" class="action-btn">下注记录</a>
+        <a href="{% url 'admin:game_bettingstats_changelist' %}" class="action-btn">下注统计</a>
+        <button class="action-btn success" onclick="scheduleNextBattle()">排程下一场战斗</button>
+        <button class="action-btn warning" onclick="initializeRankings()">初始化排名</button>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">0</div>
+        <div class="stat-label">活跃赛季节</div>
+      </div>
+    </div>
+    
+    <div class="quick-actions">
+      <div class="section-title">⚠️ 当前没有活跃的赛季节</div>
+      <div class="action-buttons">
+        <a href="{% url 'admin:game_ladderseason_add' %}" class="action-btn success">创建新赛季节</a>
+        <a href="{% url 'admin:game_ladderseason_changelist' %}" class="action-btn">管理赛季节</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+function scheduleNextBattle() {
+  if (confirm('确定要排程下一场战斗吗？')) {
+    // 这里可以调用API来排程战斗
+    alert('战斗排程功能需要实现');
+  }
+}
+
+function initializeRankings() {
+  if (confirm('确定要初始化当前赛季节的排名吗？这将重置所有玩家的积分。')) {
+    // 这里可以调用API来初始化排名
+    alert('排名初始化功能需要实现');
+  }
+}
+
+// 自动刷新页面数据（每30秒）
+setInterval(function() {
+  location.reload();
+}, 30000);
+</script>
+{% endblock %}

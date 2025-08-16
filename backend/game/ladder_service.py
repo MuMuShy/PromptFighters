@@ -8,7 +8,9 @@ from .models import (
     LadderSeason, LadderRank, ScheduledBattle, 
     BattleBet, BettingStats, Character, Player
 )
-from .tasks import run_battle_task
+from django.db import models
+# 避免循環導入，在需要時才導入
+# from .tasks import run_battle_task
 
 
 class LadderService:
@@ -34,19 +36,28 @@ class LadderService:
         # 獲取所有角色（移除等級限制）
         eligible_characters = Character.objects.all().select_related('player')
         
+        # 檢查是否已經有排名數據
+        existing_rankings = LadderRank.objects.filter(season=season).count()
+        if existing_rankings > 0:
+            print(f"賽季 {season.name} 已有 {existing_rankings} 個排名記錄，跳過初始化")
+            return
+        
+        print(f"開始初始化賽季 {season.name} 的排名，共 {eligible_characters.count()} 個角色")
+        
         rankings = []
         for i, character in enumerate(eligible_characters):
-            # 基於角色實力計算初始積分（移除等級限制）
+            # 基於角色實力計算初始積分
             base_points = 1000
             level_bonus = character.level * 30  # 每級30分
             stat_bonus = (character.strength + character.agility + character.luck) * 2
+            rarity_bonus = character.rarity * 100  # 稀有度獎勵
             win_rate_bonus = 0
             
             if character.win_count + character.loss_count > 0:
                 win_rate = character.win_count / (character.win_count + character.loss_count)
                 win_rate_bonus = int(win_rate * 200)
             
-            initial_points = base_points + level_bonus + stat_bonus + win_rate_bonus
+            initial_points = base_points + level_bonus + stat_bonus + rarity_bonus + win_rate_bonus
             
             ranking = LadderRank(
                 season=season,
@@ -55,15 +66,21 @@ class LadderService:
                 rank_points=initial_points,
                 current_rank=i + 1,
                 wins=0,
-                losses=0
+                losses=0,
+                is_eligible=True  # 預設所有角色都有參戰資格
             )
             rankings.append(ranking)
         
         # 批量創建排名
-        LadderRank.objects.bulk_create(rankings)
-        
-        # 重新排序
-        LadderService.update_rankings(season)
+        if rankings:
+            LadderRank.objects.bulk_create(rankings)
+            print(f"成功創建 {len(rankings)} 個排名記錄")
+            
+            # 重新排序
+            LadderService.update_rankings(season)
+            print(f"賽季 {season.name} 排名初始化完成")
+        else:
+            print("沒有找到可用的角色")
     
     @staticmethod
     def update_rankings(season: LadderSeason):
@@ -173,8 +190,12 @@ class LadderService:
             status='PENDING'
         )
         
-        # 觸發戰鬥任務
-        run_battle_task.delay(actual_battle.id)
+        # 觸發戰鬥任務（避免循環導入）
+        try:
+            from .tasks import run_battle_task
+            run_battle_task.delay(actual_battle.id)
+        except ImportError:
+            print("無法導入戰鬥任務，跳過任務觸發")
         
         return actual_battle
     
@@ -337,6 +358,72 @@ class LadderService:
             scheduled_time__gt=now,
             status__in=['scheduled', 'betting_open', 'betting_closed']
         ).order_by('scheduled_time').first()
+    
+    @staticmethod
+    def sync_season_rankings(season: LadderSeason):
+        """同步賽季排名，添加新角色並更新現有排名"""
+        print(f"開始同步賽季 {season.name} 的排名")
+        
+        # 獲取所有角色
+        all_characters = Character.objects.all().select_related('player')
+        
+        # 獲取現有排名
+        existing_rankings = LadderRank.objects.filter(season=season)
+        existing_character_ids = set(existing_rankings.values_list('character_id', flat=True))
+        
+        # 找出新角色
+        new_characters = [char for char in all_characters if char.id not in existing_character_ids]
+        
+        if new_characters:
+            print(f"發現 {len(new_characters)} 個新角色，正在添加到天梯系統")
+            
+            new_rankings = []
+            for character in new_characters:
+                # 計算初始積分
+                base_points = 1000
+                level_bonus = character.level * 30
+                stat_bonus = (character.strength + character.agility + character.luck) * 2
+                rarity_bonus = character.rarity * 100
+                win_rate_bonus = 0
+                
+                if character.win_count + character.loss_count > 0:
+                    win_rate = character.win_count / (character.win_count + character.loss_count)
+                    win_rate_bonus = int(win_rate * 200)
+                
+                initial_points = base_points + level_bonus + stat_bonus + rarity_bonus + win_rate_bonus
+                
+                # 新角色排名設為最後
+                max_rank_result = existing_rankings.aggregate(models.Max('current_rank'))
+                max_rank = max_rank_result['current_rank__max'] if max_rank_result['current_rank__max'] is not None else 0
+                new_rank = max_rank + 1
+                
+                ranking = LadderRank(
+                    season=season,
+                    player=character.player,
+                    character=character,
+                    rank_points=initial_points,
+                    current_rank=new_rank,
+                    wins=0,
+                    losses=0,
+                    is_eligible=True
+                )
+                new_rankings.append(ranking)
+            
+            # 批量創建新排名
+            if new_rankings:
+                LadderRank.objects.bulk_create(new_rankings)
+                print(f"成功添加 {len(new_rankings)} 個新角色到天梯系統")
+        
+        # 更新所有排名
+        LadderService.update_rankings(season)
+        print(f"賽季 {season.name} 排名同步完成，總共 {LadderRank.objects.filter(season=season).count()} 個排名")
+    
+    @staticmethod
+    def sync_all_active_seasons():
+        """同步所有活躍賽季的排名"""
+        active_seasons = LadderSeason.objects.filter(is_active=True)
+        for season in active_seasons:
+            LadderService.sync_season_rankings(season)
     
     @staticmethod
     def place_bet(player: Player, battle: ScheduledBattle, chosen_fighter: LadderRank, amount: int):

@@ -1,5 +1,16 @@
 from django.contrib import admin
-from .models import Player, Character, Battle, DailyQuest, PlayerDailyQuest, PlayerLoginRecord
+from django.utils.html import format_html
+from django.urls import reverse
+from django.utils import timezone
+from django.contrib import messages
+from django.db import transaction
+from django.http import HttpResponseRedirect
+from .models import (
+    Player, Character, Battle, DailyQuest, PlayerDailyQuest, PlayerLoginRecord,
+    LadderSeason, LadderRank, ScheduledBattle, BattleBet, BettingStats
+)
+from .ladder_service import LadderService
+from django.shortcuts import redirect
 
 
 @admin.register(Player)
@@ -87,7 +98,472 @@ class PlayerLoginRecordAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at']
 
 
-# 自定義管理後台標題
-admin.site.site_header = "AI Hero Battle 管理後台"
+# ==================== 天梯系統管理 ====================
+
+@admin.register(LadderSeason)
+class LadderSeasonAdmin(admin.ModelAdmin):
+    """天梯赛季节管理"""
+    list_display = [
+        'name', 'start_date', 'end_date', 'is_active', 'prize_pool', 
+        'player_count', 'battle_count', 'status_display', 'actions_display'
+    ]
+    list_filter = ['is_active', 'start_date', 'end_date']
+    search_fields = ['name']
+    readonly_fields = ['id', 'created_at', 'player_count', 'battle_count']
+    actions = ['activate_season', 'deactivate_season', 'initialize_rankings', 'sync_rankings', 'duplicate_season']
+    
+    fieldsets = (
+        ('赛季节基本信息', {
+            'fields': ('name', 'start_date', 'end_date', 'is_active', 'prize_pool')
+        }),
+        ('统计信息', {
+            'fields': ('player_count', 'battle_count'),
+            'classes': ('collapse',)
+        }),
+        ('系统信息', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def player_count(self, obj):
+        return obj.rankings.count()
+    player_count.short_description = '参与玩家数'
+    
+    def battle_count(self, obj):
+        return obj.battles.count()
+    battle_count.short_description = '战斗场数'
+    
+    def status_display(self, obj):
+        if obj.is_active:
+            if timezone.now() < obj.start_date:
+                return format_html('<span style="color: orange;">即将开始</span>')
+            elif obj.start_date <= timezone.now() <= obj.end_date:
+                return format_html('<span style="color: green;">进行中</span>')
+            else:
+                return format_html('<span style="color: red;">已结束</span>')
+        else:
+            return format_html('<span style="color: gray;">未激活</span>')
+    status_display.short_description = '状态'
+    
+    def actions_display(self, obj):
+        """显示操作按钮"""
+        buttons = []
+        
+        if obj.is_active:
+            buttons.append(f'<a href="{reverse("admin:game_ladderseason_change", args=[obj.id])}" class="button">编辑</a>')
+            if obj.rankings.count() == 0:
+                buttons.append(f'<a href="#" onclick="initializeRankings({obj.id})" class="button">初始化排名</a>')
+        else:
+            buttons.append(f'<a href="#" onclick="activateSeason({obj.id})" class="button">激活</a>')
+        
+        return format_html(' '.join(buttons))
+    actions_display.short_description = '操作'
+    
+    def activate_season(self, request, queryset):
+        """激活选中的赛季节"""
+        for season in queryset:
+            # 停用其他赛季节
+            LadderSeason.objects.exclude(id=season.id).update(is_active=False)
+            # 激活当前赛季节
+            season.is_active = True
+            season.save()
+            messages.success(request, f'赛季节 "{season.name}" 已激活')
+    activate_season.short_description = '激活选中的赛季节'
+    
+    def deactivate_season(self, request, queryset):
+        """停用选中的赛季节"""
+        queryset.update(is_active=False)
+        messages.success(request, f'已停用 {queryset.count()} 个赛季节')
+    deactivate_season.short_description = '停用选中的赛季节'
+    
+    def initialize_rankings(self, request, queryset):
+        """初始化賽季節排名"""
+        for season in queryset:
+            try:
+                LadderService.initialize_season_rankings(season)
+                messages.success(request, f'賽季節 "{season.name}" 排名已初始化')
+            except Exception as e:
+                messages.error(request, f'初始化賽季節 "{season.name}" 排名失敗: {str(e)}')
+    initialize_rankings.short_description = '初始化賽季節排名'
+    
+    def sync_rankings(self, request, queryset):
+        """同步賽季節排名，添加新角色"""
+        for season in queryset:
+            try:
+                LadderService.sync_season_rankings(season)
+                messages.success(request, f'賽季節 "{season.name}" 排名已同步')
+            except Exception as e:
+                messages.error(request, f'同步賽季節 "{season.name}" 排名失敗: {str(e)}')
+    sync_rankings.short_description = '同步排名（添加新角色）'
+    
+    def duplicate_season(self, request, queryset):
+        """複製賽季節"""
+        for season in queryset:
+            new_season = LadderSeason.objects.create(
+                name=f"{season.name} (副本)",
+                start_date=season.start_date + timezone.timedelta(days=30),
+                end_date=season.end_date + timezone.timedelta(days=30),
+                prize_pool=season.prize_pool,
+                is_active=False
+            )
+            messages.success(request, f'已複製賽季節 "{season.name}" 為 "{new_season.name}"')
+    duplicate_season.short_description = '複製賽季節'
+
+
+@admin.register(LadderRank)
+class LadderRankAdmin(admin.ModelAdmin):
+    """天梯排名管理"""
+    list_display = [
+        'character_name', 'player_username', 'season_name', 'current_rank', 
+        'rank_points', 'wins', 'losses', 'win_rate', 'is_eligible', 'last_battle'
+    ]
+    list_filter = ['season__is_active', 'is_eligible', 'current_rank', 'created_at']
+    search_fields = ['character__name', 'player__user__username', 'season__name']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'win_rate']
+    actions = ['toggle_eligibility', 'reset_rank_points', 'adjust_points']
+    
+    fieldsets = (
+        ('排名信息', {
+            'fields': ('season', 'player', 'character', 'current_rank', 'rank_points')
+        }),
+        ('战绩统计', {
+            'fields': ('wins', 'losses', 'win_rate', 'last_battle_at')
+        }),
+        ('参战设置', {
+            'fields': ('is_eligible',)
+        }),
+        ('系统信息', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def character_name(self, obj):
+        return obj.character.name
+    character_name.short_description = '角色名称'
+    
+    def player_username(self, obj):
+        return obj.player.user.username
+    player_username.short_description = '玩家'
+    
+    def season_name(self, obj):
+        return obj.season.name
+    season_name.short_description = '赛季节'
+    
+    def win_rate(self, obj):
+        return f"{obj.win_rate}%"
+    win_rate.short_description = '胜率'
+    
+    def last_battle(self, obj):
+        if obj.last_battle_at:
+            return obj.last_battle_at.strftime('%m-%d %H:%M')
+        return '无'
+    last_battle.short_description = '最后参战'
+    
+    def toggle_eligibility(self, request, queryset):
+        """切换参战资格"""
+        for rank in queryset:
+            rank.is_eligible = not rank.is_eligible
+            rank.save()
+        messages.success(request, f'已更新 {queryset.count()} 个排名的参战资格')
+    toggle_eligibility.short_description = '切换参战资格'
+    
+    def reset_rank_points(self, request, queryset):
+        """重置排名积分"""
+        for rank in queryset:
+            rank.rank_points = 1000
+            rank.current_rank = 999999
+            rank.wins = 0
+            rank.losses = 0
+            rank.save()
+        messages.success(request, f'已重置 {queryset.count()} 个排名的积分')
+    reset_rank_points.short_description = '重置积分'
+    
+    def adjust_points(self, request, queryset):
+        """调整积分"""
+        # 这里可以实现积分调整的逻辑
+        messages.info(request, '积分调整功能需要额外实现')
+    adjust_points.short_description = '调整积分'
+
+
+@admin.register(ScheduledBattle)
+class ScheduledBattleAdmin(admin.ModelAdmin):
+    """定时天梯战斗管理"""
+    list_display = [
+        'battle_info', 'season_name', 'scheduled_time', 'status', 
+        'total_bets', 'odds_display', 'winner_info', 'actions_display'
+    ]
+    list_filter = ['status', 'season__is_active', 'scheduled_time', 'created_at']
+    search_fields = ['fighter1__character__name', 'fighter2__character__name', 'season__name']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'total_bets', 'odds_display']
+    actions = ['start_battle', 'complete_battle', 'cancel_battle', 'recalculate_odds', 'manual_settle']
+    
+    fieldsets = (
+        ('战斗信息', {
+            'fields': ('season', 'fighter1', 'fighter2', 'status', 'winner')
+        }),
+        ('时间安排', {
+            'fields': ('scheduled_time', 'betting_start_time', 'betting_end_time')
+        }),
+        ('下注统计', {
+            'fields': ('total_bets_amount', 'fighter1_bets_amount', 'fighter2_bets_amount'),
+            'classes': ('collapse',)
+        }),
+        ('赔率设置', {
+            'fields': ('fighter1_odds', 'fighter2_odds'),
+            'classes': ('collapse',)
+        }),
+        ('战斗结果', {
+            'fields': ('battle_log',),
+            'classes': ('collapse',)
+        }),
+        ('系统信息', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def battle_info(self, obj):
+        return f"{obj.fighter1.character.name} vs {obj.fighter2.character.name}"
+    battle_info.short_description = '战斗'
+    
+    def season_name(self, obj):
+        return obj.season.name
+    season_name.short_description = '赛季节'
+    
+    def total_bets(self, obj):
+        return f"{obj.total_bets_amount} ({obj.bets.count()}笔)"
+    total_bets.short_description = '下注总额'
+    
+    def odds_display(self, obj):
+        return f"{obj.fighter1_odds} / {obj.fighter2_odds}"
+    odds_display.short_description = '赔率'
+    
+    def winner_info(self, obj):
+        if obj.winner:
+            return format_html('<span style="color: green;">{}</span>', obj.winner.character.name)
+        return '未决出'
+    winner_info.short_description = '胜利者'
+    
+    def actions_display(self, obj):
+        """显示操作按钮"""
+        buttons = []
+        
+        if obj.status == 'betting_closed':
+            buttons.append(f'<a href="#" onclick="startBattle({obj.id})" class="button">开始战斗</a>')
+        elif obj.status == 'in_progress':
+            buttons.append(f'<a href="#" onclick="completeBattle({obj.id})" class="button">完成战斗</a>')
+        
+        if obj.status in ['scheduled', 'betting_open']:
+            buttons.append(f'<a href="#" onclick="cancelBattle({obj.id})" class="button">取消战斗</a>')
+        
+        return format_html(' '.join(buttons))
+    actions_display.short_description = '操作'
+    
+    def start_battle(self, request, queryset):
+        """开始战斗"""
+        success_count = 0
+        for battle in queryset:
+            if battle.status == 'betting_closed':
+                try:
+                    actual_battle = LadderService.start_battle(battle)
+                    if actual_battle:
+                        success_count += 1
+                        messages.success(request, f'战斗 {battle.id} 已开始')
+                    else:
+                        messages.error(request, f'战斗 {battle.id} 开始失败')
+                except Exception as e:
+                    messages.error(request, f'战斗 {battle.id} 开始失败: {str(e)}')
+            else:
+                messages.warning(request, f'战斗 {battle.id} 状态不正确，无法开始')
+        
+        if success_count > 0:
+            messages.success(request, f'成功开始 {success_count} 场战斗')
+    start_battle.short_description = '开始选中的战斗'
+    
+    def complete_battle(self, request, queryset):
+        """完成战斗"""
+        if queryset.count() == 1:
+            battle = queryset.first()
+            if battle.status == 'in_progress':
+                # 重定向到战斗结果输入页面
+                return redirect(f'/admin/game/scheduledbattle/{battle.id}/complete/')
+            else:
+                messages.warning(request, f'战斗 {battle.id} 状态不正确，无法完成')
+        else:
+            messages.warning(request, '请选择一个战斗进行完成操作')
+    complete_battle.short_description = '完成选中的战斗'
+    
+    def cancel_battle(self, request, queryset):
+        """取消战斗"""
+        queryset.update(status='cancelled')
+        messages.success(request, f'已取消 {queryset.count()} 场战斗')
+    cancel_battle.short_description = '取消选中的战斗'
+    
+    def recalculate_odds(self, request, queryset):
+        """重新计算赔率"""
+        for battle in queryset:
+            battle.calculate_odds()
+        messages.success(request, f'已重新计算 {queryset.count()} 场战斗的赔率')
+    recalculate_odds.short_description = '重新计算赔率'
+    
+    def manual_settle(self, request, queryset):
+        """手动结算战斗"""
+        for battle in queryset:
+            if battle.status == 'in_progress' and battle.winner:
+                try:
+                    # 这里需要实现手动结算逻辑
+                    messages.info(request, f'战斗 {battle.id} 需要手动结算')
+                except Exception as e:
+                    messages.error(request, f'结算战斗 {battle.id} 失败: {str(e)}')
+            else:
+                messages.warning(request, f'战斗 {battle.id} 无法结算')
+    manual_settle.short_description = '手动结算战斗'
+
+
+@admin.register(BattleBet)
+class BattleBetAdmin(admin.ModelAdmin):
+    """下注记录管理"""
+    list_display = [
+        'player_username', 'battle_info', 'chosen_fighter', 'bet_amount', 
+        'odds_at_bet', 'status', 'payout_amount', 'created_at'
+    ]
+    list_filter = ['is_settled', 'is_winner', 'created_at']
+    search_fields = ['player__user__username', 'battle__fighter1__character__name', 'battle__fighter2__character__name']
+    readonly_fields = ['id', 'created_at', 'settled_at', 'potential_payout', 'estimated_pool_payout']
+    actions = ['settle_bets', 'void_bets', 'export_bets']
+    
+    fieldsets = (
+        ('下注信息', {
+            'fields': ('battle', 'player', 'chosen_fighter', 'bet_amount', 'odds_at_bet')
+        }),
+        ('结算信息', {
+            'fields': ('is_winner', 'payout_amount', 'is_settled', 'settled_at')
+        }),
+        ('预估获利', {
+            'fields': ('potential_payout', 'estimated_pool_payout'),
+            'classes': ('collapse',)
+        }),
+        ('系统信息', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def player_username(self, obj):
+        return obj.player.user.username
+    player_username.short_description = '玩家'
+    
+    def battle_info(self, obj):
+        return f"{obj.battle.fighter1.character.name} vs {obj.battle.fighter2.character.name}"
+    battle_info.short_description = '战斗'
+    
+    def status(self, obj):
+        if obj.is_settled:
+            if obj.is_winner:
+                return format_html('<span style="color: green;">获胜</span>')
+            else:
+                return format_html('<span style="color: red;">失败</span>')
+        else:
+            return format_html('<span style="color: orange;">未结算</span>')
+    status.short_description = '状态'
+    
+    def settle_bets(self, request, queryset):
+        """结算下注"""
+        unsettled_bets = queryset.filter(is_settled=False)
+        if unsettled_bets.exists():
+            messages.warning(request, '请先完成战斗，系统会自动结算下注')
+        else:
+            messages.info(request, '所有选中的下注都已结算')
+    settle_bets.short_description = '结算选中的下注'
+    
+    def void_bets(self, request, queryset):
+        """作废下注"""
+        # 这里可以实现作废下注的逻辑
+        messages.info(request, '作废下注功能需要额外实现')
+    void_bets.short_description = '作废选中的下注'
+    
+    def export_bets(self, request, queryset):
+        """导出下注记录"""
+        # 这里可以实现导出功能
+        messages.info(request, '导出功能需要额外实现')
+    export_bets.short_description = '导出下注记录'
+
+
+@admin.register(BettingStats)
+class BettingStatsAdmin(admin.ModelAdmin):
+    """下注统计管理"""
+    list_display = [
+        'player_username', 'total_bets', 'total_bet_amount', 'total_winnings', 
+        'win_count', 'win_rate', 'net_profit', 'best_streak'
+    ]
+    list_filter = ['updated_at']
+    search_fields = ['player__user__username']
+    readonly_fields = ['id', 'updated_at', 'win_rate', 'net_profit']
+    actions = ['reset_stats', 'export_stats']
+    
+    fieldsets = (
+        ('玩家信息', {
+            'fields': ('player',)
+        }),
+        ('下注统计', {
+            'fields': ('total_bets', 'total_bet_amount', 'total_winnings', 'win_count', 'win_rate')
+        }),
+        ('连胜记录', {
+            'fields': ('current_streak', 'best_streak')
+        }),
+        ('盈亏分析', {
+            'fields': ('net_profit',),
+            'classes': ('collapse',)
+        }),
+        ('系统信息', {
+            'fields': ('id', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def player_username(self, obj):
+        return obj.player.user.username
+    player_username.short_description = '玩家'
+    
+    def win_rate(self, obj):
+        return f"{obj.win_rate}%"
+    win_rate.short_description = '胜率'
+    
+    def net_profit(self, obj):
+        if obj.net_profit > 0:
+            return format_html('<span style="color: green;">+{}</span>', obj.net_profit)
+        elif obj.net_profit < 0:
+            return format_html('<span style="color: red;">{}</span>', obj.net_profit)
+        else:
+            return format_html('<span style="color: gray;">0</span>')
+    net_profit.short_description = '净利润'
+    
+    def reset_stats(self, request, queryset):
+        """重置统计"""
+        for stats in queryset:
+            stats.total_bets = 0
+            stats.total_bet_amount = 0
+            stats.total_winnings = 0
+            stats.win_count = 0
+            stats.current_streak = 0
+            stats.best_streak = 0
+            stats.save()
+        messages.success(request, f'已重置 {queryset.count()} 个玩家的下注统计')
+    reset_stats.short_description = '重置统计'
+    
+    def export_stats(self, request, queryset):
+        """导出统计"""
+        # 这里可以实现导出功能
+        messages.info(request, '导出功能需要额外实现')
+    export_stats.short_description = '导出统计'
+
+
+# 自定义管理后台标题
+admin.site.site_header = "AI Hero Battle 管理后台"
 admin.site.site_title = "AI Hero Battle"
-admin.site.index_title = "遊戲管理"
+admin.site.index_title = "游戏管理"
+
+# 添加天梯系統快速連結
+admin.site.index_template = 'admin/index.html'
