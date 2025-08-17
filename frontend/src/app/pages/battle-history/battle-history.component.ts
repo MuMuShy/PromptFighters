@@ -39,15 +39,14 @@ interface BattleHistory {
 
       <!-- 頁面標題 -->
       <div class="history-header">
-        <h1 class="history-title">📚 歷史對戰</h1>
+        <h1 class="history-title">歷史對戰</h1>
         <p class="history-subtitle">回顧精彩的天梯戰鬥記錄</p>
       </div>
 
       <!-- 戰鬥歷史列表 -->
       <div class="battles-list" *ngIf="battleHistory.length > 0">
         <div class="battle-history-card" 
-             *ngFor="let battle of battleHistory; let i = index"
-             [class.recent]="i < 3"
+             *ngFor="let battle of battleHistory"
              (click)="viewBattleDetails(battle)">
           
           <!-- 戰鬥時間和狀態 -->
@@ -64,7 +63,7 @@ interface BattleHistory {
                 <img [src]="battle.fighter1.image_url | mediaUrl" 
                      [alt]="battle.fighter1.name">
                 <div class="rank-badge">#{{ battle.fighter1.rank }}</div>
-                <div class="winner-crown" *ngIf="battle.winner?.is_fighter1">👑</div>
+                <div class="winner-crown" *ngIf="battle.winner?.is_fighter1"></div>
               </div>
               
               <div class="fighter-info">
@@ -78,11 +77,11 @@ interface BattleHistory {
               <div class="vs-icon">VS</div>
               <div class="battle-stats">
                 <div class="stat-item">
-                  <span class="stat-icon">💰</span>
+                  <div class="stat-icon prize"></div>
                   <span class="stat-value">{{ bettingService.formatAmount(battle.total_bets_amount) }}</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-icon">🎯</span>
+                  <div class="stat-icon bets"></div>
                   <span class="stat-value">{{ battle.total_bets_count }}注</span>
                 </div>
               </div>
@@ -94,7 +93,7 @@ interface BattleHistory {
                 <img [src]="battle.fighter2.image_url | mediaUrl" 
                      [alt]="battle.fighter2.name">
                 <div class="rank-badge">#{{ battle.fighter2.rank }}</div>
-                <div class="winner-crown" *ngIf="battle.winner && !battle.winner.is_fighter1">👑</div>
+                <div class="winner-crown" *ngIf="battle.winner && !battle.winner.is_fighter1"></div>
               </div>
               
               <div class="fighter-info">
@@ -107,7 +106,8 @@ interface BattleHistory {
           <!-- 戰鬥結果 -->
           <div class="battle-result" *ngIf="battle.winner">
             <div class="result-text">
-              🏆 {{ battle.winner.name }} 獲得勝利！
+              <div class="victory-icon"></div>
+              <span>{{ battle.winner.name }} 獲得勝利！</span>
             </div>
           </div>
 
@@ -120,7 +120,7 @@ interface BattleHistory {
 
       <!-- 空狀態 -->
       <div class="empty-history" *ngIf="battleHistory.length === 0 && !loading">
-        <div class="empty-icon">📜</div>
+        <div class="empty-icon"></div>
         <h2>暫無歷史記錄</h2>
         <p>還沒有完成的戰鬥記錄</p>
       </div>

@@ -16,7 +16,7 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
       <!-- 主標題 -->
       <div class="arena-header">
         <h1 class="arena-title">競技場</h1>
-        <p class="arena-subtitle">每小時自動對戰 • 實時下注 • 豐厚獎勵</p>
+        <p class="arena-subtitle">智能預測系統</p>
       </div>
 
       <!-- 當前戰鬥區域 -->
@@ -24,31 +24,40 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
         <div class="battle-card">
           <!-- 戰鬥標題 -->
           <div class="battle-header">
-            <h2 class="battle-title">⚔️ 即將開戰</h2>
+            <div class="battle-info">
+              <h2 class="battle-title">天梯競技場</h2>
+              <div class="battle-id">戰鬥 #{{ currentBattle.id.substring(0, 8) }}</div>
+            </div>
             <div class="battle-status" [ngClass]="currentBattle.status">
+              <div class="status-dot"></div>
               {{ getStatusText(currentBattle.status) }}
             </div>
           </div>
 
-          <!-- 倒數計時器 -->
-          <div class="countdown-section">
-            <div class="countdown-timer" *ngIf="!timeRemaining.isExpired">
-              <div class="timer-label">{{ getTimerLabel() }}</div>
-              <div class="timer-display">
-                <div class="time-unit">
-                  <span class="time-number">{{ timeRemaining.hours.toString().padStart(2, '0') }}</span>
-                  <span class="time-label">時</span>
+          <!-- 狀態說明和倒數計時 -->
+          <div class="battle-progress-section">
+            <div class="progress-info">
+              <div class="current-phase">
+                <h3 class="phase-title">{{ getCurrentPhaseTitle() }}</h3>
+                <p class="phase-description">{{ getCurrentPhaseDescription() }}</p>
+              </div>
+              
+              <div class="countdown-timer" *ngIf="!timeRemaining.isExpired">
+                <div class="timer-display">
+                  <div class="time-unit" *ngIf="timeRemaining.hours > 0">
+                    <span class="time-number">{{ timeRemaining.hours.toString().padStart(2, '0') }}</span>
+                    <span class="time-label">時</span>
+                  </div>
+                  <div class="time-unit">
+                    <span class="time-number">{{ timeRemaining.minutes.toString().padStart(2, '0') }}</span>
+                    <span class="time-label">分</span>
+                  </div>
+                  <div class="time-unit">
+                    <span class="time-number">{{ timeRemaining.seconds.toString().padStart(2, '0') }}</span>
+                    <span class="time-label">秒</span>
+                  </div>
                 </div>
-                <span class="time-separator">:</span>
-                <div class="time-unit">
-                  <span class="time-number">{{ timeRemaining.minutes.toString().padStart(2, '0') }}</span>
-                  <span class="time-label">分</span>
-                </div>
-                <span class="time-separator">:</span>
-                <div class="time-unit">
-                  <span class="time-number">{{ timeRemaining.seconds.toString().padStart(2, '0') }}</span>
-                  <span class="time-label">秒</span>
-                </div>
+                <div class="timer-action">{{ getTimerAction() }}</div>
               </div>
             </div>
           </div>
@@ -64,9 +73,18 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
               <div class="fighter-info">
                 <h3 class="fighter-name">{{ currentBattle.fighter1.character.name }}</h3>
                 <div class="fighter-stats">
-                  <span class="stat">💪 {{ currentBattle.fighter1.character.strength }}</span>
-                  <span class="stat">⚡ {{ currentBattle.fighter1.character.agility }}</span>
-                  <span class="stat">🍀 {{ currentBattle.fighter1.character.luck }}</span>
+                  <div class="stat-item">
+                    <div class="stat-icon str"></div>
+                    <span class="stat-value">{{ currentBattle.fighter1.character.strength }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-icon agi"></div>
+                    <span class="stat-value">{{ currentBattle.fighter1.character.agility }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-icon luk"></div>
+                    <span class="stat-value">{{ currentBattle.fighter1.character.luck }}</span>
+                  </div>
                 </div>
                 <div class="fighter-record">
                   {{ currentBattle.fighter1.wins }}勝 {{ currentBattle.fighter1.losses }}敗
@@ -102,9 +120,18 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
               <div class="fighter-info">
                 <h3 class="fighter-name">{{ currentBattle.fighter2.character.name }}</h3>
                 <div class="fighter-stats">
-                  <span class="stat">💪 {{ currentBattle.fighter2.character.strength }}</span>
-                  <span class="stat">⚡ {{ currentBattle.fighter2.character.agility }}</span>
-                  <span class="stat">🍀 {{ currentBattle.fighter2.character.luck }}</span>
+                  <div class="stat-item">
+                    <div class="stat-icon str"></div>
+                    <span class="stat-value">{{ currentBattle.fighter2.character.strength }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-icon agi"></div>
+                    <span class="stat-value">{{ currentBattle.fighter2.character.agility }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-icon luk"></div>
+                    <span class="stat-value">{{ currentBattle.fighter2.character.luck }}</span>
+                  </div>
                 </div>
                 <div class="fighter-record">
                   {{ currentBattle.fighter2.wins }}勝 {{ currentBattle.fighter2.losses }}敗
@@ -219,12 +246,18 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
       <!-- 無戰鬥時的顯示 -->
       <div class="no-battle-section" *ngIf="!currentBattle && !loading">
         <div class="no-battle-card">
-          <div class="no-battle-icon">⏰</div>
+          <div class="no-battle-icon"></div>
           <h2>暫無進行中的戰鬥</h2>
-          <p>下一場戰鬥將在整點開始，敬請期待！</p>
+          <p>系統正在安排下一場精彩對戰，敬請期待</p>
           <div class="action-buttons">
-            <button class="refresh-btn" (click)="refreshData()">刷新</button>
-            <button class="create-battle-btn" (click)="createTestBattle()">創建測試戰鬥</button>
+            <button class="refresh-btn" (click)="refreshData()">
+              <div class="btn-icon refresh"></div>
+              <span>刷新</span>
+            </button>
+            <button class="create-battle-btn" (click)="createTestBattle()">
+              <div class="btn-icon create"></div>
+              <span>創建測試戰鬥</span>
+            </button>
           </div>
         </div>
       </div>
@@ -238,19 +271,19 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
       <!-- 快速導航 -->
       <div class="quick-nav">
         <button class="nav-btn" (click)="goToLadder()">
-          <span class="nav-icon">🏆</span>
+          <div class="nav-icon ladder"></div>
           <span class="nav-text">天梯排名</span>
         </button>
         <button class="nav-btn" (click)="goToMyBets()">
-          <span class="nav-icon">📊</span>
+          <div class="nav-icon bets"></div>
           <span class="nav-text">我的下注</span>
         </button>
         <button class="nav-btn" (click)="goToUpcoming()">
-          <span class="nav-icon">📅</span>
+          <div class="nav-icon upcoming"></div>
           <span class="nav-text">即將開戰</span>
         </button>
         <button class="nav-btn" (click)="goToBattleHistory()">
-          <span class="nav-icon">📚</span>
+          <div class="nav-icon history"></div>
           <span class="nav-text">歷史對戰</span>
         </button>
       </div>
@@ -378,15 +411,56 @@ export class ArenaComponent implements OnInit, OnDestroy {
     return statusMap[status] || status;
   }
   
-  getTimerLabel(): string {
+  getCurrentPhaseTitle(): string {
     if (!this.currentBattle) return '';
     
-    if (this.currentBattle.status === 'betting_open') {
-      return '下注截止';
-    } else if (this.currentBattle.status === 'scheduled') {
-      return '下注開始';
-    } else {
-      return '戰鬥開始';
+    switch (this.currentBattle.status) {
+      case 'scheduled':
+        return '準備階段';
+      case 'betting_open':
+        return '下注進行中';
+      case 'betting_closed':
+        return '下注已截止';
+      case 'in_progress':
+        return '戰鬥進行中';
+      case 'completed':
+        return '戰鬥已結束';
+      default:
+        return '等待中';
+    }
+  }
+  
+  getCurrentPhaseDescription(): string {
+    if (!this.currentBattle) return '';
+    
+    switch (this.currentBattle.status) {
+      case 'scheduled':
+        return '戰鬥即將開始，下注將於指定時間開放';
+      case 'betting_open':
+        return '現在可以選擇支持的角色並進行下注';
+      case 'betting_closed':
+        return '下注時間已結束，戰鬥即將開始';
+      case 'in_progress':
+        return '角色正在激烈戰鬥中，請耐心等待結果';
+      case 'completed':
+        return '戰鬥已結束，可查看結果和獎金分配';
+      default:
+        return '系統正在處理中';
+    }
+  }
+  
+  getTimerAction(): string {
+    if (!this.currentBattle) return '';
+    
+    switch (this.currentBattle.status) {
+      case 'scheduled':
+        return '後開放下注';
+      case 'betting_open':
+        return '後截止下注';
+      case 'betting_closed':
+        return '後開始戰鬥';
+      default:
+        return '後更新狀態';
     }
   }
   
