@@ -7,24 +7,43 @@ networks:
     name: aiherobattle-network
 
 services:
-  ai-node-1:
+  # Cloudflare Tunnel (可選，家用網絡使用)
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: ai-node-tunnel
+    command: tunnel --no-autoupdate --url http://ai-node:8001
+    restart: unless-stopped
+    networks:
+      - aiherobattle-network
+    profiles:
+      - with-tunnel
+    healthcheck:
+      test: ["CMD", "sh", "-c", "pgrep cloudflared || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # AI 節點
+  ai-node:
     build: .
     container_name: ai-node-1
     env_file:
       - .env
     environment:
-      - NODE_NAME=ai-node-1
-      - NODE_PORT=8001
-      - DEPLOYMENT_MODE=local
-      - AGGREGATOR_URL=http://host.docker.internal:8000
-      # For production, set these:
-      # - DEPLOYMENT_MODE=production
-      # - AGGREGATOR_URL=https://your-server.com
-      # - NODE_EXTERNAL_HOST=your-public-ip (optional, auto-detected if not set)
+      - NODE_NAME=${NODE_NAME:-ai-node-1}
+      - NODE_PORT=${NODE_PORT:-8001}
+      - USE_TUNNEL=${USE_TUNNEL:-false}
+      # 環境變量從 .env 讀取，這裡不硬編碼
+      - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-local}
+      - AGGREGATOR_URL=${AGGREGATOR_URL:-http://host.docker.internal:8000}
     ports:
-      - "8001:8001"
+      - "${NODE_PORT:-8001}:${NODE_PORT:-8001}"
     volumes:
       - ./logs:/app/logs
     networks:
       - aiherobattle-network
     restart: unless-stopped
+    profiles:
+      - ""  # 默認啟動
+      - with-tunnel

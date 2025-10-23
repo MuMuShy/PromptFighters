@@ -260,26 +260,99 @@ def get_local_ip():
     except:
         return None
 
+def get_tunnel_url():
+    """Get Cloudflare Tunnel URL from tunnel container logs"""
+    try:
+        if os.getenv('USE_TUNNEL', 'false').lower() != 'true':
+            return None
+        
+        logger.info("檢測 Cloudflare Tunnel URL...")
+        
+        import subprocess
+        import re
+        import time
+        
+        # 等待 tunnel 容器啟動
+        max_retries = 30
+        for i in range(max_retries):
+            try:
+                result = subprocess.run(
+                    ['docker', 'logs', 'ai-node-tunnel', '--tail', '100'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                
+                # 查找 trycloudflare.com URL
+                match = re.search(r'https://([a-z0-9\-]+\.trycloudflare\.com)', result.stdout + result.stderr)
+                if match:
+                    tunnel_host = match.group(1)
+                    logger.info(f"✅ 檢測到 Tunnel URL: https://{tunnel_host}")
+                    return tunnel_host
+                
+                # 如果還沒有 URL，等待一下
+                if i < max_retries - 1:
+                    time.sleep(2)
+                    
+            except subprocess.TimeoutExpired:
+                logger.warning(f"Docker logs timeout, retry {i+1}/{max_retries}")
+                time.sleep(2)
+            except FileNotFoundError:
+                logger.error("Docker 命令不可用")
+                return None
+            except Exception as e:
+                logger.error(f"讀取 tunnel logs 失敗: {e}")
+                time.sleep(2)
+        
+        logger.warning("⚠️  無法檢測 Tunnel URL，請檢查 tunnel 容器狀態")
+        return None
+        
+    except Exception as e:
+        logger.error(f"Tunnel URL 檢測異常: {e}")
+        return None
+
 def detect_node_url():
     """Auto-detect the correct URL for this node"""
     node_port = os.getenv('NODE_PORT', '8001')
     
     # Priority order for determining external host:
-    # 1. Explicit configuration
-    # 2. Public IP (for production)
-    # 3. Local network IP
-    # 4. Docker host (for local development)
-    # 5. localhost (fallback)
+    # 1. Explicit configuration (NODE_EXTERNAL_HOST)
+    # 2. Cloudflare Tunnel (if USE_TUNNEL=true)
+    # 3. Public IP (for production)
+    # 4. Local network IP
+    # 5. Docker host (for local development)
+    # 6. localhost (fallback)
     
     node_external_host = os.getenv('NODE_EXTERNAL_HOST')
     
     if node_external_host:
         # Explicitly configured - highest priority
         node_host = node_external_host
-        logger.info(f"Using configured external host: {node_host}")
+        logger.info(f"使用配置的外部地址: {node_host}")
+        # 如果是 trycloudflare.com，使用 HTTPS
+        if 'trycloudflare.com' in node_host:
+            return f"https://{node_host}"
+        return f"http://{node_host}:{node_port}"
+    
+    # Check if using Cloudflare Tunnel
+    tunnel_host = get_tunnel_url()
+    if tunnel_host:
+        logger.info(f"使用 Cloudflare Tunnel: https://{tunnel_host}")
+        return f"https://{tunnel_host}"
+    
+    # Original detection logic
     else:
         # Auto-detect based on environment
         deployment_mode = os.getenv('DEPLOYMENT_MODE', 'auto')
+        
+        # 智能判斷：如果 AGGREGATOR_URL 不是本地地址，自動切換到 production 模式
+        if deployment_mode == 'auto':
+            if 'localhost' not in AGGREGATOR_URL and 'host.docker.internal' not in AGGREGATOR_URL and '127.0.0.1' not in AGGREGATOR_URL:
+                logger.info("檢測到遠程 AGGREGATOR_URL，自動切換到 production 模式")
+                deployment_mode = 'production'
+            else:
+                logger.info("檢測到本地 AGGREGATOR_URL，使用 local 模式")
+                deployment_mode = 'local'
         
         if deployment_mode == 'production':
             # Production mode - try to get public IP
@@ -341,9 +414,16 @@ async def register_with_aggregator():
             max_concurrent_requests=max_concurrent_requests
         )
         
+        # 確保 URL 正確拼接，移除多餘的斜線
+        aggregator_url = AGGREGATOR_URL.rstrip('/')
+        register_url = f"{aggregator_url}/api/nodes/register/"
+        
+        logger.info(f"📡 註冊 URL: {register_url}")
+        logger.info(f"📦 註冊數據: name={NODE_NAME}, url={node_url}")
+        
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                f"{AGGREGATOR_URL}/api/nodes/register/",
+                register_url,
                 json=registration_data.dict(),
                 timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
@@ -372,9 +452,13 @@ async def send_heartbeat():
             current_requests=current_requests
         )
         
+        # 確保 URL 正確拼接
+        aggregator_url = AGGREGATOR_URL.rstrip('/')
+        heartbeat_url = f"{aggregator_url}/api/nodes/heartbeat/"
+        
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                f"{AGGREGATOR_URL}/api/nodes/heartbeat/",
+                heartbeat_url,
                 json=heartbeat_data.dict(),
                 timeout=aiohttp.ClientTimeout(total=5)
             ) as response:
