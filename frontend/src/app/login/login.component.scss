@@ -1,17 +1,20 @@
 .login-container {
-  @apply flex items-center justify-center;
-  height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
   width: 100vw;
   background-image: url('/assets/game_bg_1.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  position: absolute;
-  top: 64px;
+  position: fixed;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  overflow: hidden;
+  overflow: auto;
+  padding: 2rem 1rem;
   
   // 添加一個半透明的遮罩層，讓文字更容易閱讀
   &::before {
@@ -31,64 +34,101 @@
   position: relative;
   z-index: 2;
   backdrop-filter: blur(10px);
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.85);
   border: 2px solid rgba(255, 215, 0, 0.3);
-  max-width: 800px;
-  min-width: 300px;
-  width: 100vw;
-  min-height: 480px;
-  max-height: 90vh;
-  overflow: auto;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(255, 215, 0, 0.1);
   padding: 2.5rem 2rem;
 }
 
 .title {
-  @apply text-4xl font-pixel text-center text-rpg-gold mb-8;
+  font-size: 2.5rem;
+  font-family: 'Press Start 2P', monospace;
+  text-align: center;
+  color: #ffd700;
+  margin-bottom: 2rem;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
 .subtitle {
-  @apply text-xl font-fantasy text-white mb-4;
+  font-size: 1.25rem;
+  font-family: 'Cinzel', serif;
+  color: white;
+  margin-bottom: 1rem;
 }
 
 .oauth-button {
-  @apply w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-lg 
-         transition-all duration-200 font-semibold;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  font-weight: 600;
   
   &.google {
-    @apply bg-white text-gray-700 hover:bg-gray-100;
+    background-color: white;
+    color: #374151;
+    
+    &:hover {
+      background-color: #f3f4f6;
+    }
     
     img {
-      @apply w-5 h-5;
+      width: 1.25rem;
+      height: 1.25rem;
     }
   }
   
   &.github {
-    @apply bg-gray-800 text-white hover:bg-gray-700;
+    background-color: #1f2937;
+    color: white;
+    
+    &:hover {
+      background-color: #374151;
+    }
     
     img {
-      @apply w-5 h-5;
+      width: 1.25rem;
+      height: 1.25rem;
     }
   }
   
   &.discord {
-    @apply bg-[#7289da] text-white hover:bg-[#6277c0];
+    background-color: #7289da;
+    color: white;
+    
+    &:hover {
+      background-color: #6277c0;
+    }
     
     img {
-      @apply w-5 h-5;
+      width: 1.25rem;
+      height: 1.25rem;
     }
   }
 }
 
 .terms {
-  @apply mt-8 text-center text-sm text-gray-400;
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #9ca3af;
   
   a {
-    @apply text-rpg-gold hover:underline;
+    color: #ffd700;
+    
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
@@ -109,23 +149,50 @@
 }
 
 .google-loading {
-  @apply flex flex-col items-center justify-center py-4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0;
   
   .loading-spinner {
-    @apply w-6 h-6 border-2 border-gray-300 border-t-rpg-gold rounded-full animate-spin mb-2;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid #d1d5db;
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 0.5rem;
   }
   
   p {
-    @apply text-sm text-gray-400;
+    font-size: 0.875rem;
+    color: #9ca3af;
   }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .fallback-button {
-  @apply w-full py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg 
-         transition-all duration-200 font-semibold flex items-center justify-center space-x-2;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #374151;
+  color: white;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
   
   &:hover {
-    @apply transform scale-105;
+    background-color: #4b5563;
+    transform: scale(1.05);
   }
 }
 
@@ -186,122 +253,194 @@
 
 // 錢包分區樣式
 .wallet-section, .social-wallet-section, .other-wallet-section {
-  @apply mb-6;
+  margin-bottom: 1.5rem;
 }
 
 .wallet-section-title {
-  @apply text-lg font-bold text-rpg-gold mb-3 text-center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffd700;
+  margin-bottom: 0.75rem;
+  text-align: center;
   text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 .wallet-buttons {
-  @apply space-y-3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 // 錢包按鈕基礎樣式
 .wallet-btn {
-  @apply w-full py-3 px-4 rounded-lg font-semibold text-sm
-         transition-all duration-200 flex items-center justify-center space-x-3
-         border-2 border-transparent shadow-lg;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  cursor: pointer;
   
   &:hover:not(:disabled) {
-    @apply transform scale-105 shadow-xl;
+    transform: scale(1.05);
+    box-shadow: 0 10px 15px rgba(0,0,0,0.2);
   }
   
   &:disabled {
-    @apply opacity-50 cursor-not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   
   .wallet-icon {
-    @apply text-xl;
+    font-size: 1.25rem;
   }
 }
 
 // MetaMask 按鈕
 .metamask-btn {
-  @apply bg-orange-500 hover:bg-orange-600 text-white;
+  background-color: #f97316;
+  color: white;
   border-color: #f6851b;
+  
+  &:hover {
+    background-color: #ea580c;
+  }
 }
 
 // WalletConnect 按鈕
 .walletconnect-btn {
-  @apply bg-blue-500 hover:bg-blue-600 text-white;
+  background-color: #3b82f6;
+  color: white;
   border-color: #3b9cfe;
+  
+  &:hover {
+    background-color: #2563eb;
+  }
 }
 
 // Coinbase 按鈕
 .coinbase-btn {
-  @apply bg-blue-600 hover:bg-blue-700 text-white;
+  background-color: #2563eb;
+  color: white;
   border-color: #0052ff;
+  
+  &:hover {
+    background-color: #1d4ed8;
+  }
 }
 
 // 社交錢包按鈕
 .social-google-btn {
-  @apply bg-white hover:bg-gray-100 text-gray-800 border-gray-300;
+  background-color: white;
+  color: #1f2937;
+  border-color: #d1d5db;
+  
+  &:hover {
+    background-color: #f3f4f6;
+  }
 }
 
 .social-facebook-btn {
-  @apply bg-blue-600 hover:bg-blue-700 text-white;
+  background-color: #2563eb;
+  color: white;
   border-color: #1877f2;
+  
+  &:hover {
+    background-color: #1d4ed8;
+  }
 }
 
 .social-apple-btn {
-  @apply bg-black hover:bg-gray-800 text-white;
+  background-color: #000;
+  color: white;
   border-color: #000;
+  
+  &:hover {
+    background-color: #1f2937;
+  }
 }
 
 // Email 和電話按鈕
 .email-btn {
-  @apply bg-gray-700 hover:bg-gray-600 text-white;
+  background-color: #374151;
+  color: white;
   border-color: #4a5568;
+  
+  &:hover {
+    background-color: #4b5563;
+  }
 }
 
 .phone-btn {
-  @apply bg-green-600 hover:bg-green-700 text-white;
+  background-color: #059669;
+  color: white;
   border-color: #38a169;
+  
+  &:hover {
+    background-color: #047857;
+  }
 }
 
 // 連接狀態
 .connecting-status {
-  @apply flex flex-col items-center justify-center py-4 mt-4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0;
+  margin-top: 1rem;
   
   .loading-spinner {
-    @apply w-8 h-8 border-2 border-gray-300 border-t-rpg-gold rounded-full animate-spin mb-2;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid #d1d5db;
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 0.5rem;
   }
   
   p {
-    @apply text-sm text-rpg-gold font-medium;
+    font-size: 0.875rem;
+    color: #ffd700;
+    font-weight: 500;
   }
 }
 
 // 響應式設計
 @media (max-width: 640px) {
   .wallet-btn {
-    @apply py-4 text-base;
+    padding: 1rem;
+    font-size: 1rem;
     
     .wallet-icon {
-      @apply text-2xl;
+      font-size: 1.5rem;
     }
   }
   
   .wallet-section-title {
-    @apply text-base;
+    font-size: 1rem;
   }
+  
   .rpg-card {
-    max-width: 98vw;
-    min-width: 0;
-    min-height: 320px;
-    max-height: 98vh;
-    padding: 1.5rem 0.5rem;
+    max-width: 95vw;
+    padding: 1.5rem 1rem;
   }
-  .space-y-4 {
-    max-height: none;
+  
+  .title {
+    font-size: 1.75rem;
   }
 }
 
 .space-y-4 {
-  max-height: none;
-  overflow-y: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   width: 100%;
-  margin-bottom: 3rem;
 } 

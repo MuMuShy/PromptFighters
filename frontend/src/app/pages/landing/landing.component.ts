@@ -157,7 +157,7 @@ import { Subscription } from 'rxjs';
           <div class="mantle-features">
             <div class="mantle-logo-section">
               <div class="mantle-logo">
-                <img src="/assets/mantle-logo.png" alt="Mantle" class="logo-img">
+                <img src="/assets/icons/mantle.jpg" alt="Mantle" class="logo-img">
                 <div class="powered-by" i18n="@@mantle.powered-by">Powered by Mantle</div>
               </div>
             </div>
@@ -267,87 +267,94 @@ import { Subscription } from 'rxjs';
         <div class="section-content">
           <div class="section-header">
             <h2 class="section-title" i18n="@@node.title">Run Your AI Node</h2>
-            <p class="section-description" i18n="@@node.description">人人都能成為 AI 節點 - 下載 Docker 映像，運行你的節點，成為 PromptFighters 的一部分</p>
+            <p class="section-description" i18n="@@node.description">人人都能成為 AI 節點 - 簡單三步驟，加入去中心化 AI 網絡</p>
+            <div class="coming-soon-badge">🚀 即將開放</div>
           </div>
           
           <div class="node-features">
             <div class="node-info">
-              <div class="node-stats">
-                <div class="stat-card">
-                  <div class="stat-icon">🔗</div>
-                  <div class="stat-value">{{ totalPlayers }}</div>
-                  <div class="stat-label">Active Nodes</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-icon">⚡</div>
-                  <div class="stat-value">99.9%</div>
-                  <div class="stat-label">Uptime</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-icon">🏆</div>
-                  <div class="stat-value">{{ totalBattles }}</div>
-                  <div class="stat-label">Consensus Votes</div>
-                </div>
-              </div>
-              
               <div class="node-benefits">
                 <h3 class="benefits-title">為什麼運行節點？</h3>
                 <ul class="benefits-list">
                   <li class="benefit-item">
                     <span class="benefit-icon">💰</span>
-                    <span>參與共識獲得獎勵</span>
+                    <span>參與共識獲得代幣獎勵</span>
                   </li>
                   <li class="benefit-item">
                     <span class="benefit-icon">🎯</span>
-                    <span>影響遊戲生態發展</span>
+                    <span>影響遊戲生態發展方向</span>
                   </li>
                   <li class="benefit-item">
                     <span class="benefit-icon">🔒</span>
-                    <span>增強網絡安全性</span>
+                    <span>增強網絡去中心化與安全性</span>
                   </li>
                   <li class="benefit-item">
                     <span class="benefit-icon">🚀</span>
-                    <span>搶先體驗新功能</span>
+                    <span>搶先體驗新功能與特權</span>
                   </li>
                 </ul>
+              </div>
+              
+              <div class="node-stats">
+                <div class="stat-card">
+                  <div class="stat-icon">🔗</div>
+                  <div class="stat-value">--</div>
+                  <div class="stat-label">Active Nodes</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon">⚡</div>
+                  <div class="stat-value">--</div>
+                  <div class="stat-label">Consensus Rate</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon">🏆</div>
+                  <div class="stat-value">--</div>
+                  <div class="stat-label">Total Votes</div>
+                </div>
               </div>
             </div>
             
             <div class="node-setup">
               <div class="setup-card">
-                <h3 class="setup-title">快速部署</h3>
+                <h3 class="setup-title">未來部署流程預覽</h3>
+                <p class="setup-subtitle">三步驟即可加入 AI 節點網絡</p>
                 <div class="setup-steps">
                   <div class="step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                      <div class="step-title">下載 Docker 映像</div>
-                      <code class="step-code">docker pull promptfighters/node:latest</code>
+                      <div class="step-title">Clone 專案</div>
+                      <code class="step-code">git clone https://github.com/your-repo/ai-node.git</code>
                     </div>
                   </div>
                   <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                      <div class="step-title">配置環境變數</div>
-                      <code class="step-code">export MANTLE_RPC_URL=your_rpc_url</code>
+                      <div class="step-title">配置 API Key</div>
+                      <code class="step-code">echo "GEMINI_API_KEY=your_key" > .env</code>
                     </div>
                   </div>
                   <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                      <div class="step-title">啟動節點</div>
-                      <code class="step-code">docker run -d promptfighters/node</code>
+                      <div class="step-title">啟動節點服務</div>
+                      <code class="step-code">./start.sh</code>
                     </div>
                   </div>
                 </div>
                 
+                <div class="node-preview-note">
+                  <span class="note-icon">💡</span>
+                  <p>節點啟動後會自動連接到 Mantle 主網，並開始參與戰鬥結果的 AI 共識投票。完全去中心化，任何人都可以運行！</p>
+                </div>
+                
                 <div class="setup-actions">
-                  <button class="btn-primary">
+                  <button class="btn-primary" disabled>
                     <span class="btn-icon">📖</span>
-                    <span>部署指引</span>
+                    <span>部署文檔（即將推出）</span>
                   </button>
-                  <button class="btn-secondary">
-                    <span class="btn-icon">📊</span>
-                    <span>節點排行榜</span>
+                  <button class="btn-secondary" disabled>
+                    <span class="btn-icon">🐙</span>
+                    <span>GitHub Repo（準備中）</span>
                   </button>
                 </div>
               </div>
