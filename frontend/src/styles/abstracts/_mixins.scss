@@ -1,0 +1,313 @@
+// ===== 响应式断点 Mixins =====
+@mixin respond-to($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (min-width: map-get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$breakpoint}";
+  }
+}
+
+@mixin respond-below($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (max-width: map-get($breakpoints, $breakpoint) - 1px) {
+      @content;
+    }
+  } @else {
+    @warn "Unknown breakpoint: #{$breakpoint}";
+  }
+}
+
+// ===== 颜色获取函数 =====
+@function color($name) {
+  @if map-has-key($colors, $name) {
+    @return map-get($colors, $name);
+  } @else {
+    @warn "Unknown color: #{$name}";
+    @return null;
+  }
+}
+
+// ===== 间距获取函数 =====
+@function spacing($size) {
+  @if map-has-key($spacing, $size) {
+    @return map-get($spacing, $size);
+  } @else {
+    @warn "Unknown spacing: #{$size}";
+    @return null;
+  }
+}
+
+// ===== 字体大小获取函数 =====
+@function font-size($size) {
+  @if map-has-key($font-sizes, $size) {
+    @return map-get($font-sizes, $size);
+  } @else {
+    @warn "Unknown font-size: #{$size}";
+    @return null;
+  }
+}
+
+// ===== 阴影获取函数 =====
+@function shadow($name) {
+  @if map-has-key($shadows, $name) {
+    @return map-get($shadows, $name);
+  } @else {
+    @warn "Unknown shadow: #{$name}";
+    @return null;
+  }
+}
+
+// ===== 渐变获取函数 =====
+@function gradient($name) {
+  @if map-has-key($gradients, $name) {
+    @return map-get($gradients, $name);
+  } @else {
+    @warn "Unknown gradient: #{$name}";
+    @return null;
+  }
+}
+
+// ===== 常用 Mixins =====
+
+// Flexbox 居中
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flexbox 垂直居中
+@mixin flex-center-vertical {
+  display: flex;
+  align-items: center;
+}
+
+// Flexbox 水平居中
+@mixin flex-center-horizontal {
+  display: flex;
+  justify-content: center;
+}
+
+// 绝对定位居中
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// 文本截断
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行文本截断
+@mixin text-truncate-lines($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// 隐藏滚动条
+@mixin hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// ===== RPG 主题 Mixins =====
+
+// RPG 按钮样式
+@mixin rpg-button($variant: 'primary') {
+  @if $variant == 'primary' {
+    background: gradient('rpg-button');
+    color: color('black');
+    font-weight: map-get($font-weights, 'bold');
+    padding: spacing('3') spacing('6');
+    border-radius: map-get($border-radius, 'lg');
+    box-shadow: shadow('rpg-glow');
+    position: relative;
+    overflow: hidden;
+    transition: map-get($transitions, 'all');
+    transform-origin: center;
+    
+    &:hover {
+      background: linear-gradient(90deg, #facc15 0%, #dc2626 100%);
+      transform: scale(1.05);
+      box-shadow: shadow('rpg-glow-strong');
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    // 光泽效果
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    &:hover::before {
+      left: 100%;
+    }
+  } @else if $variant == 'secondary' {
+    background: gradient('rpg-button-secondary');
+    color: color('white');
+    font-weight: map-get($font-weights, 'bold');
+    padding: spacing('2') spacing('4');
+    border-radius: map-get($border-radius, 'lg');
+    box-shadow: shadow('lg');
+    transition: map-get($transitions, 'all');
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: shadow('xl');
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+// RPG 卡片样式
+@mixin rpg-card($rarity: 1) {
+  background: gradient('rpg-card');
+  border-radius: map-get($border-radius, '3xl');
+  box-shadow: shadow('lg');
+  overflow: hidden;
+  position: relative;
+  
+  @if $rarity == 2 {
+    border: 2.5px solid color('energy');
+    box-shadow: shadow('rare-glow');
+  } @else if $rarity == 3 {
+    border: 2.5px solid color('rare-purple');
+    box-shadow: shadow('epic-glow');
+  } @else if $rarity == 4 {
+    border: 2.5px solid color('legendary-orange');
+    box-shadow: shadow('legendary-glow');
+  } @else if $rarity == 5 {
+    border: 3px solid color('mythic-pink');
+    box-shadow: shadow('mythic-glow');
+  } @else {
+    border: 2px solid rgba(color('rpg-gold'), 0.27);
+  }
+}
+
+// 统计条样式
+@mixin stat-bar {
+  background: color('gray-700');
+  border-radius: map-get($border-radius, 'full');
+  height: spacing('4');
+  overflow: hidden;
+}
+
+@mixin stat-fill {
+  height: 100%;
+  background: gradient('stat-fill');
+  transition: all 1000ms ease-out;
+}
+
+// 发光动画
+@mixin glow-animation($color: color('rpg-gold')) {
+  animation: glow 2s ease-in-out infinite alternate;
+  
+  @keyframes glow {
+    0% {
+      box-shadow: 0 0 5px rgba($color, 0.5);
+    }
+    100% {
+      box-shadow: 0 0 20px rgba($color, 0.8), 0 0 30px rgba($color, 0.6);
+    }
+  }
+}
+
+// 弹跳动画
+@mixin bounce-animation($duration: 2s) {
+  animation: bounce $duration infinite;
+  
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+}
+
+// 脉冲动画
+@mixin pulse-animation($duration: 2s) {
+  animation: pulse $duration infinite;
+  
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+}
+
+// 渐入动画
+@mixin fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+// 背景渐变文字
+@mixin gradient-text($gradient) {
+  background: $gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// 文字阴影
+@mixin text-shadow($color: rgba(0, 0, 0, 0.5), $blur: 2px) {
+  text-shadow: 0 2px $blur $color;
+}
+
+// 毛玻璃效果
+@mixin backdrop-blur($blur: 10px) {
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+}

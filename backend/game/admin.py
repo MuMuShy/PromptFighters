@@ -7,10 +7,13 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from .models import (
     Player, Character, Battle, DailyQuest, PlayerDailyQuest, PlayerLoginRecord,
-    LadderSeason, LadderRank, ScheduledBattle, BattleBet, BettingStats
+    LadderSeason, LadderRank, ScheduledBattle, BattleBet, BettingStats,
+    AINode, BattleVotingRecord
 )
 from .ladder_service import LadderService
 from django.shortcuts import redirect
+from .node_service import NodeHealthChecker
+import asyncio
 
 
 @admin.register(Player)
@@ -567,3 +570,197 @@ admin.site.index_title = "游戏管理"
 
 # 添加天梯系統快速連結
 admin.site.index_template = 'admin/index.html'
+
+
+@admin.register(AINode)
+class AINodeAdmin(admin.ModelAdmin):
+    """AI節點管理"""
+    list_display = [
+        'name', 'url', 'status', 'is_online_display', 'is_available_display',
+        'success_rate_display', 'avg_response_time', 'current_load',
+        'last_heartbeat', 'actions_display'
+    ]
+    list_filter = ['status', 'last_heartbeat', 'weight']
+    search_fields = ['name', 'url']
+    readonly_fields = [
+        'id', 'created_at', 'updated_at', 'last_heartbeat', 
+        'total_requests', 'successful_requests', 'avg_response_time',
+        'is_online_display', 'success_rate_display'
+    ]
+    actions = ['health_check_nodes', 'reset_stats', 'set_maintenance', 'set_online']
+    
+    fieldsets = (
+        ('節點基本信息', {
+            'fields': ('name', 'url', 'api_key', 'status')
+        }),
+        ('負載均衡設定', {
+            'fields': ('weight', 'max_concurrent_requests', 'current_requests')
+        }),
+        ('性能統計', {
+            'fields': ('total_requests', 'successful_requests', 'avg_response_time', 'success_rate_display'),
+            'classes': ('collapse',)
+        }),
+        ('狀態監控', {
+            'fields': ('last_heartbeat', 'is_online_display'),
+            'classes': ('collapse',)
+        }),
+        ('系統信息', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def is_online_display(self, obj):
+        # 檢查數據庫狀態和實際心跳狀態
+        db_status = obj.status
+        heartbeat_online = obj.is_online
+        
+        if db_status == 'online' and heartbeat_online:
+            return format_html('<span style="color: green;">●</span> 在線')
+        elif db_status == 'online' and not heartbeat_online:
+            return format_html('<span style="color: orange;">●</span> 心跳超時')
+        elif db_status == 'offline':
+            return format_html('<span style="color: red;">●</span> 離線')
+        elif db_status == 'maintenance':
+            return format_html('<span style="color: gray;">●</span> 維護中')
+        elif db_status == 'error':
+            return format_html('<span style="color: purple;">●</span> 錯誤')
+        else:
+            return format_html('<span style="color: black;">●</span> 未知')
+    is_online_display.short_description = '實時狀態'
+    
+    def is_available_display(self, obj):
+        if obj.is_available:
+            return format_html('<span style="color: green;">可用</span>')
+        else:
+            return format_html('<span style="color: orange;">不可用</span>')
+    is_available_display.short_description = '可用狀態'
+    
+    def success_rate_display(self, obj):
+        rate = obj.success_rate
+        if rate >= 95:
+            color = 'green'
+        elif rate >= 80:
+            color = 'orange'
+        else:
+            color = 'red'
+        return format_html('<span style="color: {};">{}</span>', color, f"{rate:.1f}%")
+    success_rate_display.short_description = '成功率'
+    
+    def current_load(self, obj):
+        percentage = (obj.current_requests / obj.max_concurrent_requests) * 100 if obj.max_concurrent_requests > 0 else 0
+        return f"{obj.current_requests}/{obj.max_concurrent_requests} ({percentage:.0f}%)"
+    current_load.short_description = '當前負載'
+    
+    def actions_display(self, obj):
+        """顯示操作按鈕"""
+        buttons = []
+        
+        if obj.status == 'online':
+            buttons.append(f'<a href="#" class="button" onclick="setMaintenance({obj.id})" title="設為維護">維護</a>')
+        elif obj.status == 'maintenance':
+            buttons.append(f'<a href="#" class="button" onclick="setOnline({obj.id})" title="設為在線">上線</a>')
+        
+        buttons.append(f'<a href="#" class="button" onclick="healthCheck({obj.id})" title="健康檢查">檢查</a>')
+        
+        from django.utils.safestring import mark_safe
+        return mark_safe(' '.join(buttons))
+    actions_display.short_description = '操作'
+    
+    def health_check_nodes(self, request, queryset):
+        """健康檢查選中的節點"""
+        try:
+            # 使用asyncio運行異步健康檢查
+            total_checked = 0
+            online_count = 0
+            
+            for node in queryset:
+                total_checked += 1
+                # 這裡應該調用實際的健康檢查邏輯
+                try:
+                    is_healthy = asyncio.run(NodeHealthChecker.check_node_health(node))
+                    if is_healthy:
+                        online_count += 1
+                except Exception as e:
+                    messages.warning(request, f'節點 {node.name} 健康檢查失敗: {str(e)}')
+            
+            messages.success(request, f'健康檢查完成: {online_count}/{total_checked} 節點在線')
+            
+        except Exception as e:
+            messages.error(request, f'健康檢查失敗: {str(e)}')
+    health_check_nodes.short_description = '健康檢查選中節點'
+    
+    def reset_stats(self, request, queryset):
+        """重置統計數據"""
+        for node in queryset:
+            node.total_requests = 0
+            node.successful_requests = 0
+            node.avg_response_time = 0.0
+            node.save()
+        
+        messages.success(request, f'已重置 {queryset.count()} 個節點的統計數據')
+    reset_stats.short_description = '重置統計數據'
+    
+    def set_maintenance(self, request, queryset):
+        """設為維護狀態"""
+        queryset.update(status='maintenance')
+        messages.success(request, f'已將 {queryset.count()} 個節點設為維護狀態')
+    set_maintenance.short_description = '設為維護狀態'
+    
+    def set_online(self, request, queryset):
+        """設為在線狀態"""
+        queryset.update(status='online')
+        messages.success(request, f'已將 {queryset.count()} 個節點設為在線狀態')
+    set_online.short_description = '設為在線狀態'
+
+
+@admin.register(BattleVotingRecord)
+class BattleVotingRecordAdmin(admin.ModelAdmin):
+    """戰鬥投票記錄管理"""
+    list_display = [
+        'battle_info', 'node_name', 'voted_winner_id', 
+        'is_valid', 'response_time', 'created_at'
+    ]
+    list_filter = ['is_valid', 'node__status', 'created_at']
+    search_fields = ['battle__id', 'node__name', 'voted_winner_id']
+    readonly_fields = [
+        'id', 'battle', 'node', 'voted_winner_id', 'battle_result',
+        'response_time', 'is_valid', 'error_message', 'created_at'
+    ]
+    
+    fieldsets = (
+        ('投票信息', {
+            'fields': ('battle', 'node', 'voted_winner_id', 'is_valid')
+        }),
+        ('結果數據', {
+            'fields': ('battle_result',),
+            'classes': ('collapse',)
+        }),
+        ('性能數據', {
+            'fields': ('response_time', 'error_message'),
+            'classes': ('collapse',)
+        }),
+        ('系統信息', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def battle_info(self, obj):
+        return f"戰鬥 {obj.battle.id}"
+    battle_info.short_description = '戰鬥'
+    
+    def node_name(self, obj):
+        status_color = {
+            'online': 'green',
+            'offline': 'red',
+            'error': 'orange',
+            'maintenance': 'gray'
+        }.get(obj.node.status, 'black')
+        
+        return format_html(
+            '<span style="color: {};">{}</span>', 
+            status_color, 
+            obj.node.name
+        )
+    node_name.short_description = '節點'

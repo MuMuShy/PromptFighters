@@ -1,0 +1,265 @@
+// ===== 字体样式 =====
+
+// 导入字体
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=MedievalSharp&display=swap');
+
+// 基础字体样式
+html, body {
+  font-family: $font-family-base;
+  font-size: font-size('base');
+  line-height: 1.5;
+  color: color('white');
+}
+
+// 标题样式
+h1, h2, h3, h4, h5, h6 {
+  font-weight: map-get($font-weights, 'bold');
+  line-height: 1.2;
+  margin-bottom: spacing('4');
+}
+
+h1 {
+  font-size: font-size('4xl');
+  
+  @include respond-to('md') {
+    font-size: font-size('5xl');
+  }
+  
+  @include respond-to('lg') {
+    font-size: font-size('6xl');
+  }
+}
+
+h2 {
+  font-size: font-size('3xl');
+  
+  @include respond-to('md') {
+    font-size: font-size('4xl');
+  }
+}
+
+h3 {
+  font-size: font-size('2xl');
+  
+  @include respond-to('md') {
+    font-size: font-size('3xl');
+  }
+}
+
+h4 {
+  font-size: font-size('xl');
+  
+  @include respond-to('md') {
+    font-size: font-size('2xl');
+  }
+}
+
+h5 {
+  font-size: font-size('lg');
+  
+  @include respond-to('md') {
+    font-size: font-size('xl');
+  }
+}
+
+h6 {
+  font-size: font-size('base');
+  
+  @include respond-to('md') {
+    font-size: font-size('lg');
+  }
+}
+
+// 段落样式
+p {
+  margin-bottom: spacing('4');
+  line-height: 1.6;
+}
+
+// 链接样式
+a {
+  color: color('rpg-gold');
+  transition: map-get($transitions, 'colors');
+  
+  &:hover {
+    color: color('yellow-400');
+  }
+}
+
+// 强调文本
+strong, b {
+  font-weight: map-get($font-weights, 'bold');
+}
+
+em, i {
+  font-style: italic;
+}
+
+// 代码样式
+code {
+  font-family: $font-family-monospace;
+  font-size: 0.875em;
+  background: rgba(color('gray-800'), 0.5);
+  padding: spacing('1') spacing('2');
+  border-radius: map-get($border-radius, 'sm');
+  color: color('rpg-gold');
+}
+
+pre {
+  font-family: $font-family-monospace;
+  background: rgba(color('gray-900'), 0.8);
+  padding: spacing('4');
+  border-radius: map-get($border-radius, 'lg');
+  overflow-x: auto;
+  margin-bottom: spacing('4');
+  
+  code {
+    background: none;
+    padding: 0;
+  }
+}
+
+// 引用样式
+blockquote {
+  border-left: 4px solid color('rpg-gold');
+  padding-left: spacing('4');
+  margin: spacing('4') 0;
+  font-style: italic;
+  color: color('gray-300');
+}
+
+// 列表样式
+ul, ol {
+  margin-bottom: spacing('4');
+  padding-left: spacing('6');
+}
+
+ul {
+  list-style-type: disc;
+}
+
+ol {
+  list-style-type: decimal;
+}
+
+li {
+  margin-bottom: spacing('2');
+}
+
+// 特殊字体类
+.font-pixel {
+  font-family: $font-family-pixel;
+}
+
+.font-fantasy {
+  font-family: $font-family-fantasy;
+}
+
+.font-mono {
+  font-family: $font-family-monospace;
+}
+
+// 字体大小工具类
+@each $name, $size in $font-sizes {
+  .text-#{$name} {
+    font-size: $size;
+  }
+}
+
+// 字体粗细工具类
+@each $name, $weight in $font-weights {
+  .font-#{$name} {
+    font-weight: $weight;
+  }
+}
+
+// 文本对齐工具类
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
+
+// 文本颜色工具类
+@each $name, $color in $colors {
+  .text-#{$name} {
+    color: $color;
+  }
+}
+
+// 特殊文本效果
+.text-gradient-gold {
+  @include gradient-text(gradient('text-gold'));
+}
+
+.text-shadow {
+  @include text-shadow();
+}
+
+.text-glow {
+  text-shadow: 0 0 10px currentColor;
+}
+
+// 文本截断工具类
+.truncate {
+  @include text-truncate;
+}
+
+.line-clamp-2 {
+  @include text-truncate-lines(2);
+}
+
+.line-clamp-3 {
+  @include text-truncate-lines(3);
+}
+
+// 响应式文本大小
+.responsive-title {
+  font-size: font-size('3xl');
+  
+  @include respond-to('sm') {
+    font-size: font-size('4xl');
+  }
+  
+  @include respond-to('md') {
+    font-size: font-size('5xl');
+  }
+  
+  @include respond-to('lg') {
+    font-size: font-size('6xl');
+  }
+}
+
+.responsive-subtitle {
+  font-size: font-size('lg');
+  
+  @include respond-to('md') {
+    font-size: font-size('xl');
+  }
+  
+  @include respond-to('lg') {
+    font-size: font-size('2xl');
+  }
+}
+
+// Material Icons 样式
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+  margin: 0 spacing('1');
+  
+  // 浏览器优化
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+}

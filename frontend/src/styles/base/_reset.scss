@@ -1,0 +1,113 @@
+// ===== CSS Reset =====
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family-base;
+  font-size: font-size('base');
+  font-weight: map-get($font-weights, 'normal');
+  line-height: 1.5;
+  color: color('white');
+  background: gradient('rpg-bg');
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Remove default margins
+h1, h2, h3, h4, h5, h6,
+p, blockquote, pre,
+dl, dd, ol, ul,
+figure, hr,
+fieldset, legend {
+  margin: 0;
+  padding: 0;
+}
+
+// Remove list styles
+ol, ul {
+  list-style: none;
+}
+
+// Reset quotes
+blockquote, q {
+  quotes: none;
+  
+  &::before,
+  &::after {
+    content: '';
+    content: none;
+  }
+}
+
+// Reset table
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// Reset form elements
+input, button, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+// Reset button
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+// Reset links
+a {
+  color: inherit;
+  text-decoration: none;
+  
+  &:focus {
+    outline: 2px solid color('rpg-gold');
+    outline-offset: 2px;
+  }
+}
+
+// Reset images
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+// Reset form inputs
+input, textarea {
+  outline: none;
+  
+  &:focus {
+    outline: 2px solid color('rpg-gold');
+    outline-offset: 2px;
+  }
+}
+
+// Accessibility
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

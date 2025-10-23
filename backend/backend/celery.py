@@ -52,6 +52,12 @@ app.conf.beat_schedule = {
         'task': 'game.tasks.cleanup_old_battles',
         'schedule': 3600.0,  # 每小時執行
     },
+    
+    # 每30秒檢查節點健康狀態
+    'check-node-health': {
+        'task': 'game.tasks.check_node_health',
+        'schedule': 30.0,  # 每30秒執行
+    },
 }
 
 app.conf.timezone = 'Asia/Taipei' 

@@ -1,0 +1,394 @@
+// ===== 卡片组件样式 =====
+
+// 基础卡片样式
+.card {
+  background: gradient('rpg-card');
+  border-radius: map-get($border-radius, '2xl');
+  box-shadow: shadow('lg');
+  overflow: hidden;
+  position: relative;
+  transition: map-get($transitions, 'all');
+}
+
+// RPG 卡片样式
+.rpg-card {
+  @include rpg-card(1);
+}
+
+// 角色卡片样式
+.character-card {
+  @include rpg-card(1);
+  max-width: 420px;
+  
+  // 稀有度变体
+  &.rarity-2 {
+    @include rpg-card(2);
+  }
+  
+  &.rarity-3 {
+    @include rpg-card(3);
+  }
+  
+  &.rarity-4 {
+    @include rpg-card(4);
+  }
+  
+  &.rarity-5 {
+    @include rpg-card(5);
+  }
+}
+
+// 卡片图片容器
+.card-image-wrapper {
+  width: 100%;
+  height: 460px;
+  background: color('gray-900');
+  position: relative;
+  overflow: hidden;
+  @include flex-center;
+  
+  @include respond-below('md') {
+    height: 400px;
+  }
+  
+  @include respond-below('sm') {
+    height: 320px;
+  }
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: none;
+  box-shadow: none;
+  display: block;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// 图片加载状态
+.image-loading {
+  width: 100%;
+  height: 100%;
+  @include flex-center;
+  flex-direction: column;
+  background: gradient('rpg-card');
+  color: color('rpg-gold');
+  font-size: font-size('lg');
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+}
+
+.spinner {
+  border: 4px solid rgba(color('rpg-gold'), 0.27);
+  border-top: 4px solid color('rpg-gold');
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  animation: spin 1s linear infinite;
+  margin-bottom: spacing('2');
+}
+
+.loading-text {
+  color: color('rpg-gold');
+  font-size: font-size('base');
+  margin-top: spacing('1');
+}
+
+// 卡片信息栏
+.info-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: rgba(30, 30, 30, 0.85);
+  @include backdrop-blur(4px);
+  color: color('white');
+  padding: spacing('3') spacing('4');
+  @include flex-center-vertical;
+  justify-content: space-between;
+  z-index: 1;
+  
+  .name {
+    font-size: font-size('xl');
+    font-weight: map-get($font-weights, 'bold');
+    color: color('rpg-gold');
+    @include text-shadow(rgba(0, 0, 0, 0.67));
+  }
+  
+  .stats {
+    display: flex;
+    gap: spacing('3');
+    font-size: font-size('lg');
+  }
+}
+
+// 统计项样式
+.stat {
+  @include flex-center-vertical;
+  gap: spacing('1');
+  @include text-shadow(rgba(0, 0, 0, 0.5));
+  
+  &.strength { color: #ff4d4f; }
+  &.agility { color: #40a9ff; }
+  &.luck { color: color('rpg-gold'); }
+  &.level { color: #5bcb3c; }
+}
+
+// 技能栏
+.skill-bar {
+  background: rgba(108, 52, 131, 0.95);
+  @include backdrop-blur(4px);
+  color: color('white');
+  font-size: font-size('sm');
+  padding: spacing('2') spacing('4');
+  text-align: left;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  
+  &::before {
+    content: '✨';
+    margin-right: spacing('2');
+    color: color('rpg-gold');
+  }
+}
+
+// 卡片底部
+.card-footer {
+  display: flex;
+  flex-direction: column;
+  background: color('gray-900');
+  border-radius: 0 0 map-get($border-radius, '3xl') map-get($border-radius, '3xl');
+  overflow: hidden;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  padding: spacing('3') spacing('4');
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-item {
+  text-align: center;
+  flex: 1;
+  position: relative;
+  
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 70%;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.footer-value {
+  font-size: font-size('xl');
+  font-weight: map-get($font-weights, 'bold');
+  
+  &.win { color: #52c41a; }
+  &.loss { color: #ff4d4f; }
+  &.rate { color: color('rpg-gold'); }
+}
+
+.footer-label {
+  color: color('gray-300');
+  font-size: font-size('sm');
+  margin-top: spacing('1');
+}
+
+// 稀有度徽章
+.rarity-badge {
+  position: absolute;
+  top: spacing('2');
+  right: spacing('3');
+  z-index: 10;
+  padding: 0.04em 0.6em;
+  font-weight: map-get($font-weights, 'semibold');
+  font-size: font-size('sm');
+  border-radius: map-get($border-radius, 'full');
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1.2px;
+  color: color('white');
+  background: rgba(136, 136, 136, 0.67);
+  border: 1.2px solid rgba(255, 255, 255, 0.27);
+  user-select: none;
+  @include text-shadow(rgba(0, 0, 0, 0.47), 1px);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.47), 0 0 1px color('white');
+  transition: box-shadow 0.2s, background 0.2s, border 0.2s;
+  @include flex-center-vertical;
+  gap: 0.2em;
+  
+  &.rarity-2 {
+    background: gradient('rare-border');
+    border-color: color('energy');
+  }
+  
+  &.rarity-3 {
+    background: gradient('epic-border');
+    border-color: color('rare-purple');
+  }
+  
+  &.rarity-4 {
+    background: gradient('legendary-border');
+    color: #333;
+    border-color: color('legendary-orange');
+  }
+  
+  &.rarity-5 {
+    background: gradient('mythic-border');
+    color: color('white');
+    border: 1.5px solid color('white');
+    box-shadow: 0 0 10px 2px rgba(color('mythic-pink'), 0.47), 0 0 0 1.5px rgba(255, 255, 255, 0.53) inset;
+  }
+}
+
+// 卡片头部行
+.card-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: spacing('2') spacing('5') spacing('1') spacing('5');
+  z-index: 10;
+}
+
+.stats-header {
+  display: flex;
+  gap: spacing('3');
+  font-size: font-size('lg');
+  align-items: center;
+}
+
+// 角色名称栏
+.character-name-bar {
+  @include flex-center;
+  gap: spacing('2');
+  margin-top: spacing('2');
+  margin-bottom: spacing('1');
+}
+
+.character-name {
+  font-size: font-size('xl');
+  font-weight: map-get($font-weights, 'bold');
+  color: #ffe066;
+  letter-spacing: 1px;
+  @include text-shadow(rgba(0, 0, 0, 0.67));
+}
+
+// 等级徽章
+.level-medal {
+  @include flex-center;
+  min-width: 36px;
+  height: 22px;
+  padding: 0 spacing('3');
+  margin-left: spacing('1');
+  border-radius: map-get($border-radius, 'xl');
+  background: linear-gradient(90deg, #232946 60%, #3fd0ff 100%);
+  color: color('white');
+  font-weight: map-get($font-weights, 'bold');
+  font-size: font-size('sm');
+  border: 1.5px solid #6ee7ff;
+  box-shadow: 0 2px 8px rgba(63, 208, 255, 0.2), 0 0 0 2px #232946;
+  letter-spacing: 1px;
+  @include text-shadow(rgba(63, 208, 255, 0.6));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.13));
+  line-height: 1.2;
+  transition: background 0.2s;
+  
+  &::before {
+    content: "★";
+    color: #ffe066;
+    font-size: font-size('base');
+    margin-right: spacing('1');
+    filter: drop-shadow(0 0 2px rgba(255, 224, 102, 0.8));
+  }
+  
+  @include respond-below('sm') {
+    min-width: 28px;
+    height: 18px;
+    padding: 0 spacing('2');
+    font-size: font-size('xs');
+    
+    &::before {
+      font-size: font-size('sm');
+      margin-right: spacing('1');
+    }
+  }
+}
+
+// 卡片悬停效果
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: shadow('2xl');
+  }
+}
+
+// 统计条样式
+.stat-bar {
+  @include stat-bar;
+}
+
+.stat-fill {
+  @include stat-fill;
+}
+
+// 卡片网格
+.card-grid {
+  display: grid;
+  gap: spacing('6');
+  
+  @include respond-to('sm') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @include respond-to('lg') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @include respond-to('xl') {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// 卡片列表
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: spacing('4');
+}
+
+// 紧凑卡片
+.card-compact {
+  .card-image-wrapper {
+    height: 200px;
+  }
+  
+  .info-bar {
+    padding: spacing('2') spacing('3');
+    
+    .name {
+      font-size: font-size('base');
+    }
+    
+    .stats {
+      font-size: font-size('sm');
+      gap: spacing('2');
+    }
+  }
+}

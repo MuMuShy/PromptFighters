@@ -16,3 +16,5 @@ google
 google-genai
 gunicorn==22.0.0
 eth-account
+aiohttp==3.9.1
+pydantic==2.5.0

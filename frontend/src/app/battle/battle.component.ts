@@ -179,8 +179,14 @@ export class BattleComponent implements OnInit, OnDestroy {
             this.stopPolling();
             console.log('battle', battle);
 
+            // 調試：完整輸出戰鬥結果
+            console.log('🎯 完整戰鬥結果:', battle);
+            console.log('🏆 獲勝者信息:', battle.winner);
+            console.log('📋 戰鬥日誌:', battle.battle_log);
+            
             // Process battle log to add types
             if (battle.battle_log && battle.battle_log.battle_log) {
+              console.log('📝 戰鬥日誌條目:', battle.battle_log.battle_log);
               battle.battle_log.battle_log = battle.battle_log.battle_log.map(log => ({
                 ...log,
                 type: this.getLogEntryType(log.description)
@@ -241,14 +247,55 @@ export class BattleComponent implements OnInit, OnDestroy {
   }
 
   private updateHealth(log: any): void {
-    if (log.attacker === this.playerCharacter?.name) {
-      this.isOpponentBeingAttacked = true;
-      this.opponentHealth = log.remaining_hp <= 0 ? 0 : log.remaining_hp;
-      setTimeout(() => { this.isOpponentBeingAttacked = false; }, 500);
-    } else {
+    console.log('戰鬥日誌詳細:', {
+      attacker: log.attacker,
+      defender: log.defender,
+      damage: log.damage,
+      remaining_hp: log.remaining_hp,
+      playerCharacterId: this.playerCharacter?.id,
+      opponentId: this.opponent?.id,
+      playerName: this.playerCharacter?.name,
+      opponentName: this.opponent?.name,
+      description: log.description
+    });
+    
+    // 根據戰鬥日誌，remaining_hp 應該是被攻擊者的剩餘血量
+    // 但讓我們先用更安全的方式：手動計算血量變化
+    
+    if (log.defender === this.playerCharacter?.id) {
+      // 玩家被攻擊
+      console.log(`玩家 ${this.playerCharacter?.name} 被攻擊，受到 ${log.damage} 傷害`);
       this.isPlayerBeingAttacked = true;
-      this.playerHealth = log.remaining_hp <= 0 ? 0 : log.remaining_hp;
+      
+      // 使用 remaining_hp 直接設置
+      const newHealth = Math.max(0, log.remaining_hp);
+      console.log(`玩家血量: ${this.playerHealth} → ${newHealth}`);
+      this.playerHealth = newHealth;
+      
       setTimeout(() => { this.isPlayerBeingAttacked = false; }, 500);
+      
+    } else if (log.defender === this.opponent?.id) {
+      // 對手被攻擊
+      console.log(`對手 ${this.opponent?.name} 被攻擊，受到 ${log.damage} 傷害`);
+      this.isOpponentBeingAttacked = true;
+      
+      // 使用 remaining_hp 直接設置
+      const newHealth = Math.max(0, log.remaining_hp);
+      console.log(`對手血量: ${this.opponentHealth} → ${newHealth}`);
+      this.opponentHealth = newHealth;
+      
+      setTimeout(() => { this.isOpponentBeingAttacked = false; }, 500);
+    }
+    
+    // 處理攻擊動畫
+    if (log.attacker === this.playerCharacter?.id) {
+      console.log(`玩家 ${this.playerCharacter?.name} 發動攻擊`);
+      this.isPlayerAttacking = true;
+      setTimeout(() => { this.isPlayerAttacking = false; }, 600);
+    } else if (log.attacker === this.opponent?.id) {
+      console.log(`對手 ${this.opponent?.name} 發動攻擊`);
+      this.isOpponentAttacking = true;
+      setTimeout(() => { this.isOpponentAttacking = false; }, 600);
     }
   }
 
@@ -336,8 +383,8 @@ export class BattleComponent implements OnInit, OnDestroy {
       const playerDamage = Math.floor(Math.random() * player.strength);
       opponentHp -= playerDamage;
       log.push({
-        attacker: player.name,
-        defender: opponent.name,
+        attacker: player.id,  // 使用 ID 而不是 name
+        defender: opponent.id, // 使用 ID 而不是 name
         action: '普通攻擊',
         damage: playerDamage,
         description: `${player.name}發動了猛烈的攻擊！`,
@@ -350,8 +397,8 @@ export class BattleComponent implements OnInit, OnDestroy {
       const opponentDamage = Math.floor(Math.random() * opponent.strength);
       playerHp -= opponentDamage;
       log.push({
-        attacker: opponent.name,
-        defender: player.name,
+        attacker: opponent.id, // 使用 ID 而不是 name
+        defender: player.id,   // 使用 ID 而不是 name
         action: '普通攻擊',
         damage: opponentDamage,
         description: `${opponent.name}進行了反擊！`,

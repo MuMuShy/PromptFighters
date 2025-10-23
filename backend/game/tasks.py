@@ -11,6 +11,24 @@ import random
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
+from pydantic import BaseModel
+from typing import List
+import asyncio
+from .node_service import NodeManager
+
+# 定義戰鬥結果的Pydantic模型
+class BattleLogEntry(BaseModel):
+    attacker: str
+    defender: str
+    action: str
+    damage: int
+    description: str
+    remaining_hp: int
+
+class BattleResult(BaseModel):
+    winner: str
+    battle_log: List[BattleLogEntry]
+    battle_description: str
 
 @shared_task
 def generate_character_image(character_id):
@@ -100,34 +118,60 @@ def fix_battle_result(battle_result, player, opponent):
     try:
         battle_log = battle_result.get('battle_log', [])
         
-        # 重新計算血量
+        # 重新計算血量 - 使用ID而不是name
         player_hp = 100
         opponent_hp = 100
         
-        for log in battle_log:
-            attacker = log.get('attacker')
-            defender = log.get('defender')
+        player_id_str = str(player.id)
+        opponent_id_str = str(opponent.id)
+        
+        print(f"修正戰鬥結果: 玩家ID={player_id_str}, 對手ID={opponent_id_str}")
+        
+        for i, log in enumerate(battle_log):
+            attacker = str(log.get('attacker'))
+            defender = str(log.get('defender'))
             damage = log.get('damage', 0)
             
-            if defender == player.name:
+            # 使用ID匹配，不是name
+            if defender == player_id_str:
                 player_hp = max(0, player_hp - damage)
                 log['remaining_hp'] = player_hp
-            elif defender == opponent.name:
+                print(f"回合{i+1}: {player.name}被攻擊，受到{damage}傷害，剩餘HP={player_hp}")
+            elif defender == opponent_id_str:
                 opponent_hp = max(0, opponent_hp - damage)
                 log['remaining_hp'] = opponent_hp
+                print(f"回合{i+1}: {opponent.name}被攻擊，受到{damage}傷害，剩餘HP={opponent_hp}")
         
-        # 修正勝者
-        actual_winner_id = player.id if opponent_hp <= 0 else opponent.id
+        # 修正勝者：血量高的那個獲勝
+        if player_hp > opponent_hp:
+            actual_winner_id = player.id
+            winner_name = player.name
+        elif opponent_hp > player_hp:
+            actual_winner_id = opponent.id
+            winner_name = opponent.name
+        else:
+            # 平局，隨機決定
+            import random
+            if random.random() > 0.5:
+                actual_winner_id = player.id
+                winner_name = player.name
+            else:
+                actual_winner_id = opponent.id
+                winner_name = opponent.name
+        
         battle_result['winner'] = str(actual_winner_id)
         
         # 修正戰鬥描述
-        winner_name = player.name if opponent_hp <= 0 else opponent.name
         battle_result['battle_description'] = f"經過激烈的戰鬥，{winner_name} 最終獲得了勝利！"
+        
+        print(f"修正結果: 玩家HP={player_hp}, 對手HP={opponent_hp}, 勝者={winner_name}")
         
         return battle_result
         
     except Exception as e:
         print(f"修正戰鬥結果時發生錯誤：{e}")
+        import traceback
+        traceback.print_exc()
         return battle_result
 
 
@@ -179,7 +223,7 @@ def run_battle_task(battle_id):
             player = battle.character1
             opponent = battle.character2
 
-            # 準備戰鬥場景描述 (這部分邏輯與原 view 相同)
+            # 準備戰鬥場景描述 (使用結構化輸出，簡化prompt)
             battle_prompt = f"""
                         一場史詩般的對決即將展開！
 
@@ -187,11 +231,12 @@ def run_battle_task(battle_id):
 
                         第一步：請你自行想像一個極具創意、天馬行空的戰鬥地點。
 
-                        第二步：基於這個你想像出來的地點，生成一場精彩的戰鬥過程，並以JSON格式回傳。
+                        第二步：基於這個你想像出來的地點，生成一場精彩的戰鬥過程。
 
                         **戰鬥員資料：**
 
                         玩家角色：
+                        ID：{player.id}
                         名稱：{player.name}
                         描述：{player.prompt}
                         力量：{player.strength}
@@ -200,6 +245,7 @@ def run_battle_task(battle_id):
                         特殊能力：{player.skill_description}
 
                         對手角色：
+                        ID：{opponent.id}
                         名稱：{opponent.name}
                         描述：{opponent.prompt}
                         力量：{opponent.strength}
@@ -209,60 +255,94 @@ def run_battle_task(battle_id):
 
                         **重要規則：**
                         1. 3-5個回合的戰鬥。
-                        2. **你想像出的戰鬥地點必須對戰局產生決定性或意想不到的影響。**
+                        2. 你想像出的戰鬥地點必須對戰局產生決定性或意想不到的影響。
                         3. 每個回合要有具體的動作和傷害值。
                         4. 要運用到角色的特殊能力。
-                        5. **血量先歸零者輸，請嚴格按照血量計算決定勝負。**
-                        6. **每個回合結束後，請仔細檢查剩餘血量，確保敘述與血量一致。**
+                        5. 血量先歸零者輸，請嚴格按照血量計算決定勝負。
+                        6. 每個回合結束後，請仔細檢查剩餘血量，確保敘述與血量一致。
 
                         **血量追蹤規則：**
                         - 每個角色初始血量：100
                         - 每回合結束後，被攻擊者的剩餘血量 = 當前血量 - 受到的傷害
                         - 如果剩餘血量 <= 0，該角色立即敗北
-                        - **最後一個血量 > 0 的角色獲勝**
+                        - 最後一個血量 > 0 的角色獲勝
 
-                        **JSON格式要求：**
+                        **重要：ID格式要求（必須嚴格遵守）：**
+                        - winner字段必須填入獲勝者的ID：{player.id} 或 {opponent.id}
+                        - 每個回合的attacker字段必須填入攻擊者的ID：{player.id} 或 {opponent.id}
+                        - 每個回合的defender字段必須填入防守者的ID：{player.id} 或 {opponent.id}
+                        - description字段中可以使用角色名稱（{player.name}、{opponent.name}）來描述戰鬥
+                        - 每個回合的damage和remaining_hp必須是數字
+                        - 血量計算必須正確
+                        - 最後一個血量 > 0 的角色必須是winner
+                        - 如果某角色血量歸零，戰鬥立即結束
+
+                        **範例格式（請務必使用ID而不是名稱）：**
                         {{
-                            "winner": "獲勝者ID（{player.id}或{opponent.id}）",
+                            "winner": "{player.id}",
                             "battle_log": [
                                 {{
-                                    "attacker": "攻擊者名稱",
-                                    "defender": "防守者名稱", 
-                                    "action": "動作描述",
-                                    "damage": 傷害數值（數字）,
-                                    "description": "詳細描述（必須與血量變化一致）",
-                                    "remaining_hp": 防守者剩餘血量（數字）
+                                    "attacker": "{player.id}",
+                                    "defender": "{opponent.id}",
+                                    "action": "火球術",
+                                    "damage": 15,
+                                    "remaining_hp": 85,
+                                    "description": "{player.name}施放火球術攻擊{opponent.name}"
                                 }}
-                            ],
-                            "battle_description": "整體戰鬥描述（必須與最終結果一致）"
+                            ]
                         }}
 
-                        **檢查清單：**
-                        1. 每個回合的 damage 和 remaining_hp 必須是數字
-                        2. 血量計算必須正確：remaining_hp = 100 - 累積傷害
-                        3. 最後一個血量 > 0 的角色必須是 winner
-                        4. battle_description 必須與 winner 一致
-                        5. 如果某角色血量歸零，戰鬥立即結束
-
-                        請仔細檢查你的回答，確保敘述與數據完全一致！
+                        請仔細檢查你的回答，確保：
+                        1. 所有ID字段都使用角色ID，不是名稱
+                        2. 敘述與數據完全一致
+                        3. 血量計算準確無誤
                         """
 
-        # 使用 Gemini API 生成戰鬥結果
-        genai_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-        response = genai_client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=battle_prompt
-        )
-        raw_text = getattr(response, "text", "")
+        # 嘗試使用分散式節點生成戰鬥結果
+        node_manager = NodeManager()
+        battle_result = None
         
-        # 提取 JSON
-        json_match = re.search(r'```json\n({.*?})\n```', raw_text, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-        else:
-            json_str = raw_text
+        try:
+            # 檢查是否有可用節點
+            available_nodes = node_manager.get_available_nodes()
+            if available_nodes:
+                print(f"找到 {len(available_nodes)} 個可用節點，嘗試分散式生成")
+                
+                # 使用同步版本的分散式共識
+                battle_result = node_manager.generate_battle_with_consensus_sync(battle, battle_prompt)
+                
+                if battle_result:
+                    print("成功從分散式節點獲得戰鬥結果")
+                else:
+                    print("分散式節點未能產生共識，使用本地生成")
+                
+            else:
+                print("沒有可用的AI節點，使用本地生成")
+                battle_result = None
+                
+        except Exception as e:
+            print(f"分散式節點調用失敗，使用本地生成: {e}")
+            battle_result = None
         
-        battle_result = json.loads(json_str)
+        # 如果分散式節點無法產生共識結果，回退到本地Gemini API
+        if battle_result is None:
+            print("回退到本地Gemini API生成戰鬥結果")
+            genai_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+            response = genai_client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=battle_prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_schema": BattleResult,
+                }
+            )
+            
+            # 直接使用解析後的結果，轉換為dict格式以兼容現有邏輯
+            if response.parsed:
+                battle_result = response.parsed.model_dump()
+            else:
+                # 如果解析失敗，拋出錯誤
+                raise ValueError("Failed to parse battle result from Gemini API")
 
         # 驗證並修正戰鬥結果
         if not validate_battle_result(battle_result, player, opponent):
@@ -483,4 +563,57 @@ def cleanup_old_battles():
     count = old_battles.count()
     old_battles.delete()
     
-    return f"Cleaned up {count} old battles" 
+    return f"Cleaned up {count} old battles"
+
+
+@shared_task 
+def check_node_health():
+    """定期檢查節點健康狀態，標記離線節點"""
+    from .models import AINode
+    
+    print(f"[{timezone.now()}] 開始節點健康檢查...")
+    
+    # 找出超過5分鐘沒有心跳的節點
+    offline_threshold = timezone.now() - timedelta(minutes=5)
+    
+    # 獲取所有在線節點進行檢查
+    online_nodes = AINode.objects.filter(status='online')
+    total_online = online_nodes.count()
+    
+    print(f"[{timezone.now()}] 檢查 {total_online} 個在線節點...")
+    
+    # 更新狀態為offline的節點（原本是online但心跳超時的）
+    offline_nodes = online_nodes.filter(last_heartbeat__lt=offline_threshold)
+    
+    offline_count = 0
+    for node in offline_nodes:
+        print(f"[{timezone.now()}] 節點 {node.name} 心跳超時 (最後心跳: {node.last_heartbeat})")
+        node.status = 'offline'
+        node.save()
+        offline_count += 1
+    
+    # 找出沒有心跳記錄的節點也標記為離線
+    no_heartbeat_nodes = online_nodes.filter(last_heartbeat__isnull=True)
+    
+    no_heartbeat_count = 0
+    for node in no_heartbeat_nodes:
+        print(f"[{timezone.now()}] 節點 {node.name} 無心跳記錄")
+        node.status = 'offline'
+        node.save()
+        no_heartbeat_count += 1
+    
+    # 顯示當前所有節點狀態
+    all_nodes = AINode.objects.all()
+    for node in all_nodes:
+        status_info = f"節點 {node.name}: {node.status}"
+        if node.last_heartbeat:
+            time_diff = timezone.now() - node.last_heartbeat
+            status_info += f" (最後心跳: {time_diff.total_seconds():.0f}秒前)"
+        else:
+            status_info += " (無心跳記錄)"
+        print(f"[{timezone.now()}] {status_info}")
+    
+    total_marked_offline = offline_count + no_heartbeat_count
+    print(f"[{timezone.now()}] 健康檢查完成: 標記 {total_marked_offline} 個節點為離線")
+    
+    return f"Health check completed: {total_marked_offline} nodes marked offline" 

@@ -1,0 +1,565 @@
+// ===== 主样式文件 =====
+// 导入顺序很重要：变量 -> mixins -> 基础 -> 组件 -> 布局 -> 页面 -> 主题
+
+// 1. 抽象层 - 变量、函数、mixins
+@import 'abstracts/variables';
+@import 'abstracts/mixins';
+
+// 2. 基础层 - 重置、字体、动画
+@import 'base/reset';
+@import 'base/typography';
+@import 'base/animations';
+
+// 3. 组件层 - 可复用组件
+@import 'components/buttons';
+@import 'components/cards';
+
+// 4. 布局层 - 页面布局
+@import 'layout/header';
+// @import 'layout/navigation';
+// @import 'layout/footer';
+
+// 5. 页面层 - 页面特定样式
+// @import 'pages/landing';
+// @import 'pages/battle';
+// @import 'pages/arena';
+
+// 6. 主题层 - 主题覆盖
+// @import 'themes/rpg-theme';
+
+// ===== 全局样式覆盖 =====
+
+// Angular Material 覆盖
+.mat-mdc-card {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: color('white') !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: spacing('4');
+
+  .mat-mdc-card-header {
+    color: color('white');
+  }
+
+  .mat-mdc-card-title {
+    color: color('rpg-gold');
+    font-size: font-size('lg');
+    margin-bottom: spacing('2');
+    @include flex-center-vertical;
+
+    .material-icons {
+      margin-left: spacing('2');
+    }
+  }
+
+  .mat-mdc-card-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .mat-mdc-card-content {
+    color: color('white');
+  }
+}
+
+// 确保 Material 组件在暗色背景上可见
+.mat-mdc-raised-button {
+  margin: spacing('2');
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-toolbar {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.mat-drawer {
+  background: color('gray-800') !important;
+}
+
+.mat-drawer-container {
+  background: color('gray-900') !important;
+}
+
+// 确保按钮文字在暗色主题中可见
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button {
+  color: inherit;
+}
+
+// ===== 应用程序特定样式 =====
+
+// 维护覆盖层
+.maintenance-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: color('gray-900');
+  @include flex-center;
+  z-index: map-get($z-index, '9999');
+  color: color('gray-300');
+  text-align: center;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+
+.maintenance-content {
+  @include flex-center;
+  flex-direction: column;
+  gap: spacing('8');
+  padding: spacing('8');
+
+  .logo {
+    width: 100px;
+    height: auto;
+    opacity: 0.8;
+  }
+
+  .title {
+    font-size: font-size('4xl');
+    font-weight: map-get($font-weights, 'bold');
+    color: color('rpg-gold');
+    @include text-shadow(rgba(0, 0, 0, 0.5));
+  }
+
+  .message {
+    font-size: font-size('lg');
+    line-height: 1.6;
+    max-width: 400px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(color('rpg-gold'), 0.2);
+    border-top-color: color('rpg-gold');
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-top: spacing('4');
+  }
+}
+
+// 能量恢复提示
+.energy-recovery-tooltip {
+  z-index: map-get($z-index, '1000');
+  pointer-events: none;
+  opacity: 0.9;
+  animation: pulse 2s infinite;
+}
+
+// 珍贵的 PROMPT 代币显示样式
+.premium-prompt-display {
+  position: fixed;
+  top: spacing('5');
+  right: spacing('5');
+  z-index: map-get($z-index, '1000');
+  pointer-events: none;
+}
+
+.prompt-container {
+  @include flex-center-vertical;
+  gap: spacing('3');
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 40, 0.95));
+  @include backdrop-blur(10px);
+  border: 2px solid;
+  border-image: linear-gradient(45deg, #00d4ff, #0099cc, #0066ff, #00d4ff) 1;
+  border-radius: spacing('5');
+  padding: spacing('3') spacing('4');
+  box-shadow: 
+    0 0 20px rgba(0, 212, 255, 0.3),
+    0 0 40px rgba(0, 212, 255, 0.1),
+    inset 0 0 20px rgba(0, 212, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  animation: promptGlow 3s ease-in-out infinite alternate;
+}
+
+.prompt-icon-wrapper {
+  position: relative;
+  @include flex-center;
+}
+
+.prompt-icon {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.8));
+  animation: promptPulse 2s ease-in-out infinite;
+}
+
+.prompt-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.prompt-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing('1');
+}
+
+.prompt-label {
+  font-size: 10px;
+  font-weight: map-get($font-weights, 'semibold');
+  color: #00d4ff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(0, 212, 255, 0.8);
+}
+
+.prompt-amount {
+  font-size: font-size('lg');
+  font-weight: map-get($font-weights, 'extrabold');
+  color: color('white');
+  text-shadow: 
+    0 0 10px rgba(0, 212, 255, 0.8),
+    0 0 20px rgba(0, 212, 255, 0.4);
+  font-family: $font-family-monospace;
+}
+
+.prompt-sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #00d4ff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.8);
+}
+
+.sparkle-1 {
+  top: 20%;
+  left: 10%;
+  animation: sparkle1 3s ease-in-out infinite;
+}
+
+.sparkle-2 {
+  top: 60%;
+  right: 15%;
+  animation: sparkle2 4s ease-in-out infinite;
+}
+
+.sparkle-3 {
+  bottom: 30%;
+  left: 20%;
+  animation: sparkle3 3.5s ease-in-out infinite;
+}
+
+// 手机版 PROMPT 显示
+@include respond-below('md') {
+  .premium-prompt-display {
+    top: spacing('3');
+    right: spacing('3');
+  }
+  
+  .prompt-container {
+    padding: spacing('2') spacing('3');
+    gap: spacing('2');
+  }
+  
+  .prompt-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .prompt-label {
+    font-size: 8px;
+  }
+  
+  .prompt-amount {
+    font-size: font-size('sm');
+  }
+}
+
+// 应用程式容器样式
+.app-container {
+  min-height: 100vh;
+  background: gradient('rpg-bg');
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+// 确保组件在 router-outlet 中正确显示
+.main-content:not(.battle-main) > *:first-child {
+  flex-grow: 1;
+}
+
+// 修复战斗页面的 router-outlet
+.battle-main > router-outlet {
+  display: contents;
+}
+
+.contained-view {
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+  padding: spacing('8') spacing('4');
+  
+  @include respond-to('sm') {
+    padding: spacing('8') spacing('6');
+  }
+  
+  @include respond-to('lg') {
+    padding: spacing('8') spacing('8');
+  }
+}
+
+// 战斗页面特定样式
+.battle-main {
+  height: 100vh;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  
+  > * {
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+// 导航连结样式
+.nav-link {
+  color: color('white');
+  transition: map-get($transitions, 'colors');
+  padding: spacing('2') spacing('3');
+  border-radius: map-get($border-radius, 'md');
+  font-size: font-size('sm');
+  font-weight: map-get($font-weights, 'medium');
+  
+  &:hover {
+    color: color('rpg-gold');
+  }
+}
+
+.arena-link {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  font-weight: map-get($font-weights, 'bold') !important;
+  position: relative;
+  
+  &:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    transform: translateY(-1px);
+  }
+}
+
+.logout-btn {
+  margin-left: spacing('4');
+  padding: spacing('2') spacing('3');
+  border-radius: map-get($border-radius, 'md');
+  background: color('rpg-gold');
+  color: color('black');
+  font-weight: map-get($font-weights, 'bold');
+  transition: map-get($transitions, 'colors');
+  
+  &:hover {
+    background: color('yellow-400');
+  }
+}
+
+.mobile-menu-btn {
+  @include flex-center;
+  padding: spacing('2');
+  border-radius: map-get($border-radius, 'md');
+  color: color('rpg-gold');
+  transition: map-get($transitions, 'all');
+  
+  &:hover {
+    color: color('white');
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &:focus {
+    outline: none;
+  }
+}
+
+.mobile-nav-link {
+  color: color('white');
+  display: block;
+  padding: spacing('2') spacing('3');
+  border-radius: map-get($border-radius, 'md');
+  font-size: font-size('base');
+  font-weight: map-get($font-weights, 'medium');
+  
+  &:hover {
+    color: color('rpg-gold');
+  }
+}
+
+.prompt-rare {
+  margin-left: spacing('2');
+  padding: spacing('1') spacing('2');
+  border-radius: spacing('3');
+  background: rgba(0, 212, 255, 0.08);
+  box-shadow: 0 0 6px 0 rgba(0, 212, 255, 0.12) inset;
+  @include flex-center-vertical;
+  
+  .prompt-icon {
+    filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.8));
+    animation: promptPulse 2s ease-in-out infinite;
+  }
+  
+  .prompt-label {
+    font-size: 10px;
+    font-weight: map-get($font-weights, 'bold');
+    color: #00d4ff;
+    margin: 0 spacing('1');
+    letter-spacing: 1px;
+    text-shadow: 0 0 4px rgba(0, 212, 255, 0.6);
+  }
+  
+  .prompt-amount {
+    font-size: font-size('lg');
+    font-weight: map-get($font-weights, 'extrabold');
+    color: color('white');
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.53);
+    font-family: $font-family-monospace;
+  }
+}
+
+// 手机版微调
+@include respond-below('md') {
+  .prompt-rare {
+    margin-left: spacing('1');
+    padding: spacing('1') spacing('1');
+    
+    .prompt-icon {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .prompt-label {
+      font-size: 8px;
+    }
+    
+    .prompt-amount {
+      font-size: font-size('sm');
+    }
+  }
+}
+
+// ===== 工具类 =====
+
+// 间距工具类
+@each $name, $size in $spacing {
+  .m-#{$name} { margin: $size; }
+  .mt-#{$name} { margin-top: $size; }
+  .mr-#{$name} { margin-right: $size; }
+  .mb-#{$name} { margin-bottom: $size; }
+  .ml-#{$name} { margin-left: $size; }
+  .mx-#{$name} { margin-left: $size; margin-right: $size; }
+  .my-#{$name} { margin-top: $size; margin-bottom: $size; }
+  
+  .p-#{$name} { padding: $size; }
+  .pt-#{$name} { padding-top: $size; }
+  .pr-#{$name} { padding-right: $size; }
+  .pb-#{$name} { padding-bottom: $size; }
+  .pl-#{$name} { padding-left: $size; }
+  .px-#{$name} { padding-left: $size; padding-right: $size; }
+  .py-#{$name} { padding-top: $size; padding-bottom: $size; }
+}
+
+// Flexbox 工具类
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.flex-1 { flex: 1 1 0%; }
+.flex-auto { flex: 1 1 auto; }
+.flex-none { flex: none; }
+
+// 显示工具类
+.block { display: block; }
+.inline-block { display: inline-block; }
+.inline { display: inline; }
+.hidden { display: none; }
+
+// 位置工具类
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+
+// 宽度和高度工具类
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.w-auto { width: auto; }
+.h-auto { height: auto; }
+.min-h-screen { min-height: 100vh; }
+
+// 圆角工具类
+@each $name, $radius in $border-radius {
+  .rounded-#{$name} { border-radius: $radius; }
+}
+
+// 阴影工具类
+@each $name, $shadow in $shadows {
+  .shadow-#{$name} { box-shadow: $shadow; }
+}
+
+// 背景工具类
+@each $name, $color in $colors {
+  .bg-#{$name} { background-color: $color; }
+}
+
+// 边框工具类
+@each $name, $color in $colors {
+  .border-#{$name} { border-color: $color; }
+}
+
+.border { border-width: 1px; border-style: solid; }
+.border-2 { border-width: 2px; border-style: solid; }
+.border-4 { border-width: 4px; border-style: solid; }
+
+// 透明度工具类
+.opacity-0 { opacity: 0; }
+.opacity-25 { opacity: 0.25; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+
+// 溢出工具类
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-scroll { overflow: scroll; }
+
+// Z-index 工具类
+@each $name, $z in $z-index {
+  .z-#{$name} { z-index: $z; }
+}

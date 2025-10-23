@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import timedelta
 
 class Player(models.Model):
     LOGIN_METHOD_CHOICES = [
@@ -516,3 +517,113 @@ class BettingStats(models.Model):
     class Meta:
         verbose_name = '下注統計'
         verbose_name_plural = '下注統計'
+
+
+# AI節點管理模型
+class AINode(models.Model):
+    """AI節點註冊與管理"""
+    STATUS_CHOICES = [
+        ('online', '在線'),
+        ('offline', '離線'),
+        ('error', '錯誤'),
+        ('maintenance', '維護中'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, verbose_name='節點名稱')
+    url = models.URLField(verbose_name='節點API地址')
+    api_key = models.CharField(max_length=255, null=True, blank=True, verbose_name='API密鑰')
+    
+    # 節點狀態
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline')
+    last_heartbeat = models.DateTimeField(null=True, blank=True, verbose_name='最後心跳時間')
+    
+    # 效能統計
+    total_requests = models.PositiveIntegerField(default=0, verbose_name='總請求數')
+    successful_requests = models.PositiveIntegerField(default=0, verbose_name='成功請求數')
+    avg_response_time = models.FloatField(default=0.0, verbose_name='平均響應時間(秒)')
+    
+    # 負載均衡權重
+    weight = models.PositiveIntegerField(default=1, verbose_name='權重')
+    max_concurrent_requests = models.PositiveIntegerField(default=5, verbose_name='最大並發請求數')
+    current_requests = models.PositiveIntegerField(default=0, verbose_name='當前請求數')
+    
+    # 時間戳
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    @property
+    def is_online(self):
+        """判斷節點是否在線（5分鐘內有心跳）"""
+        if not self.last_heartbeat:
+            return False
+        return timezone.now() - self.last_heartbeat < timedelta(minutes=5)
+    
+    @property
+    def success_rate(self):
+        """成功率"""
+        if self.total_requests == 0:
+            return 0
+        return (self.successful_requests / self.total_requests) * 100
+    
+    @property
+    def is_available(self):
+        """節點是否可用於新請求"""
+        return (self.status == 'online' and 
+                self.is_online and 
+                self.current_requests < self.max_concurrent_requests)
+    
+    def update_heartbeat(self):
+        """更新心跳時間"""
+        self.last_heartbeat = timezone.now()
+        if self.status == 'offline':
+            self.status = 'online'
+        self.save(update_fields=['last_heartbeat', 'status'])
+    
+    def record_request(self, success=True, response_time=0.0):
+        """記錄請求統計"""
+        self.total_requests += 1
+        if success:
+            self.successful_requests += 1
+        
+        # 更新平均響應時間
+        if self.total_requests == 1:
+            self.avg_response_time = response_time
+        else:
+            self.avg_response_time = ((self.avg_response_time * (self.total_requests - 1)) + response_time) / self.total_requests
+        
+        self.save(update_fields=['total_requests', 'successful_requests', 'avg_response_time'])
+    
+    def __str__(self):
+        return f"{self.name} ({self.status})"
+    
+    class Meta:
+        verbose_name = 'AI節點'
+        verbose_name_plural = 'AI節點'
+        ordering = ['-created_at']
+
+
+class BattleVotingRecord(models.Model):
+    """戰鬥結果投票記錄"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    battle = models.ForeignKey(Battle, on_delete=models.CASCADE, related_name='voting_records')
+    node = models.ForeignKey(AINode, on_delete=models.CASCADE, related_name='votes')
+    
+    # 投票結果
+    voted_winner_id = models.CharField(max_length=100, verbose_name='投票的獲勝者ID')
+    battle_result = models.JSONField(verbose_name='節點返回的戰鬥結果')
+    response_time = models.FloatField(verbose_name='響應時間(秒)')
+    
+    # 狀態
+    is_valid = models.BooleanField(default=True, verbose_name='投票是否有效')
+    error_message = models.TextField(null=True, blank=True, verbose_name='錯誤信息')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.node.name} votes for {self.voted_winner_id} in battle {self.battle.id}"
+    
+    class Meta:
+        verbose_name = '戰鬥投票記錄'
+        verbose_name_plural = '戰鬥投票記錄'
+        unique_together = ['battle', 'node']  # 每個節點每場戰鬥只能投票一次

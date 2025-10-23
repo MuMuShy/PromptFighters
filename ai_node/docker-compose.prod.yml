@@ -1,0 +1,48 @@
+# Production AI Node Docker Compose Configuration
+# Copy this file and modify for your production deployment
+version: '3.8'
+
+services:
+  ai-node-1:
+    build: .
+    container_name: ai-node-prod-1
+    env_file:
+      - .env
+    environment:
+      - NODE_NAME=ai-node-prod-1
+      - NODE_PORT=8001
+      - DEPLOYMENT_MODE=production
+      - AGGREGATOR_URL=https://your-gcp-server.com
+      # Optional: Set specific external IP/domain
+      # - NODE_EXTERNAL_HOST=203.0.113.1
+      # - NODE_EXTERNAL_HOST=your-domain.com
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    # For production, you might want to use host networking
+    # network_mode: "host"
+    
+  ai-node-2:
+    build: .
+    container_name: ai-node-prod-2
+    env_file:
+      - .env
+    environment:
+      - NODE_NAME=ai-node-prod-2
+      - NODE_PORT=8002
+      - DEPLOYMENT_MODE=production
+      - AGGREGATOR_URL=https://your-gcp-server.com
+      # Optional: Set specific external IP/domain
+      # - NODE_EXTERNAL_HOST=203.0.113.1
+      # - NODE_EXTERNAL_HOST=your-domain.com
+    ports:
+      - "8002:8002"
+    restart: unless-stopped
+    # For production, you might want to use host networking
+    # network_mode: "host"
+
+# Production deployment instructions:
+# 1. Copy this file: cp docker-compose.prod.yml docker-compose.yml
+# 2. Edit AGGREGATOR_URL to point to your GCP server
+# 3. Optionally set NODE_EXTERNAL_HOST if auto-detection doesn't work
+# 4. Run: docker-compose up -d

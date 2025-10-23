@@ -1,7 +1,9 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
+import { I18nService } from '../../services/i18n.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-landing',
@@ -12,37 +14,54 @@ import { Meta, Title } from '@angular/platform-browser';
       <!-- 1. Hero Section with Animated Background -->
       <section class="hero-section">
         
-        <div class="hero-content relative z-10 w-full max-w-5xl mx-auto">
+        <div class="hero-content">
           <div class="game-logo">
             <h1 class="hero-title">PromptFighters</h1>
-            <div class="logo-subtitle">AI 英雄對戰</div>
+            <div class="logo-subtitle">{{ getHeroSubtitle() }}</div>
           </div>
           
-          <p class="hero-subtitle">一個指令，創造你的專屬英雄。一場戰鬥，見證 AI 的無限可能。</p>
+          <p class="hero-subtitle">{{ getHeroTagline() }}</p>
+          <p class="hero-description">{{ getHeroDescription() }}</p>
           
           <div class="hero-stats">
             <div class="stat-item">
               <span class="stat-number">{{ totalPlayers }}+</span>
-              <span class="stat-label">活躍玩家</span>
+              <span class="stat-label">{{ getStatLabel('nodes') }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-number">{{ totalBattles }}+</span>
-              <span class="stat-label">精彩對戰</span>
+              <span class="stat-label">{{ getStatLabel('battles') }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-number">{{ totalHeroes }}+</span>
-              <span class="stat-label">獨特英雄</span>
+              <span class="stat-label">{{ getStatLabel('fighters') }}</span>
             </div>
           </div>
           
           <div class="hero-buttons">
             <button (click)="startAdventure()" class="btn-primary btn-glow">
-              <span class="btn-icon">🚀</span>
-              <span class="btn-text">立刻開始冒險</span>
-            </button>
-            <button (click)="scrollToFeatures()" class="btn-secondary">
               <span class="btn-icon">⚔️</span>
-              <span class="btn-text">了解遊戲特色</span>
+              <span class="btn-text">{{ getButtonText('start-battle') }}</span>
+            </button>
+            <button (click)="scrollToNodes()" class="btn-secondary">
+              <span class="btn-icon">🔗</span>
+              <span class="btn-text">{{ getButtonText('join-node') }}</span>
+            </button>
+          </div>
+          
+          <!-- 語言切換按鈕 -->
+          <div class="language-switcher">
+            <button 
+              (click)="switchLanguage('zh-Hant')" 
+              class="lang-btn"
+              [class.active]="i18n.isChinese()">
+              中文
+            </button>
+            <button 
+              (click)="switchLanguage('en')" 
+              class="lang-btn"
+              [class.active]="i18n.isEnglish()">
+              English
             </button>
           </div>
           
@@ -80,8 +99,8 @@ import { Meta, Title } from '@angular/platform-browser';
       <section id="features" class="section features-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title">這不僅是遊戲，更是你的創意戰場</h2>
-            <p class="section-description">我們將複雜的 AI 技術，轉化為你手中最强大的創作工具。</p>
+            <h2 class="section-title" i18n="@@about.title">About the Game</h2>
+            <p class="section-description" i18n="@@about.description">每個角色都是由 AI 生成的獨特存在。戰鬥過程由 AI 決策，不可預測但可驗證。玩家可以參與生成、對戰或運行 AI Node 參與共識。</p>
           </div>
           
           <div class="features-grid">
@@ -111,15 +130,14 @@ import { Meta, Title } from '@angular/platform-browser';
               <div class="hero-card-inner">
                 <div class="hero-avatar-wrapper">
                   <img [src]="hero.image" [alt]="hero.name" class="hero-avatar-img">
-                  <div class="avatar-ring"></div>
                   <div class="hero-level">{{ hero.level }}</div>
                 </div>
                 <h3 class="hero-name">{{ hero.name }}</h3>
                 <p class="hero-desc">{{ hero.description }}</p>
                 <div class="hero-stats-mini">
-                  <span class="stat">力量: {{ hero.stats.strength }}</span>
-                  <span class="stat">敏捷: {{ hero.stats.agility }}</span>
-                  <span class="stat">幸運: {{ hero.stats.luck }}</span>
+                  <span class="stat">{{ hero.stats.strength }}</span>
+                  <span class="stat">{{ hero.stats.agility }}</span>
+                  <span class="stat">{{ hero.stats.luck }}</span>
                 </div>
                 <div class="hero-rarity" [class]="hero.rarity">{{ hero.rarity }}</div>
               </div>
@@ -128,7 +146,44 @@ import { Meta, Title } from '@angular/platform-browser';
         </div>
       </section>
       
-      <!-- 4. Battle Preview Section with Real-time Animation -->
+      <!-- 4. Mantle Integration Section -->
+      <section class="section mantle-section">
+        <div class="section-content">
+          <div class="section-header">
+            <h2 class="section-title" i18n="@@mantle.title">Built on Mantle</h2>
+            <p class="section-description" i18n="@@mantle.description">Powered by Mantle Layer 2 - 為 AI & GameFi 而生的區塊鏈</p>
+          </div>
+          
+          <div class="mantle-features">
+            <div class="mantle-logo-section">
+              <div class="mantle-logo">
+                <img src="/assets/mantle-logo.png" alt="Mantle" class="logo-img">
+                <div class="powered-by" i18n="@@mantle.powered-by">Powered by Mantle</div>
+              </div>
+            </div>
+            
+            <div class="mantle-benefits">
+              <div class="benefit-card">
+                <div class="benefit-icon">🏗️</div>
+                <h3 class="benefit-title" i18n="@@mantle.benefit1.title">模組化架構</h3>
+                <p class="benefit-desc" i18n="@@mantle.benefit1.desc">靈活的模組化設計，完美適配 AI 節點網絡</p>
+              </div>
+              <div class="benefit-card">
+                <div class="benefit-icon">⚡</div>
+                <h3 class="benefit-title" i18n="@@mantle.benefit2.title">高效能低費用</h3>
+                <p class="benefit-desc" i18n="@@mantle.benefit2.desc">快速確認，低 Gas 費，適合高頻戰鬥遊戲</p>
+              </div>
+              <div class="benefit-card">
+                <div class="benefit-icon">🎮</div>
+                <h3 class="benefit-title" i18n="@@mantle.benefit3.title">GameFi 友善</h3>
+                <p class="benefit-desc" i18n="@@mantle.benefit3.desc">專為 AI & GameFi 結合場景優化的 Layer 2</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 5. Battle Preview Section with Real-time Animation -->
       <section class="section battle-preview-section">
         <div class="section-content">
           <div class="section-header">
@@ -207,12 +262,185 @@ import { Meta, Title } from '@angular/platform-browser';
         </div>
       </section>
 
-      <!-- 6. Final CTA Section with Parallax -->
+      <!-- 6. AI Node Network Section -->
+      <section class="section node-network-section">
+        <div class="section-content">
+          <div class="section-header">
+            <h2 class="section-title" i18n="@@node.title">Run Your AI Node</h2>
+            <p class="section-description" i18n="@@node.description">人人都能成為 AI 節點 - 下載 Docker 映像，運行你的節點，成為 PromptFighters 的一部分</p>
+          </div>
+          
+          <div class="node-features">
+            <div class="node-info">
+              <div class="node-stats">
+                <div class="stat-card">
+                  <div class="stat-icon">🔗</div>
+                  <div class="stat-value">{{ totalPlayers }}</div>
+                  <div class="stat-label">Active Nodes</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon">⚡</div>
+                  <div class="stat-value">99.9%</div>
+                  <div class="stat-label">Uptime</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon">🏆</div>
+                  <div class="stat-value">{{ totalBattles }}</div>
+                  <div class="stat-label">Consensus Votes</div>
+                </div>
+              </div>
+              
+              <div class="node-benefits">
+                <h3 class="benefits-title">為什麼運行節點？</h3>
+                <ul class="benefits-list">
+                  <li class="benefit-item">
+                    <span class="benefit-icon">💰</span>
+                    <span>參與共識獲得獎勵</span>
+                  </li>
+                  <li class="benefit-item">
+                    <span class="benefit-icon">🎯</span>
+                    <span>影響遊戲生態發展</span>
+                  </li>
+                  <li class="benefit-item">
+                    <span class="benefit-icon">🔒</span>
+                    <span>增強網絡安全性</span>
+                  </li>
+                  <li class="benefit-item">
+                    <span class="benefit-icon">🚀</span>
+                    <span>搶先體驗新功能</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="node-setup">
+              <div class="setup-card">
+                <h3 class="setup-title">快速部署</h3>
+                <div class="setup-steps">
+                  <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                      <div class="step-title">下載 Docker 映像</div>
+                      <code class="step-code">docker pull promptfighters/node:latest</code>
+                    </div>
+                  </div>
+                  <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                      <div class="step-title">配置環境變數</div>
+                      <code class="step-code">export MANTLE_RPC_URL=your_rpc_url</code>
+                    </div>
+                  </div>
+                  <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                      <div class="step-title">啟動節點</div>
+                      <code class="step-code">docker run -d promptfighters/node</code>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="setup-actions">
+                  <button class="btn-primary">
+                    <span class="btn-icon">📖</span>
+                    <span>部署指引</span>
+                  </button>
+                  <button class="btn-secondary">
+                    <span class="btn-icon">📊</span>
+                    <span>節點排行榜</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Hackathon Section -->
+      <section class="section hackathon-section">
+        <div class="section-content">
+          <div class="section-header">
+            <h2 class="section-title" i18n="@@hackathon.title">Built for Mantle Global Hackathon 2025</h2>
+            <p class="section-description" i18n="@@hackathon.description">Track: GameFi & Social + AI & Oracles - Building the first decentralized AI battle protocol</p>
+          </div>
+          
+          <div class="hackathon-info">
+            <div class="hackathon-card">
+              <div class="hackathon-badge">
+                <div class="badge-icon">🏆</div>
+                <div class="badge-text">
+                  <div class="badge-title">Mantle Global Hackathon</div>
+                  <div class="badge-subtitle">2025</div>
+                </div>
+              </div>
+              
+              <div class="hackathon-details">
+                <div class="detail-item">
+                  <span class="detail-label">Track:</span>
+                  <span class="detail-value">GameFi & Social + AI & Oracles</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Goal:</span>
+                  <span class="detail-value">Build the first decentralized AI battle protocol</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Innovation:</span>
+                  <span class="detail-value">Multi-AI consensus + On-chain verification</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="team-section">
+              <h3 class="team-title">Meet the Team</h3>
+              <div class="team-grid">
+                <div class="team-member">
+                  <div class="member-avatar">👨‍💻</div>
+                  <div class="member-info">
+                    <div class="member-name">Lead Developer</div>
+                    <div class="member-role">Full-Stack & Blockchain</div>
+                  </div>
+                </div>
+                <div class="team-member">
+                  <div class="member-avatar">🤖</div>
+                  <div class="member-info">
+                    <div class="member-name">AI Engineer</div>
+                    <div class="member-role">LLM & Node Architecture</div>
+                  </div>
+                </div>
+                <div class="team-member">
+                  <div class="member-avatar">🎨</div>
+                  <div class="member-info">
+                    <div class="member-name">Game Designer</div>
+                    <div class="member-role">UX & Game Mechanics</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="hackathon-links">
+            <button class="btn-primary">
+              <span class="btn-icon">📖</span>
+              <span>View Documentation</span>
+            </button>
+            <button class="btn-secondary">
+              <span class="btn-icon">💻</span>
+              <span>GitHub Repository</span>
+            </button>
+            <button class="btn-secondary">
+              <span class="btn-icon">🎥</span>
+              <span>Demo Video</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. Final CTA Section with Parallax -->
       <section class="section cta-section">
         <div class="parallax-bg"></div>
         <div class="section-content">
-          <h2 class="cta-title">準備好指揮你的 AI 英雄了嗎？</h2>
-          <p class="cta-subtitle">你的傳奇故事，現在開始。</p>
+          <h2 class="cta-title">準備好加入去中心化 AI 戰場了嗎？</h2>
+          <p class="cta-subtitle">你的 AI 英雄傳奇，現在開始。</p>
           
           <div class="cta-features">
             <div class="cta-feature">
@@ -248,7 +476,7 @@ import { Meta, Title } from '@angular/platform-browser';
   `,
   styleUrls: ['./landing.component.scss']
 })
-export class LandingComponent implements OnInit, AfterViewInit {
+export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('battleLog') battleLog!: ElementRef;
   
   // 统计数据
@@ -259,28 +487,54 @@ export class LandingComponent implements OnInit, AfterViewInit {
   // 战斗演示状态
   isPlaying = false;
   private battleInterval: any;
+  private localeSubscription?: Subscription;
   
 
-  features = [
-    {
-      icon: '✨',
-      title: '無限創造',
-      description: '只需一個名字，AI 就能為你生成獨特的背景故事、性格和技能，讓每個英雄都獨一無二。',
-      highlight: 'AI 驅動'
-    },
-    {
-      icon: '⚔️',
-      title: '動態戰鬥',
-      description: '告別固定腳本。AI 將根據戰況即時生成戰鬥過程，每一次對決都充滿未知與驚喜。',
-      highlight: '即時生成'
-    },
-    {
-      icon: '📊',
-      title: '見證成長',
-      description: '追蹤英雄的戰鬥歷史與數據，分析戰術，調整策略，見證他們從新手到傳奇的蛻變。',
-      highlight: '數據分析'
+  get features() {
+    if (this.i18n.isEnglish()) {
+      return [
+        {
+          icon: '🔗',
+          title: 'AI Node Network',
+          description: 'Players can run Docker nodes to participate in battle consensus, becoming part of the decentralized network.',
+          highlight: 'Decentralized'
+        },
+        {
+          icon: '🤖',
+          title: 'LLM Consensus',
+          description: 'Multiple AI models vote to generate results, ensuring fairness and diversity while eliminating single points of failure.',
+          highlight: 'Multi-AI'
+        },
+        {
+          icon: '⛓️',
+          title: 'On-Chain Verification',
+          description: 'Battle result hashes are stored on Mantle blockchain, publicly verifiable, immutable, and transparent.',
+          highlight: 'Zero Trust'
+        }
+      ];
+    } else {
+      return [
+        {
+          icon: '🔗',
+          title: 'AI Node Network',
+          description: '玩家可運行 Docker 節點參與戰鬥共識，成為去中心化網絡的一部分。',
+          highlight: 'Decentralized'
+        },
+        {
+          icon: '🤖',
+          title: 'LLM Consensus',
+          description: '多 AI 模型投票產生結果，確保公平與多樣性，消除單點故障。',
+          highlight: 'Multi-AI'
+        },
+        {
+          icon: '⛓️',
+          title: 'On-Chain Verification',
+          description: '戰鬥結果的 Hash 上鏈 Mantle，公開可查，結果不可篡改、可驗證、透明。',
+          highlight: 'Zero Trust'
+        }
+      ];
     }
-  ];
+  }
 
   sampleHeroes = [
     { 
@@ -354,11 +608,27 @@ export class LandingComponent implements OnInit, AfterViewInit {
   constructor(
     private router: Router,
     private meta: Meta,
-    private title: Title
+    private title: Title,
+    public i18n: I18nService
   ) {}
 
   ngOnInit() {
     this.setupSEO();
+    
+    // 監聽語言變化
+    this.localeSubscription = this.i18n.locale$.subscribe(() => {
+      // 語言變化時重新觸發變更檢測
+      // Angular 會自動重新評估 getter
+    });
+  }
+  
+  ngOnDestroy() {
+    if (this.localeSubscription) {
+      this.localeSubscription.unsubscribe();
+    }
+    if (this.battleInterval) {
+      clearInterval(this.battleInterval);
+    }
   }
 
   ngAfterViewInit() {
@@ -502,6 +772,50 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   scrollToFeatures() {
     document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  scrollToNodes() {
+    document.querySelector('.node-network-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  switchLanguage(locale: string) {
+    this.i18n.switchLanguage(locale);
+  }
+
+  // 翻譯方法
+  getHeroSubtitle(): string {
+    return this.i18n.isEnglish() 
+      ? 'Decentralized AI Battle Arena'
+      : '去中心化 AI 戰鬥競技場';
+  }
+
+  getHeroTagline(): string {
+    return this.i18n.isEnglish()
+      ? 'Where AI Fights, and Players Run the Nodes'
+      : 'AI 戰鬥，玩家運行節點';
+  }
+
+  getHeroDescription(): string {
+    return this.i18n.isEnglish()
+      ? "The world's first decentralized AI battle game powered by Mantle Layer 2"
+      : '全球首款由 Mantle Layer 2 驅動的去中心化 AI 戰鬥遊戲';
+  }
+
+  getStatLabel(type: string): string {
+    const labels = {
+      'nodes': this.i18n.isEnglish() ? 'AI Nodes' : 'AI 節點',
+      'battles': this.i18n.isEnglish() ? 'Battles Verified' : '已驗證戰鬥',
+      'fighters': this.i18n.isEnglish() ? 'AI Fighters' : 'AI 戰士'
+    };
+    return labels[type as keyof typeof labels] || '';
+  }
+
+  getButtonText(type: string): string {
+    const buttons = {
+      'start-battle': this.i18n.isEnglish() ? 'Start Battle' : '開始對戰',
+      'join-node': this.i18n.isEnglish() ? 'Join Node' : '加入節點'
+    };
+    return buttons[type as keyof typeof buttons] || '';
   }
 
   goToIntroPage(page: string) {

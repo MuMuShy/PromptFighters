@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="zh-Hant" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="hero.subtitle" datatype="html">
+        <source>Decentralized AI Battle Arena</source>
+        <target>去中心化 AI 戰鬥競技場</target>
+      </trans-unit>
+      <trans-unit id="hero.tagline" datatype="html">
+        <source>Where AI Fights, and Players Run the Nodes</source>
+        <target>AI 戰鬥，玩家運行節點</target>
+      </trans-unit>
+      <trans-unit id="hero.description" datatype="html">
+        <source>The world's first decentralized AI battle game powered by Mantle Layer 2</source>
+        <target>全球首款由 Mantle Layer 2 驅動的去中心化 AI 戰鬥遊戲</target>
+      </trans-unit>
+      <trans-unit id="stats.ai-nodes" datatype="html">
+        <source>AI Nodes</source>
+        <target>AI 節點</target>
+      </trans-unit>
+      <trans-unit id="stats.battles-verified" datatype="html">
+        <source>Battles Verified</source>
+        <target>已驗證戰鬥</target>
+      </trans-unit>
+      <trans-unit id="stats.ai-fighters" datatype="html">
+        <source>AI Fighters</source>
+        <target>AI 戰士</target>
+      </trans-unit>
+      <trans-unit id="button.start-battle" datatype="html">
+        <source>開始對戰</source>
+        <target>開始對戰</target>
+      </trans-unit>
+      <trans-unit id="button.join-node" datatype="html">
+        <source>加入節點</source>
+        <target>加入節點</target>
+      </trans-unit>
+      <trans-unit id="about.title" datatype="html">
+        <source>About the Game</source>
+        <target>關於遊戲</target>
+      </trans-unit>
+      <trans-unit id="about.description" datatype="html">
+        <source>每個角色都是由 AI 生成的獨特存在。戰鬥過程由 AI 決策，不可預測但可驗證。玩家可以參與生成、對戰或運行 AI Node 參與共識。</source>
+        <target>每個角色都是由 AI 生成的獨特存在。戰鬥過程由 AI 決策，不可預測但可驗證。玩家可以參與生成、對戰或運行 AI Node 參與共識。</target>
+      </trans-unit>
+      <trans-unit id="mantle.title" datatype="html">
+        <source>Built on Mantle</source>
+        <target>基於 Mantle 構建</target>
+      </trans-unit>
+      <trans-unit id="mantle.description" datatype="html">
+        <source>Powered by Mantle Layer 2 - 為 AI &amp; GameFi 而生的區塊鏈</source>
+        <target>由 Mantle Layer 2 驅動 - 為 AI &amp; GameFi 而生的區塊鏈</target>
+      </trans-unit>
+      <trans-unit id="mantle.powered-by" datatype="html">
+        <source>Powered by Mantle</source>
+        <target>由 Mantle 驅動</target>
+      </trans-unit>
+      <trans-unit id="mantle.benefit1.title" datatype="html">
+        <source>模組化架構</source>
+        <target>模組化架構</target>
+      </trans-unit>
+      <trans-unit id="mantle.benefit1.desc" datatype="html">
+        <source>靈活的模組化設計，完美適配 AI 節點網絡</source>
+        <target>靈活的模組化設計，完美適配 AI 節點網絡</target>
+      </trans-unit>
+      <trans-unit id="mantle.benefit2.title" datatype="html">
+        <source>高效能低費用</source>
+        <target>高效能低費用</target>
+      </trans-unit>
+      <trans-unit id="mantle.benefit2.desc" datatype="html">
+        <source>快速確認，低 Gas 費，適合高頻戰鬥遊戲</source>
+        <target>快速確認，低 Gas 費，適合高頻戰鬥遊戲</target>
+      </trans-unit>
+      <trans-unit id="mantle.benefit3.title" datatype="html">
+        <source>GameFi 友善</source>
+        <target>GameFi 友善</target>
+      </trans-unit>
+      <trans-unit id="mantle.benefit3.desc" datatype="html">
+        <source>專為 AI &amp; GameFi 結合場景優化的 Layer 2</source>
+        <target>專為 AI &amp; GameFi 結合場景優化的 Layer 2</target>
+      </trans-unit>
+      <trans-unit id="node.title" datatype="html">
+        <source>Run Your AI Node</source>
+        <target>運行你的 AI 節點</target>
+      </trans-unit>
+      <trans-unit id="node.description" datatype="html">
+        <source>人人都能成為 AI 節點 - 下載 Docker 映像，運行你的節點，成為 PromptFighters 的一部分</source>
+        <target>人人都能成為 AI 節點 - 下載 Docker 映像，運行你的節點，成為 PromptFighters 的一部分</target>
+      </trans-unit>
+      <trans-unit id="hackathon.title" datatype="html">
+        <source>Built for Mantle Global Hackathon 2025</source>
+        <target>為 Mantle 全球黑客松 2025 而建</target>
+      </trans-unit>
+      <trans-unit id="hackathon.description" datatype="html">
+        <source>Track: GameFi &amp; Social + AI &amp; Oracles - Building the first decentralized AI battle protocol</source>
+        <target>賽道：GameFi &amp; Social + AI &amp; Oracles - 構建首個去中心化 AI 戰鬥協議</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

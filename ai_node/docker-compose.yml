@@ -1,0 +1,30 @@
+# AI Node Docker Compose Configuration
+version: '3.8'
+
+networks:
+  aiherobattle-network:
+    external: true
+    name: aiherobattle-network
+
+services:
+  ai-node-1:
+    build: .
+    container_name: ai-node-1
+    env_file:
+      - .env
+    environment:
+      - NODE_NAME=ai-node-1
+      - NODE_PORT=8001
+      - DEPLOYMENT_MODE=local
+      - AGGREGATOR_URL=http://host.docker.internal:8000
+      # For production, set these:
+      # - DEPLOYMENT_MODE=production
+      # - AGGREGATOR_URL=https://your-server.com
+      # - NODE_EXTERNAL_HOST=your-public-ip (optional, auto-detected if not set)
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - aiherobattle-network
+    restart: unless-stopped

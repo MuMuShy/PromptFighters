@@ -11,6 +11,10 @@ from .betting_views import (
     place_bet, get_my_bets, get_betting_stats, get_battle_details, join_ladder,
     get_battle_history, create_test_battle
 )
+from .node_views import (
+    register_node, node_heartbeat, list_nodes, health_check_all, 
+    remove_node, update_node
+)
 
 router = DefaultRouter()
 router.register(r'characters', CharacterViewSet, basename='character')
@@ -43,4 +47,12 @@ urlpatterns = [
     path('ladder/join/', join_ladder, name='join-ladder'),
     path('ladder/battles/history/', get_battle_history, name='battle-history'),
     path('ladder/create-test-battle/', create_test_battle, name='create-test-battle'),
+    
+    # AI節點管理
+    path('nodes/register/', register_node, name='register-node'),
+    path('nodes/heartbeat/', node_heartbeat, name='node-heartbeat'),
+    path('nodes/', list_nodes, name='list-nodes'),
+    path('nodes/health-check/', health_check_all, name='health-check-all'),
+    path('nodes/<uuid:node_id>/', update_node, name='update-node'),
+    path('nodes/<uuid:node_id>/remove/', remove_node, name='remove-node'),
 ]  

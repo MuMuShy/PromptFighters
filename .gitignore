@@ -26,3 +26,6 @@ frontend/.nx/
 postgres_data/ 
 .venv/
 staticfiles/
+.env
+start_multiple_nodes.sh
+ai_node/logs/

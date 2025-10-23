@@ -1,0 +1,324 @@
+// ===== 按钮组件样式 =====
+
+// 基础按钮样式
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: map-get($font-weights, 'medium');
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: map-get($transitions, 'all');
+  position: relative;
+  overflow: hidden;
+  
+  &:focus {
+    outline: 2px solid color('rpg-gold');
+    outline-offset: 2px;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// RPG 主按钮
+.rpg-button {
+  @include rpg-button('primary');
+}
+
+// RPG 次要按钮
+.rpg-button-secondary {
+  @include rpg-button('secondary');
+}
+
+// 按钮大小变体
+.btn-sm {
+  padding: spacing('2') spacing('3');
+  font-size: font-size('sm');
+  border-radius: map-get($border-radius, 'md');
+}
+
+.btn-base {
+  padding: spacing('3') spacing('4');
+  font-size: font-size('base');
+  border-radius: map-get($border-radius, 'lg');
+}
+
+.btn-lg {
+  padding: spacing('3') spacing('6');
+  font-size: font-size('lg');
+  border-radius: map-get($border-radius, 'lg');
+}
+
+.btn-xl {
+  padding: spacing('4') spacing('8');
+  font-size: font-size('xl');
+  border-radius: map-get($border-radius, 'xl');
+}
+
+// 按钮变体
+.btn-primary {
+  background: gradient('rpg-button');
+  color: color('black');
+  font-weight: map-get($font-weights, 'bold');
+  box-shadow: shadow('rpg-glow');
+  
+  &:hover {
+    background: linear-gradient(90deg, color('yellow-400') 0%, #dc2626 100%);
+    transform: scale(1.05);
+    box-shadow: shadow('rpg-glow-strong');
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.btn-secondary {
+  background: gradient('rpg-button-secondary');
+  color: color('white');
+  font-weight: map-get($font-weights, 'bold');
+  box-shadow: shadow('lg');
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: shadow('xl');
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid color('gray-600');
+  color: color('gray-200');
+  font-weight: map-get($font-weights, 'bold');
+  
+  &:hover {
+    background: color('gray-700');
+    border-color: color('gray-500');
+  }
+}
+
+.btn-ghost {
+  background: transparent;
+  color: color('rpg-gold');
+  
+  &:hover {
+    background: rgba(color('rpg-gold'), 0.1);
+  }
+}
+
+.btn-link {
+  background: transparent;
+  border: none;
+  color: color('rpg-gold');
+  text-decoration: underline;
+  
+  &:hover {
+    color: color('yellow-400');
+  }
+}
+
+// 特殊效果按钮
+.btn-glow {
+  box-shadow: 0 0 20px rgba(color('rpg-gold'), 0.5);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.btn-shine {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+// 按钮图标
+.btn-icon {
+  margin-right: spacing('2');
+  
+  &.icon-only {
+    margin: 0;
+  }
+}
+
+.btn-icon-right {
+  margin-left: spacing('2');
+  margin-right: 0;
+}
+
+// 按钮组
+.btn-group {
+  display: inline-flex;
+  vertical-align: middle;
+  
+  .btn {
+    position: relative;
+    flex: 1 1 auto;
+    
+    &:not(:first-child) {
+      margin-left: -1px;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    
+    &:not(:last-child) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    
+    &:hover,
+    &:focus,
+    &:active {
+      z-index: 1;
+    }
+  }
+}
+
+// 全宽按钮
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+// 圆形按钮
+.btn-circle {
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  
+  &.btn-sm {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  &.btn-lg {
+    width: 4rem;
+    height: 4rem;
+  }
+}
+
+// 方形按钮
+.btn-square {
+  border-radius: map-get($border-radius, 'md');
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  
+  &.btn-sm {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  &.btn-lg {
+    width: 4rem;
+    height: 4rem;
+  }
+}
+
+// 加载状态
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .btn-text {
+    opacity: 0;
+  }
+}
+
+// 响应式按钮
+@include respond-below('sm') {
+  .btn-responsive {
+    width: 100%;
+    margin-bottom: spacing('2');
+  }
+}
+
+// 特殊游戏按钮样式
+.game-button {
+  background: linear-gradient(135deg, #232526 0%, #414345 100%);
+  border: 2px solid rgba(color('rpg-gold'), 0.3);
+  color: color('white');
+  padding: spacing('4') spacing('6');
+  border-radius: map-get($border-radius, 'xl');
+  font-weight: map-get($font-weights, 'bold');
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover {
+    border-color: color('rpg-gold');
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(color('rpg-gold'), 0.3);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(color('rpg-gold'), 0.1), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+// 战斗按钮
+.battle-button {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  color: color('white');
+  font-weight: map-get($font-weights, 'bold');
+  padding: spacing('3') spacing('8');
+  border-radius: map-get($border-radius, 'full');
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(238, 90, 36, 0.6);
+  }
+  
+  &:active {
+    transform: translateY(-1px);
+  }
+}

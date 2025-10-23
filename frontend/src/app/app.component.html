@@ -35,16 +35,16 @@
       </div>
     </div> -->
 
-    <nav class="bg-black/30 backdrop-blur-sm border-b border-rpg-gold/30 sticky top-0 z-50 flex-shrink-0">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <div class="flex-shrink-0">
-            <a routerLink="/" class="text-xl font-pixel font-bold text-rpg-gold"><img src="/assets/icon_home.png" alt="Logo" class="w-10 h-10"></a>
+    <nav class="main-nav">
+      <div class="nav-container">
+        <div class="nav-content">
+          <div class="nav-logo">
+            <a routerLink="/"><img src="/assets/icon_home.png" alt="Logo"></a>
           </div>
           <!-- Desktop Menu + 資源條 + 登出 -->
-          <div class="hidden md:flex items-center w-full">
+          <div class="desktop-menu">
             <!-- 主選單 -->
-            <div class="flex items-baseline space-x-4 flex-grow ml-16">
+            <div class="main-menu">
               <a routerLink="/profile" class="nav-link">Profile</a>
               <a routerLink="/create" class="nav-link">Create</a>
               <a routerLink="/battle" class="nav-link">Battle</a>
@@ -53,26 +53,26 @@
               <a routerLink="/leaderboard" class="nav-link">Leaderboard</a>
             </div>
             <!-- 資源條（移除 prompt） -->
-            <div *ngIf="isLoggedIn" class="game-status-bar flex items-center gap-4 bg-gray-900/70 rounded-lg px-4 py-1 mx-8 shadow">
-              <div class="flex items-center gap-1">
-                <img src="/assets/game/gold_coin.png" alt="Gold" class="w-7 h-7" />
-                <span class="text-yellow-300 font-bold text-base">{{ gold | number }}</span>
+            <div *ngIf="isLoggedIn" class="game-status-bar">
+              <div class="status-item">
+                <img src="/assets/game/gold_coin.png" alt="Gold" />
+                <span class="status-value gold">{{ gold | number }}</span>
               </div>
-              <div class="flex items-center gap-1">
-                <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-7 h-7" />
-                <span class="text-purple-300 font-bold text-base">{{ promptPower }}</span>
+              <div class="status-item">
+                <img src="/assets/game/prompt_power.png" alt="Prompt Power" />
+                <span class="status-value prompt-power">{{ promptPower }}</span>
               </div>
-              <div class="flex items-center gap-1 relative">
-                <img src="/assets/game/stamina.png" alt="Energy" class="w-7 h-7" />
-                <span class="text-red-200 font-bold text-base">{{ energy }}/{{ maxEnergy }}</span>
+              <div class="status-item relative">
+                <img src="/assets/game/stamina.png" alt="Energy" />
+                <span class="status-value energy">{{ energy }}/{{ maxEnergy }}</span>
                 <span *ngIf="energyRecoveryInfo.isRecovering && energy < maxEnergy" 
-                      class="text-xs text-gray-400 ml-1">
+                      class="energy-recovery">
                   ({{ energyRecoveryInfo.nextRecoveryMinutes }}m)
                 </span>
               </div>
               <!-- $PROMPT 放在最右側，特別樣式 -->
-              <div class="flex items-center gap-1 prompt-rare">
-                <img src="/assets/game/prompt.png" alt="PROMPT" class="w-7 h-7 prompt-icon" />
+              <div class="status-item prompt-rare">
+                <img src="/assets/game/prompt.png" alt="PROMPT" class="prompt-icon" />
                 <span class="prompt-label">$PROMPT</span>
                 <span class="prompt-amount">{{ prompt | number }}</span>
               </div>
@@ -81,7 +81,7 @@
             <button *ngIf="isLoggedIn" (click)="logout()" class="logout-btn">登出</button>
           </div>
           <!-- Mobile Menu Button -->
-          <div class="-mr-2 flex md:hidden">
+          <div class="mobile-menu-toggle">
             <button (click)="toggleMenu()" type="button" class="mobile-menu-btn" aria-controls="mobile-menu" aria-expanded="false">
               <span class="sr-only">Open main menu</span>
               <svg *ngIf="!isMenuOpen" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -91,40 +91,44 @@
         </div>
       </div>
       <!-- Mobile menu -->
-      <div class="md:hidden" id="mobile-menu" *ngIf="isMenuOpen">
-        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          <a routerLink="/profile" (click)="closeMenu()" class="mobile-nav-link">Profile</a>
-          <a routerLink="/create" (click)="closeMenu()" class="mobile-nav-link">Create</a>
-          <a routerLink="/battle" (click)="closeMenu()" class="mobile-nav-link">Battle</a>
-          <a routerLink="/arena" (click)="closeMenu()" class="mobile-nav-link arena-link">🏟️ Arena</a>
-          <a routerLink="/daily-quests" (click)="closeMenu()" class="mobile-nav-link">Daily Quest</a>
-          <a routerLink="/leaderboard" (click)="closeMenu()" class="mobile-nav-link">Leaderboard</a>
-          <button *ngIf="isLoggedIn" (click)="logout(); closeMenu();" class="w-full text-left mobile-nav-link">登出</button>
+      <div class="mobile-menu hidden-desktop" id="mobile-menu" *ngIf="isMenuOpen">
+        <div class="mobile-menu-content">
+          <div class="mobile-nav-links">
+            <a routerLink="/profile" (click)="closeMenu()" class="mobile-nav-link">Profile</a>
+            <a routerLink="/create" (click)="closeMenu()" class="mobile-nav-link">Create</a>
+            <a routerLink="/battle" (click)="closeMenu()" class="mobile-nav-link">Battle</a>
+            <a routerLink="/arena" (click)="closeMenu()" class="mobile-nav-link arena-link">🏟️ Arena</a>
+            <a routerLink="/daily-quests" (click)="closeMenu()" class="mobile-nav-link">Daily Quest</a>
+            <a routerLink="/leaderboard" (click)="closeMenu()" class="mobile-nav-link">Leaderboard</a>
+          </div>
+          <div class="mobile-status-bar" *ngIf="isLoggedIn">
+            <button (click)="logout(); closeMenu();" class="mobile-logout">登出</button>
+          </div>
         </div>
       </div>
     </nav>
     
-    <!-- 手機版資源條（md:hidden，移除 prompt） -->
-    <div *ngIf="!isBattlePage && isLoggedIn" class="md:hidden game-status-bar flex items-center justify-between bg-gray-900/90 backdrop-blur-sm border-b border-gray-700/50 px-4 py-3 sticky top-16 left-0 w-full z-40">
-      <div class="flex items-center gap-1">
-        <img src="/assets/game/gold_coin.png" alt="Gold" class="w-6 h-6" />
-        <span class="text-yellow-300 font-bold text-sm">{{ gold | number }}</span>
+    <!-- 手機版資源條 -->
+    <div *ngIf="!isBattlePage && isLoggedIn" class="mobile-status-bar-main">
+      <div class="mobile-status-item">
+        <img src="/assets/game/gold_coin.png" alt="Gold" />
+        <span class="mobile-status-value gold">{{ gold | number }}</span>
       </div>
-      <div class="flex items-center gap-1">
-        <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="w-6 h-6" />
-        <span class="text-purple-300 font-bold text-sm">{{ promptPower }}</span>
+      <div class="mobile-status-item">
+        <img src="/assets/game/prompt_power.png" alt="Prompt Power" />
+        <span class="mobile-status-value prompt-power">{{ promptPower }}</span>
       </div>
-      <div class="flex items-center gap-1">
-        <img src="/assets/game/stamina.png" alt="Energy" class="w-6 h-6" />
-        <span class="text-red-200 font-bold text-sm">{{ energy }}/{{ maxEnergy }}</span>
+      <div class="mobile-status-item">
+        <img src="/assets/game/stamina.png" alt="Energy" />
+        <span class="mobile-status-value energy">{{ energy }}/{{ maxEnergy }}</span>
         <span *ngIf="energyRecoveryInfo.isRecovering && energy < maxEnergy" 
-              class="text-xs text-gray-400">
+              class="mobile-energy-recovery">
           ({{ energyRecoveryInfo.nextRecoveryMinutes }}m)
         </span>
       </div>
       <!-- $PROMPT 放最後，特別樣式 -->
-      <div class="flex items-center gap-1 prompt-rare">
-        <img src="/assets/game/prompt.png" alt="PROMPT" class="w-6 h-6 prompt-icon" />
+      <div class="mobile-status-item prompt-rare">
+        <img src="/assets/game/prompt.png" alt="PROMPT" class="prompt-icon" />
         <span class="prompt-label">$PROMPT</span>
         <span class="prompt-amount">{{ prompt | number }}</span>
       </div>

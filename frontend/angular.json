@@ -39,8 +39,8 @@
             "polyfills": ["zone.js"],
             "scripts": [],
             "styles": [
-              "src/styles.scss",
-              "src/global_styles.css"
+              "src/styles/main.scss",
+              "@angular/material/prebuilt-themes/purple-green.css"
             ],
             "tsConfig": "tsconfig.app.json"
           }
