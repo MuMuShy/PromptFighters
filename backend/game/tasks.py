@@ -32,41 +32,154 @@ class BattleResult(BaseModel):
 
 @shared_task
 def generate_character_image(character_id):
+    from .storage_service import get_cloud_storage
+    
     char = Character.objects.get(id=character_id)
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     try:
+        # 加強 Prompt，強調禁止文字
+        prompt = f"""Create a high-quality character portrait of: {char.prompt}
+
+CRITICAL REQUIREMENTS:
+- ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO SYMBOLS, NO WATERMARKS anywhere in the image
+- Pure visual art only, zero text content
+- Clean image without any written language
+
+Art Style:
+- AAA game character art (Final Fantasy, Genshin Impact, Fate/Grand Order quality)
+- Cinematic rendering with detailed materials (metal, leather, fabric, magic effects)
+- Dramatic lighting, rich saturated colors, high contrast
+- Dynamic heroic pose with expressive eyes
+- Complex costume design with multiple layers
+- Character as main focus, blurred or magical background
+
+Character Special Ability: {char.skill_description}
+
+REMINDER: The image must be completely text-free. No captions, labels, titles, or any form of text."""
+
+        print(f"🎨 為角色 '{char.name}' 生成圖片...")
+        
         response = client.models.generate_content(
             model="gemini-2.0-flash-preview-image-generation",
-            contents=f"""
-            請以3A級遊戲CG、電影級渲染的風格，繪製{char.prompt}這個角色。風格需極度精緻成熟，參考《Final Fantasy》、《Genshin Impact》、《Fate/Grand Order》、《Arknights》、《暴雪爐石傳說》角色卡面。  
-            重點要求：  
-            - 飽和且高對比的色彩，光影立體，材質細膩（如金屬、皮革、布料、魔法特效等）  
-            - 線條乾淨俐落，無任何草圖感或插畫感  
-            - 角色比例自然，姿勢帥氣，眼神有戲  
-            - 服裝設計複雜且有層次，細節豐富  
-            - 構圖以角色為主體，背景可柔焦或帶魔法特效  
-            - 禁止Q版、卡通、低齡、簡筆畫、模糊、低解析、插畫風、草圖風  
-            - 圖片中禁止出現任何文字、標語、說明、標籤、中英文等
-
-            角色描述：{char.prompt}
-            必殺技描述：{char.skill_description}
-            """,
+            contents=prompt,
             config=types.GenerateContentConfig(
-                response_modalities=['TEXT', 'IMAGE']
+                response_modalities=['IMAGE', 'TEXT'],
             )
         )
-        for part in response.candidates[0].content.parts:
+        # 檢查是否有收到 response
+        if not response.candidates or len(response.candidates) == 0:
+            print(f"❌ Gemini 沒有返回任何候選結果 (角色 {character_id})")
+            return
+        
+        candidate = response.candidates[0]
+        if not candidate.content or not candidate.content.parts:
+            print(f"❌ Gemini 候選結果中沒有內容 (角色 {character_id})")
+            return
+        
+        print(f"📦 收到 {len(candidate.content.parts)} 個部分的內容")
+        
+        # 尋找圖片數據
+        image_found = False
+        for i, part in enumerate(candidate.content.parts):
+            print(f"  部分 {i+1}: inline_data={part.inline_data is not None}, text={hasattr(part, 'text') and part.text is not None}")
+            
             if part.inline_data is not None:
                 filename = f"character_{character_id}.png"
+                
+                # 🔧 關鍵修正：Gemini 返回的 data 可能是 base64 編碼的字串或 bytes
+                import base64
+                raw_data = part.inline_data.data
+                
+                print(f"🔍 原始數據類型: {type(raw_data)}")
+                
+                # 嘗試 base64 解碼
+                if isinstance(raw_data, str):
+                    print(f"🔄 檢測到字串，嘗試 base64 解碼...")
+                    try:
+                        image_data = base64.b64decode(raw_data)
+                        print(f"✅ Base64 解碼成功")
+                    except Exception as e:
+                        print(f"❌ Base64 解碼失敗: {e}")
+                        continue
+                elif isinstance(raw_data, bytes):
+                    # bytes 可能已經解碼，或者本身就是 base64 bytes
+                    # 先檢查 PNG header
+                    if raw_data[:4] == b'\x89PNG':
+                        image_data = raw_data
+                        print(f"✅ 已是有效的 PNG 數據")
+                    else:
+                        # 嘗試 base64 解碼
+                        try:
+                            image_data = base64.b64decode(raw_data)
+                            print(f"✅ Base64 (bytes) 解碼成功")
+                        except:
+                            # 解碼失敗，使用原始數據
+                            image_data = raw_data
+                            print(f"⚠️ Base64 解碼失敗，使用原始數據")
+                else:
+                    image_data = raw_data
+                    print(f"⚠️ 未知數據類型，直接使用")
+                
+                image_size = len(image_data)
+                print(f"✅ 圖片數據大小: {image_size:,} bytes ({image_size/1024:.2f} KB)")
+                
+                # 驗證圖片數據
+                if image_size < 1000:
+                    print(f"⚠️ 圖片太小 ({image_size} bytes)，可能不是有效圖片")
+                    continue
+                
+                # 檢查是否為 PNG 格式 (PNG header: 89 50 4E 47)
+                if len(image_data) >= 4:
+                    header = image_data[:4]
+                    is_png = header == b'\x89PNG'
+                    print(f"🔍 PNG 格式驗證: {'✅ 是' if is_png else '❌ 否'} (header: {header.hex()})")
+                    if not is_png:
+                        print(f"⚠️ 警告：不是標準 PNG 格式，但仍嘗試儲存")
+                
+                # 嘗試上傳到雲端儲存
+                cloud_storage = get_cloud_storage()
+                if cloud_storage.enabled:
+                    print(f"☁️ 雲端儲存已啟用，開始上傳...")
+                    cloud_url = cloud_storage.upload_file(
+                        file_data=image_data,
+                        file_name=filename,
+                        content_type='image/png'
+                    )
+                    if cloud_url:
+                        char.image_url = cloud_url
+                        char.save()
+                        print(f"✅ 角色圖片已上傳到雲端: {cloud_url}")
+                        image_found = True
+                        break
+                    else:
+                        print(f"⚠️ 雲端上傳失敗，改用本地儲存")
+                else:
+                    print(f"💾 雲端儲存未配置，使用本地儲存")
+                
+                # 備援：儲存到本地（如果雲端未配置或上傳失敗）
                 media_path = os.path.join(settings.MEDIA_ROOT, filename)
+                print(f"💾 儲存到本地路徑: {media_path}")
                 with open(media_path, "wb") as f:
-                    f.write(part.inline_data.data)
+                    f.write(image_data)
+                
+                # 驗證檔案是否成功寫入
+                if os.path.exists(media_path):
+                    saved_size = os.path.getsize(media_path)
+                    print(f"✅ 檔案已儲存，大小: {saved_size:,} bytes")
+                else:
+                    print(f"❌ 檔案儲存失敗: {media_path}")
+                
                 char.image_url = settings.MEDIA_URL + filename
                 char.save()
+                print(f"💾 角色圖片 URL 已更新: {char.image_url}")
+                image_found = True
                 break
+        
+        if not image_found:
+            print(f"❌ 沒有在 response 中找到圖片數據 (角色 {character_id})")
     except Exception as e:
         # 可加 log 或通知
-        print(f"Error generating character image for {character_id}: {e}")
+        print(f"❌ 圖片生成失敗 (角色 {character_id}): {e}")
         pass
 
 def validate_battle_result(battle_result, player, opponent):

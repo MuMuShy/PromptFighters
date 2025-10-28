@@ -29,3 +29,4 @@ staticfiles/
 .env
 start_multiple_nodes.sh
 ai_node/logs/
+.env*
