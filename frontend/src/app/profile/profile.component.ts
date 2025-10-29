@@ -10,6 +10,9 @@ import { Battle } from '../interfaces/battle.interface';
 import { PlayerService } from '../services/player.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NftService } from '../services/nft.service';
+import { Web3Service } from '../services/web3.service';
+import { DialogService } from '../services/dialog.service';
 @Component({
   selector: 'app-profile',
   standalone: true,
@@ -29,14 +32,16 @@ export class ProfileComponent implements OnInit {
   nicknameChanged: boolean = false;
   displayName: string = '';
   editNicknameMode: boolean = false;
+  isMinting: boolean = false;
+  mintingCharacterId: string | null = null;
   
   rarityFilters = [
-    { value: null, label: '全部', icon: '◉', count: 0 },
-    { value: 1, label: '普通', icon: '●', count: 0 },
-    { value: 2, label: '稀有', icon: '✦', count: 0 },
-    { value: 3, label: '精英', icon: '✧', count: 0 },
-    { value: 4, label: '史詩', icon: '✨', count: 0 },
-    { value: 5, label: '傳說', icon: '⭐', count: 0 }
+    { value: null, label: 'ALL', icon: '◉', count: 0 },
+    { value: 1, label: 'N', icon: '●', count: 0 },
+    { value: 2, label: 'R', icon: '✦', count: 0 },
+    { value: 3, label: 'SR', icon: '✧', count: 0 },
+    { value: 4, label: 'SSR', icon: '✨', count: 0 },
+    { value: 5, label: 'UR', icon: '⭐', count: 0 }
   ];
 
   constructor(
@@ -44,8 +49,11 @@ export class ProfileComponent implements OnInit {
     private battleService: BattleService,
     private authService: AuthService,
     private playerService: PlayerService,
+    private dialogService: DialogService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private nftService: NftService,
+    private web3Service: Web3Service
   ) {}
 
   ngOnInit(): void {
@@ -135,6 +143,17 @@ export class ProfileComponent implements OnInit {
     return this.allCharacters.filter(char => char.rarity === rarity).length;
   }
   
+  getRarityLabel(rarity: number): string {
+    const rarityMap: { [key: number]: string } = {
+      1: 'N',
+      2: 'R', 
+      3: 'SR',
+      4: 'SSR',
+      5: 'UR'
+    };
+    return rarityMap[rarity] || 'N';
+  }
+
   getRarityText(rarity: number): string {
     const rarityMap: { [key: number]: string } = {
       1: '普通',
@@ -183,5 +202,82 @@ export class ProfileComponent implements OnInit {
     event.stopPropagation();
     event.preventDefault();
     this.router.navigate(['/upgrade', character.id]);
+  }
+
+  async mintNFT(character: Character, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    // 檢查是否已鑄造
+    if (character.is_minted) {
+      this.dialogService.warning('已鑄造', '此角色已經鑄造為 NFT！');
+      return;
+    }
+
+    // 檢查是否有連接錢包
+    if (!this.web3Service.isWalletConnected()) {
+      this.dialogService.warning('請連接錢包', '請先連接 MetaMask 錢包才能鑄造 NFT');
+      return;
+    }
+
+    const walletAddress = this.web3Service.getWalletAddress();
+    if (!walletAddress) {
+      this.dialogService.error('錯誤', '無法取得錢包地址，請重新連接錢包');
+      return;
+    }
+
+    // 確認對話框
+    this.dialogService.confirm(
+      '確認鑄造 NFT',
+      `確定要將「${character.name}」鑄造為 NFT 嗎？\n\n` +
+      `這將會：\n` +
+      `• 在 Mantle 網絡上創建 NFT\n` +
+      `• NFT 將發送到你的錢包：${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}\n` +
+      `• 可以在 OpenSea 上交易\n\n` +
+      `<strong>注意：此操作不可逆！</strong>`,
+      async () => {
+        this.isMinting = true;
+        this.mintingCharacterId = character.id;
+
+        // 顯示載入中
+        this.dialogService.loading('鑄造中', '正在鑄造 NFT，請稍候...\n這可能需要幾秒鐘');
+
+        try {
+          const result = await this.nftService.mintCharacterNFT(character.id, walletAddress).toPromise();
+          
+          if (result?.success && result.data) {
+            // 更新本地角色數據
+            character.is_minted = true;
+            character.token_id = result.data.token_id;
+            character.contract_address = result.data.contract_address;
+            character.owner_wallet = result.data.owner_wallet;
+            character.tx_hash = result.data.tx_hash;
+
+            this.dialogService.success(
+              'NFT 鑄造成功',
+              `Token ID: #${result.data.token_id}\n` +
+              `合約地址: ${result.data.contract_address}\n` +
+              `交易哈希: ${result.data.tx_hash}\n\n` +
+              `<a href="${result.data.explorer_url}" target="_blank" style="color: #6366f1;">在區塊鏈瀏覽器查看</a>`
+            );
+          } else {
+            throw new Error(result?.error || '鑄造失敗');
+          }
+        } catch (error: any) {
+          console.error('鑄造 NFT 失敗:', error);
+          this.dialogService.error(
+            '鑄造失敗',
+            `錯誤: ${error.error?.error || error.message || '未知錯誤'}\n\n` +
+            `請確認：\n` +
+            `• 錢包已連接\n` +
+            `• 網絡設定正確\n` +
+            `• 角色圖片已生成完成`
+          );
+        } finally {
+          this.isMinting = false;
+          this.mintingCharacterId = null;
+        }
+      }
+    );
   }
 }

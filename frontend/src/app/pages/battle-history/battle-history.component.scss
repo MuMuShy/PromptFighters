@@ -8,23 +8,55 @@
   color: #f8fafc;
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  position: relative;
 }
 
-// 背景效果
-.history-background {
+// 返回按鈕（左上角）
+.back-button {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  pointer-events: none;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.4);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(12px);
+  
+  &:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #f1f5f9;
+    transform: translateX(-2px);
+  }
+  
+  &:active {
+    transform: scale(0.96);
+  }
+  
+  .back-arrow {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+  
+  .back-text {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
 }
 
 // 頁面標題
 .history-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin: 60px 0 32px 0;
 }
 
 .history-title {
@@ -163,42 +195,20 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
-.winner-crown {
+.winner-badge {
   position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 12px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  border-radius: 2px 2px 0 0;
+  top: 6px;
+  right: 6px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.95), rgba(245, 158, 11, 0.95));
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(251, 191, 36, 0.4);
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 5px solid #fbbf24;
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 2px;
-    height: 2px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 
-      -4px 0 0 -1px white,
-      4px 0 0 -1px white;
+  span {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: #0a0f1c;
+    letter-spacing: 0.05em;
   }
 }
 

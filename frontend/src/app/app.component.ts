@@ -6,11 +6,12 @@ import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { HealthCheckService } from './services/health-check.service';
 import { Observable } from 'rxjs';
+import { DialogComponent } from './components/dialog/dialog.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, CommonModule],
+  imports: [RouterOutlet, RouterLink, CommonModule, DialogComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })

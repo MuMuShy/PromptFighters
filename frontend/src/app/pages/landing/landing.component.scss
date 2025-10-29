@@ -408,28 +408,7 @@
   }
 }
 
-.scroll-indicator {
-  position: absolute;
-  bottom: spacing('8');
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  color: color('gray-400');
-  
-  .scroll-arrow {
-    width: 24px;
-    height: 24px;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: rotate(45deg);
-    margin: 0 auto spacing('2');
-    animation: bounce 2s infinite;
-  }
-  
-  span {
-    font-size: font-size('sm');
-  }
-}
+
 
 // 其他landing页面样式继续...
 

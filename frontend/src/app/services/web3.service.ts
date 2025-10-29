@@ -58,9 +58,36 @@ export class Web3Service {
       });
       console.log('thirdweb client created successfully:', this.client);
       console.log('Client structure:', Object.keys(this.client));
+      
+      // 檢查並恢復 MetaMask 連接狀態
+      this.checkMetamaskConnection();
     } catch (error) {
       console.error('Failed to create thirdweb client:', error);
       console.log('Environment object:', environment);
+    }
+  }
+
+  // 檢查 MetaMask 是否已連接
+  private async checkMetamaskConnection() {
+    try {
+      if ((window as any).ethereum) {
+        const accounts = await (window as any).ethereum.request({ 
+          method: 'eth_accounts' 
+        });
+        
+        if (accounts && accounts.length > 0) {
+          const address = accounts[0];
+          console.log('🔗 檢測到已連接的 MetaMask 錢包:', address);
+          
+          this.connectionStatus.next({
+            connected: true,
+            address,
+            walletType: 'metamask'
+          });
+        }
+      }
+    } catch (error) {
+      console.log('檢查 MetaMask 連接狀態失敗:', error);
     }
   }
 
@@ -250,6 +277,16 @@ export class Web3Service {
   // 取得當前連接狀態
   getCurrentConnection() {
     return this.connectionStatus.value;
+  }
+
+  // 檢查錢包是否已連接
+  isWalletConnected(): boolean {
+    return this.connectionStatus.value.connected;
+  }
+
+  // 獲取當前連接的錢包地址
+  getWalletAddress(): string | undefined {
+    return this.connectionStatus.value.address;
   }
 
   // 切換到 Mantle 鏈

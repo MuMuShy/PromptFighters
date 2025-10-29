@@ -28,12 +28,15 @@ interface BattleDetails {
   imports: [CommonModule, MediaUrlPipe],
   template: `
     <div class="battle-details-page">
-      <!-- 簡潔背景 -->
-      <div class="details-background"></div>
+      <!-- 返回按鈕 -->
+      <button class="back-button" (click)="goBack()">
+        <span class="back-arrow">←</span>
+        <span class="back-text">BACK</span>
+      </button>
 
       <!-- 頁面標題 -->
       <div class="details-header" *ngIf="battleDetails">
-        <h1 class="details-title">⚔️ 戰鬥詳情</h1>
+        <h1 class="details-title">BATTLE DETAILS</h1>
         <div class="battle-date">
           {{ formatBattleDate(battleDetails.scheduled_time) }}
         </div>
@@ -48,7 +51,9 @@ interface BattleDetails {
               <img [src]="battleDetails?.fighter1?.character?.image_url | mediaUrl" 
                    [alt]="battleDetails?.fighter1?.character?.name">
               <div class="rank-badge">#{{ battleDetails?.fighter1?.current_rank }}</div>
-              <div class="winner-crown" *ngIf="battleDetails?.winner?.id === battleDetails?.fighter1?.id">👑</div>
+              <div class="winner-badge" *ngIf="battleDetails?.winner?.id === battleDetails?.fighter1?.id">
+                <span>WINNER</span>
+              </div>
             </div>
             
             <div class="fighter-info">
@@ -58,19 +63,16 @@ interface BattleDetails {
               
               <div class="fighter-stats">
                 <div class="stat">
-                  <span class="stat-icon">💪</span>
+                  <span class="stat-label">STR</span>
                   <span class="stat-value">{{ battleDetails?.fighter1?.character?.strength }}</span>
-                  <span class="stat-label">力量</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-icon">⚡</span>
+                  <span class="stat-label">AGI</span>
                   <span class="stat-value">{{ battleDetails?.fighter1?.character?.agility }}</span>
-                  <span class="stat-label">敏捷</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-icon">🍀</span>
+                  <span class="stat-label">LUK</span>
                   <span class="stat-value">{{ battleDetails?.fighter1?.character?.luck }}</span>
-                  <span class="stat-label">幸運</span>
                 </div>
               </div>
               
@@ -96,15 +98,14 @@ interface BattleDetails {
           <div class="vs-showcase">
             <div class="vs-icon">VS</div>
             <div class="battle-result" *ngIf="battleDetails?.winner">
-              <div class="result-icon">🏆</div>
               <div class="result-text">
-                {{ battleDetails?.winner?.character?.name }} 獲勝！
+                {{ battleDetails?.winner?.character?.name }} WINS
               </div>
             </div>
             <div class="total-pool">
-              <div class="pool-label">總獎池</div>
+              <div class="pool-label">PRIZE POOL</div>
               <div class="pool-amount">
-                {{ bettingService.formatAmount(battleDetails?.total_bets_amount || 0) }} 金幣
+                {{ bettingService.formatAmount(battleDetails?.total_bets_amount || 0) }}
               </div>
             </div>
           </div>
@@ -115,7 +116,9 @@ interface BattleDetails {
               <img [src]="battleDetails?.fighter2?.character?.image_url | mediaUrl" 
                    [alt]="battleDetails?.fighter2?.character?.name">
               <div class="rank-badge">#{{ battleDetails?.fighter2?.current_rank }}</div>
-              <div class="winner-crown" *ngIf="battleDetails?.winner?.id === battleDetails?.fighter2?.id">👑</div>
+              <div class="winner-badge" *ngIf="battleDetails?.winner?.id === battleDetails?.fighter2?.id">
+                <span>WINNER</span>
+              </div>
             </div>
             
             <div class="fighter-info">
@@ -125,19 +128,16 @@ interface BattleDetails {
               
               <div class="fighter-stats">
                 <div class="stat">
-                  <span class="stat-icon">💪</span>
+                  <span class="stat-label">STR</span>
                   <span class="stat-value">{{ battleDetails?.fighter2?.character?.strength }}</span>
-                  <span class="stat-label">力量</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-icon">⚡</span>
+                  <span class="stat-label">AGI</span>
                   <span class="stat-value">{{ battleDetails?.fighter2?.character?.agility }}</span>
-                  <span class="stat-label">敏捷</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-icon">🍀</span>
+                  <span class="stat-label">LUK</span>
                   <span class="stat-value">{{ battleDetails?.fighter2?.character?.luck }}</span>
-                  <span class="stat-label">幸運</span>
                 </div>
               </div>
               
@@ -193,23 +193,23 @@ interface BattleDetails {
               <!-- 攻擊者頭像 -->
               <div class="attacker-avatar">
                 <img [src]="getCharacterAvatar(log.attacker) | mediaUrl" 
-                     [alt]="log.attacker"
+                     [alt]="getCharacterName(log.attacker)"
                      class="character-avatar">
-                <div class="character-name">{{ log.attacker }}</div>
+                <div class="character-name">{{ getCharacterName(log.attacker) }}</div>
               </div>
               
               <!-- 攻擊箭頭和動作 -->
               <div class="attack-action">
-                <div class="action-arrow">⚔️</div>
+                <div class="action-arrow">→</div>
                 <div class="action-name">{{ log.action }}</div>
               </div>
               
               <!-- 防守者頭像 -->
               <div class="defender-avatar">
                 <img [src]="getCharacterAvatar(log.defender) | mediaUrl" 
-                     [alt]="log.defender"
+                     [alt]="getCharacterName(log.defender)"
                      class="character-avatar">
-                <div class="character-name">{{ log.defender }}</div>
+                <div class="character-name">{{ getCharacterName(log.defender) }}</div>
               </div>
               
               <!-- 戰鬥描述 -->
@@ -256,20 +256,18 @@ interface BattleDetails {
       <!-- 下注統計 -->
       <div class="betting-section" *ngIf="battleDetails?.betting_stats">
         <div class="section-header">
-          <h2>📊 下注統計</h2>
+          <h2>BETTING STATS</h2>
         </div>
 
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon">🎯</div>
             <div class="stat-value">{{ battleDetails?.betting_stats?.total_bets || 0 }}</div>
-            <div class="stat-label">總下注數</div>
+            <div class="stat-label">Total Bets</div>
           </div>
           
           <div class="stat-card">
-            <div class="stat-icon">💰</div>
             <div class="stat-value">{{ bettingService.formatAmount(battleDetails?.total_bets_amount || 0) }}</div>
-            <div class="stat-label">總獎池</div>
+            <div class="stat-label">Total Pool</div>
           </div>
           
           <div class="stat-card fighter1">
@@ -307,7 +305,7 @@ interface BattleDetails {
       <!-- 用戶下注 -->
       <div class="user-bet-section" *ngIf="battleDetails?.user_bet">
         <div class="section-header">
-          <h2>🎯 您的下注</h2>
+          <h2>YOUR BET</h2>
         </div>
 
         <div class="user-bet-card">
@@ -348,13 +346,6 @@ interface BattleDetails {
         <p>{{ error }}</p>
         <button class="retry-btn" (click)="loadBattleDetails()">重試</button>
       </div>
-
-      <!-- 返回按鈕 -->
-      <div class="back-nav">
-        <button class="back-btn" (click)="goBack()">
-          <span>← 返回</span>
-        </button>
-      </div>
     </div>
   `,
   styleUrls: ['./battle-details.component.scss']
@@ -391,13 +382,19 @@ export class BattleDetailsComponent implements OnInit {
     this.loading = true;
     this.error = '';
     
+    console.log('🔄 [Battle Details] 開始載入戰鬥詳情, Battle ID:', this.battleId);
+    
     this.bettingService.getBattleDetails(this.battleId).subscribe({
       next: (response) => {
+        console.log('✅ [Battle Details] 戰鬥詳情載入成功:', response);
+        console.log('📸 Fighter1 圖片 URL:', response?.fighter1?.character?.image_url);
+        console.log('📸 Fighter2 圖片 URL:', response?.fighter2?.character?.image_url);
+        console.log('🏆 Winner:', response?.winner);
         this.battleDetails = response;
         this.loading = false;
       },
       error: (error) => {
-        console.error('Failed to load battle details:', error);
+        console.error('❌ [Battle Details] 載入戰鬥詳情失敗:', error);
         this.error = '載入戰鬥詳情失敗';
         this.loading = false;
       }
@@ -461,18 +458,61 @@ export class BattleDetailsComponent implements OnInit {
     return '未知選手';
   }
 
-  isAttackerLeft(attackerName: string): boolean {
-    // 判斷攻擊者是否是左側選手
-    return this.battleDetails?.fighter1?.character?.name === attackerName;
+  isAttackerLeft(attackerIdentifier: string): boolean {
+    // 判斷攻擊者是否是左側選手（通過名稱或ID）
+    return this.battleDetails?.fighter1?.character?.name === attackerIdentifier ||
+           this.battleDetails?.fighter1?.character?.id === attackerIdentifier;
   }
 
-  getCharacterAvatar(characterName: string): string {
-    // 根據角色名稱獲取頭像
-    if (this.battleDetails?.fighter1?.character?.name === characterName) {
-      return this.battleDetails.fighter1.character.image_url;
-    } else if (this.battleDetails?.fighter2?.character?.name === characterName) {
-      return this.battleDetails.fighter2.character.image_url;
+  getCharacterName(characterIdentifier: string): string {
+    // 根據角色ID或名稱獲取角色名稱
+    if (!characterIdentifier) return '未知角色';
+    
+    // 檢查是否匹配 Fighter1
+    if (this.battleDetails?.fighter1?.character?.id === characterIdentifier ||
+        this.battleDetails?.fighter1?.character?.name === characterIdentifier) {
+      return this.battleDetails.fighter1.character.name;
     }
+    
+    // 檢查是否匹配 Fighter2
+    if (this.battleDetails?.fighter2?.character?.id === characterIdentifier ||
+        this.battleDetails?.fighter2?.character?.name === characterIdentifier) {
+      return this.battleDetails.fighter2.character.name;
+    }
+    
+    // 如果都不匹配，返回原始值（可能本身就是名稱）
+    return characterIdentifier;
+  }
+
+  getCharacterAvatar(characterIdentifier: string): string {
+    // 根據角色名稱或ID獲取頭像
+    console.log('🖼️ [Battle Details] 獲取角色頭像:', {
+      characterIdentifier,
+      fighter1Name: this.battleDetails?.fighter1?.character?.name,
+      fighter1Id: this.battleDetails?.fighter1?.character?.id,
+      fighter1Image: this.battleDetails?.fighter1?.character?.image_url,
+      fighter2Name: this.battleDetails?.fighter2?.character?.name,
+      fighter2Id: this.battleDetails?.fighter2?.character?.id,
+      fighter2Image: this.battleDetails?.fighter2?.character?.image_url,
+    });
+    
+    // 檢查是否匹配 Fighter1 (通過名稱或ID)
+    if (this.battleDetails?.fighter1?.character?.name === characterIdentifier ||
+        this.battleDetails?.fighter1?.character?.id === characterIdentifier) {
+      const imageUrl = this.battleDetails.fighter1.character.image_url;
+      console.log('✅ 返回 Fighter1 圖片:', imageUrl);
+      return imageUrl;
+    } 
+    
+    // 檢查是否匹配 Fighter2 (通過名稱或ID)
+    if (this.battleDetails?.fighter2?.character?.name === characterIdentifier ||
+        this.battleDetails?.fighter2?.character?.id === characterIdentifier) {
+      const imageUrl = this.battleDetails.fighter2.character.image_url;
+      console.log('✅ 返回 Fighter2 圖片:', imageUrl);
+      return imageUrl;
+    }
+    
+    console.log('⚠️ 使用預設頭像，未匹配到角色');
     return '/assets/game/default-avatar.png'; // 預設頭像
   }
 

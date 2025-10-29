@@ -136,8 +136,15 @@ class Character(models.Model):
     
     # NFT 相關欄位
     is_minted = models.BooleanField(default=False, verbose_name='是否已鑄造為 NFT')
-    nft_token_id = models.PositiveIntegerField(null=True, blank=True, help_text="NFT 的 Token ID")
-    nft_transaction_hash = models.CharField(max_length=255, null=True, blank=True, help_text="鑄造交易的雜湊值")
+    token_id = models.BigIntegerField(null=True, blank=True, unique=True, verbose_name='NFT Token ID')
+    contract_address = models.CharField(max_length=42, null=True, blank=True, verbose_name='合約地址')
+    owner_wallet = models.CharField(max_length=42, null=True, blank=True, verbose_name='持有者錢包', db_index=True)
+    minted_at = models.DateTimeField(null=True, blank=True, verbose_name='鑄造時間')
+    tx_hash = models.CharField(max_length=66, null=True, blank=True, verbose_name='交易哈希')
+    
+    # 保留舊欄位以便相容性（可以之後移除）
+    nft_token_id = models.PositiveIntegerField(null=True, blank=True, help_text="NFT 的 Token ID (deprecated)")
+    nft_transaction_hash = models.CharField(max_length=255, null=True, blank=True, help_text="鑄造交易的雜湊值 (deprecated)")
 
     def __str__(self):
         return f"{self.name} (Lv.{self.level})"

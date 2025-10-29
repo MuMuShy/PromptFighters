@@ -1,0 +1,78 @@
+// ===== Rarity Badge Styles =====
+// 稀有度徽章通用樣式
+
+.rarity-badge {
+  position: absolute;
+  z-index: 10;
+  padding: 0.4em 0.6em;
+  font-weight: 700;
+  font-size: 0.75rem;
+  border-radius: 0.4em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+  color: #fff;
+  background: rgba(136, 136, 136, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  user-select: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+
+  // N - 普通
+  &.rarity-1,
+  &.rarity-common {
+    background: rgba(136, 136, 136, 0.9);
+    border-color: rgba(136, 136, 136, 0.5);
+    color: #fff;
+  }
+
+  // R - 稀有
+  &.rarity-2,
+  &.rarity-rare {
+    background: linear-gradient(135deg, #2196f3 0%, #4fd2ff 100%);
+    border-color: rgba(79, 210, 255, 0.5);
+    color: #000;
+    font-weight: 700;
+  }
+
+  // SR - 精英
+  &.rarity-3,
+  &.rarity-elite {
+    background: linear-gradient(135deg, #a259ff 0%, #7f53ac 100%);
+    border-color: rgba(162, 89, 255, 0.5);
+    color: #fff;
+  }
+
+  // SSR - 史詩
+  &.rarity-4,
+  &.rarity-epic {
+    background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
+    border-color: rgba(255, 179, 0, 0.5);
+    color: #000;
+    font-weight: 700;
+  }
+
+  // UR - 傳說
+  &.rarity-5,
+  &.rarity-legendary {
+    background: linear-gradient(135deg, #ff3c6e 0%, #ffb300 100%);
+    border-color: rgba(255, 60, 110, 0.5);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255, 60, 110, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// NFT 已鑄造徽章
+.nft-badge {
+  padding: 5px 10px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  border-radius: 6px;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+

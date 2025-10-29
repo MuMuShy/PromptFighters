@@ -76,6 +76,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'nft-gallery',
+    loadComponent: () => import('./nft-gallery/nft-gallery.component').then(m => m.NftGalleryComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'upcoming-battles',
     loadComponent: () => import('./pages/upcoming-battles/upcoming-battles.component').then(m => m.UpcomingBattlesComponent),
     canActivate: [authGuard]

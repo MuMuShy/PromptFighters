@@ -11,20 +11,16 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
   imports: [CommonModule, MediaUrlPipe],
   template: `
     <div class="upcoming-battles-page">
-      <!-- 背景效果 -->
-      <div class="battles-background">
-        <div class="sword-particles">
-          <div class="sword-particle" *ngFor="let p of swordParticles" 
-               [style.left.%]="p.x" 
-               [style.top.%]="p.y"
-               [style.animation-delay.s]="p.delay">⚔️</div>
-        </div>
-      </div>
+      <!-- 返回按鈕 -->
+      <button class="back-button" (click)="goBack()">
+        <span class="back-arrow">←</span>
+        <span class="back-text">BACK</span>
+      </button>
 
       <!-- 頁面標題 -->
       <div class="battles-header">
-        <h1 class="battles-title">📅 即將開戰</h1>
-        <p class="battles-subtitle">預覽未來的精彩對戰</p>
+        <h1 class="battles-title">UPCOMING BATTLES</h1>
+        <p class="battles-subtitle">Preview Future Matches</p>
       </div>
 
       <!-- 戰鬥時間軸 -->
@@ -82,15 +78,15 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
                   
                   <div class="fighter-stats">
                     <div class="stat">
-                      <span class="stat-icon">💪</span>
+                      <span class="stat-label">STR</span>
                       <span class="stat-value">{{ battle.fighter1.character.strength }}</span>
                     </div>
                     <div class="stat">
-                      <span class="stat-icon">⚡</span>
+                      <span class="stat-label">AGI</span>
                       <span class="stat-value">{{ battle.fighter1.character.agility }}</span>
                     </div>
                     <div class="stat">
-                      <span class="stat-icon">🍀</span>
+                      <span class="stat-label">LUK</span>
                       <span class="stat-value">{{ battle.fighter1.character.luck }}</span>
                     </div>
                   </div>
@@ -153,15 +149,15 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
                   
                   <div class="fighter-stats">
                     <div class="stat">
-                      <span class="stat-icon">💪</span>
+                      <span class="stat-label">STR</span>
                       <span class="stat-value">{{ battle.fighter2.character.strength }}</span>
                     </div>
                     <div class="stat">
-                      <span class="stat-icon">⚡</span>
+                      <span class="stat-label">AGI</span>
                       <span class="stat-value">{{ battle.fighter2.character.agility }}</span>
                     </div>
                     <div class="stat">
-                      <span class="stat-icon">🍀</span>
+                      <span class="stat-label">LUK</span>
                       <span class="stat-value">{{ battle.fighter2.character.luck }}</span>
                     </div>
                   </div>
@@ -226,11 +222,11 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
       </div>
 
       <!-- 返回按鈕 -->
-      <div class="back-nav">
+      <!-- <div class="back-nav">
         <button class="back-btn" (click)="goBack()">
           <span>← 返回競技場</span>
         </button>
-      </div>
+      </div> -->
     </div>
   `,
   styleUrls: ['./upcoming-battles.component.scss']

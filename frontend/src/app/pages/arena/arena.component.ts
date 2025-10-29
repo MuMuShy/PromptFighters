@@ -6,6 +6,7 @@ import { interval, Subscription } from 'rxjs';
 import { BettingService, ScheduledBattle, LadderRank } from '../../services/betting.service';
 import { PlayerService } from '../../services/player.service';
 import { MediaUrlPipe } from '../../pipes/media-url.pipe';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-arena',
@@ -13,10 +14,16 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
   imports: [CommonModule, FormsModule, MediaUrlPipe],
   template: `
     <div class="arena-page">
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" *ngIf="overlayActive">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">更新戰鬥狀態...</p>
+      </div>
+
       <!-- 主標題 -->
       <div class="arena-header">
-        <h1 class="arena-title">競技場</h1>
-        <p class="arena-subtitle">智能預測系統</p>
+        <h1 class="arena-title">ARENA</h1>
+        <p class="arena-subtitle">Battle Prediction System</p>
       </div>
 
       <!-- 當前戰鬥區域 -->
@@ -25,8 +32,8 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
           <!-- 戰鬥標題 -->
           <div class="battle-header">
             <div class="battle-info">
-              <h2 class="battle-title">天梯競技場</h2>
-              <div class="battle-id">戰鬥 #{{ currentBattle.id.substring(0, 8) }}</div>
+              <h2 class="battle-title">RANKED MATCH</h2>
+              <div class="battle-id">#{{ currentBattle.id.substring(0, 8) }}</div>
             </div>
             <div class="battle-status" [ngClass]="currentBattle.status">
               <div class="status-dot"></div>
@@ -175,33 +182,33 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
                     </div>
                     <div class="payout-note">
                       *實際獲利基於獎池分配機制
-                      <button class="info-btn" (click)="showPoolInfo = !showPoolInfo">ℹ️</button>
+                    <button class="info-btn" (click)="showPoolInfo = !showPoolInfo">?</button>
                     </div>
                     
                     <!-- 獎池機制說明 -->
                     <div class="pool-info-modal" *ngIf="showPoolInfo" (click)="showPoolInfo = false">
                       <div class="pool-info-content" (click)="$event.stopPropagation()">
-                        <h4>💰 獎池分配機制</h4>
+                      <h4>PRIZE POOL MECHANISM</h4>
                         <div class="info-sections">
                           <div class="info-section">
-                            <h5>🎯 如何運作</h5>
-                            <p>• 所有失敗者的下注金額進入獎池</p>
-                            <p>• 系統收取 5% 手續費</p>
-                            <p>• 剩餘 95% 按比例分配給獲勝者</p>
+                          <h5>How It Works</h5>
+                          <p>• All losing bets go into the prize pool</p>
+                          <p>• 5% platform fee is deducted</p>
+                          <p>• Remaining 95% is distributed proportionally to winners</p>
                           </div>
                           <div class="info-section">
-                            <h5>💎 獲利計算</h5>
-                            <p>獲勝者獲得 = 本金 + 獎池分成</p>
-                            <p>分成比例 = 你的下注 ÷ 獲勝方總下注</p>
+                          <h5>Profit Calculation</h5>
+                          <p>Winner Receives = Principal + Pool Share</p>
+                          <p>Share Ratio = Your Bet ÷ Total Winning Side Bets</p>
                           </div>
                           <div class="info-section">
-                            <h5>⚖️ 公平機制</h5>
-                            <p>• 沒有莊家優勢（除手續費外）</p>
-                            <p>• 獲利來自失敗者，不是系統印鈔</p>
-                            <p>• 下注越多，分成越多</p>
-                          </div>
+                          <h5>Fair System</h5>
+                          <p>• No house edge (除hand續費外)</p>
+                          <p>• Profits come from losing bets, not system printing</p>
+                          <p>• Bigger bets = Bigger share</p>
                         </div>
-                        <button class="close-btn" (click)="showPoolInfo = false">知道了</button>
+                      </div>
+                      <button class="close-btn" (click)="showPoolInfo = false">Got It</button>
                       </div>
                     </div>
                   </div>
@@ -229,14 +236,103 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
           </div>
 
           <!-- 已下注顯示 -->
-          <div class="user-bet-display" *ngIf="currentBattle.user_bet">
+          <div class="user-bet-display" *ngIf="currentBattle.user_bet && currentBattle.status !== 'completed'">
             <div class="bet-info">
-              <h3>🎯 您的下注</h3>
+              <h3 class="bet-title">YOUR BET</h3>
               <div class="bet-details">
                 <div class="bet-fighter">{{ currentBattle.user_bet.chosen_fighter.character.name }}</div>
-                <div class="bet-amount-display">{{ currentBattle.user_bet.bet_amount }} 金幣</div>
-                <div class="bet-odds">賠率 {{ currentBattle.user_bet.odds_at_bet }}x</div>
-                <div class="potential-win">預估獲利: {{ currentBattle.user_bet.potential_payout }} 金幣</div>
+                <div class="bet-amount-display">{{ currentBattle.user_bet.bet_amount }} GOLD</div>
+                <div class="bet-odds">{{ currentBattle.user_bet.odds_at_bet }}x ODDS</div>
+                <div class="potential-win">Est. Profit: {{ currentBattle.user_bet.potential_payout }} GOLD</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 戰鬥進行中顯示 -->
+          <div class="battle-in-progress" *ngIf="currentBattle.status === 'in_progress'">
+            <div class="progress-container">
+              <div class="battle-animation">
+                <div class="animation-ring"></div>
+                <div class="animation-ring"></div>
+                <div class="animation-ring"></div>
+                <div class="battle-icon">⚔️</div>
+              </div>
+              <h3 class="progress-title">BATTLE IN PROGRESS</h3>
+              <p class="progress-description">兩位戰士正在激烈交鋒中...</p>
+              <div class="progress-bar">
+                <div class="progress-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 戰鬥結果顯示 -->
+          <div class="battle-result" *ngIf="currentBattle.status === 'completed'">
+            <div class="result-container">
+              <div class="result-header">
+                <h3 class="result-title">BATTLE COMPLETED</h3>
+                <div class="winner-announcement">
+                  <div class="winner-label">WINNER</div>
+                  <div class="winner-name">{{ currentBattle.winner?.character?.name || 'Unknown' }}</div>
+                </div>
+              </div>
+
+              <div class="result-fighters">
+                <div class="result-fighter" [class.winner]="currentBattle.winner?.id === currentBattle.fighter1.id">
+                  <div class="fighter-portrait">
+                    <img [src]="currentBattle.fighter1.character.image_url | mediaUrl" 
+                         [alt]="currentBattle.fighter1.character.name">
+                    <div class="winner-badge" *ngIf="currentBattle.winner?.id === currentBattle.fighter1.id">
+                      <span>VICTORY</span>
+                    </div>
+                  </div>
+                  <div class="fighter-name">{{ currentBattle.fighter1.character.name }}</div>
+                  <div class="fighter-rank">Rank #{{ currentBattle.fighter1.current_rank }}</div>
+                </div>
+
+                <div class="vs-divider">VS</div>
+
+                <div class="result-fighter" [class.winner]="currentBattle.winner?.id === currentBattle.fighter2.id">
+                  <div class="fighter-portrait">
+                    <img [src]="currentBattle.fighter2.character.image_url | mediaUrl" 
+                         [alt]="currentBattle.fighter2.character.name">
+                    <div class="winner-badge" *ngIf="currentBattle.winner?.id === currentBattle.fighter2.id">
+                      <span>VICTORY</span>
+                    </div>
+                  </div>
+                  <div class="fighter-name">{{ currentBattle.fighter2.character.name }}</div>
+                  <div class="fighter-rank">Rank #{{ currentBattle.fighter2.current_rank }}</div>
+                </div>
+              </div>
+
+              <!-- 用戶下注結果 -->
+              <div class="user-bet-result" *ngIf="currentBattle.user_bet">
+                <div class="bet-result-card" [class.won]="getBetResult() === 'won'" [class.lost]="getBetResult() === 'lost'">
+                  <div class="result-icon">{{ getBetResult() === 'won' ? '🎉' : '😢' }}</div>
+                  <div class="result-status">{{ getBetResult() === 'won' ? 'YOU WON!' : 'YOU LOST' }}</div>
+                  <div class="result-details">
+                    <div class="detail-row">
+                      <span class="detail-label">Your Bet:</span>
+                      <span class="detail-value">{{ currentBattle.user_bet.bet_amount }} GOLD</span>
+                    </div>
+                    <div class="detail-row" *ngIf="getBetResult() === 'won'">
+                      <span class="detail-label">Payout:</span>
+                      <span class="detail-value winning">+{{ currentBattle.user_bet.actual_payout || currentBattle.user_bet.potential_payout }} GOLD</span>
+                    </div>
+                    <div class="detail-row" *ngIf="getBetResult() === 'lost'">
+                      <span class="detail-label">Lost:</span>
+                      <span class="detail-value losing">-{{ currentBattle.user_bet.bet_amount }} GOLD</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="result-actions">
+                <button class="action-btn primary" (click)="goToBattleHistory()">
+                  VIEW HISTORY
+                </button>
+                <button class="action-btn secondary" (click)="goToUpcoming()">
+                  NEXT BATTLE
+                </button>
               </div>
             </div>
           </div>
@@ -247,44 +343,32 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
       <div class="no-battle-section" *ngIf="!currentBattle && !loading">
         <div class="no-battle-card">
           <div class="no-battle-icon"></div>
-          <h2>暫無進行中的戰鬥</h2>
-          <p>系統正在安排下一場精彩對戰，敬請期待</p>
+          <h2>NO ACTIVE BATTLES</h2>
+          <p>Next battle is being scheduled</p>
           <div class="action-buttons">
             <button class="refresh-btn" (click)="refreshData()">
-              <div class="btn-icon refresh"></div>
-              <span>刷新</span>
+              <span>REFRESH</span>
             </button>
             <button class="create-battle-btn" (click)="createTestBattle()">
-              <div class="btn-icon create"></div>
-              <span>創建測試戰鬥</span>
+              <span>CREATE TEST BATTLE</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 載入中 -->
-      <div class="loading-section" *ngIf="loading">
-        <div class="loading-spinner"></div>
-        <p>載入中...</p>
-      </div>
-
       <!-- 快速導航 -->
       <div class="quick-nav">
         <button class="nav-btn" (click)="goToLadder()">
-          <div class="nav-icon ladder"></div>
-          <span class="nav-text">天梯排名</span>
+          <span class="nav-text">LADDER</span>
         </button>
         <button class="nav-btn" (click)="goToMyBets()">
-          <div class="nav-icon bets"></div>
-          <span class="nav-text">我的下注</span>
+          <span class="nav-text">MY BETS</span>
         </button>
         <button class="nav-btn" (click)="goToUpcoming()">
-          <div class="nav-icon upcoming"></div>
-          <span class="nav-text">即將開戰</span>
+          <span class="nav-text">UPCOMING</span>
         </button>
         <button class="nav-btn" (click)="goToBattleHistory()">
-          <div class="nav-icon history"></div>
-          <span class="nav-text">歷史對戰</span>
+          <span class="nav-text">HISTORY</span>
         </button>
       </div>
     </div>
@@ -303,12 +387,21 @@ export class ArenaComponent implements OnInit, OnDestroy {
   quickAmounts = [50, 100, 500, 1000, 5000];
   
   private subscriptions: Subscription[] = [];
+  private hasHandledExpiry = false; // 防止重複處理倒數完成
+  private lastApiCallTime = 0; // 最後一次 API 調用時間
+  private nextScheduledCallTime = 0; // 下次預定調用時間
+  // Overlay 僅在階段切換時顯示
+  overlayActive: boolean = false;
+  private overlayUntilStatus: string | null = null;
+  private overlayDeadline: number = 0;
+  private lastKnownStatus: string | null = null;
   
   constructor(
     public bettingService: BettingService,
     private playerService: PlayerService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private dialogService: DialogService
   ) {}
   
   ngOnInit(): void {
@@ -325,6 +418,10 @@ export class ArenaComponent implements OnInit, OnDestroy {
     // 設置定時器更新倒數計時
     const timerSub = interval(1000).subscribe(() => {
       this.updateTimeRemaining();
+      // 同時檢查 overlay 是否應該關閉（超時保護）
+      if (this.overlayActive && this.currentBattle) {
+        this.maybeDismissOverlay(this.currentBattle.status);
+      }
     });
     this.subscriptions.push(timerSub);
     
@@ -333,10 +430,19 @@ export class ArenaComponent implements OnInit, OnDestroy {
       if (!battleId) { // 只有在沒有指定戰鬥ID時才更新
         this.currentBattle = battle;
         this.loading = false;
+        if (battle) {
+          this.onBattleUpdated(battle);
+        }
         this.selectedFighter = null; // 重置選擇
       }
     });
     this.subscriptions.push(battleSub);
+    
+    // 智能輪詢：根據戰鬥狀態和時間戳調度 API 調用
+    const pollSub = interval(1000).subscribe(() => {
+      this.smartPoll(battleId);
+    });
+    this.subscriptions.push(pollSub);
   }
   
   ngOnDestroy(): void {
@@ -351,21 +457,60 @@ export class ArenaComponent implements OnInit, OnDestroy {
   }
   
   private loadCurrentBattle(): void {
-    // 載入當前戰鬥
-    this.bettingService.getCurrentBettingBattle().subscribe();
+    // 載入當前戰鬥（僅用於 betting_open 和 betting_closed 狀態）
+    console.log('🔄 [Arena] 開始載入當前戰鬥');
+    this.bettingService.getCurrentBettingBattle().subscribe({
+      next: (battle) => {
+        console.log('✅ [Arena] 當前戰鬥載入成功:', battle);
+        if (battle) {
+          this.currentBattle = battle;
+          // 僅在初次載入時影響 loading，避免閃爍
+          if (!this.lastKnownStatus) {
+            this.loading = false;
+          }
+          this.hasHandledExpiry = false; // 重置倒數處理標記
+          console.log('📸 Arena Fighter1 圖片:', battle.fighter1?.character?.image_url);
+          console.log('📸 Arena Fighter2 圖片:', battle.fighter2?.character?.image_url);
+          this.onBattleUpdated(battle);
+        } else {
+          // 沒有當前戰鬥
+          this.currentBattle = null;
+          this.loading = false;
+        }
+      },
+      error: (error) => {
+        // 404 錯誤表示沒有當前戰鬥（正常情況）
+        if (error.status === 404) {
+          console.log('ℹ️ [Arena] 目前沒有可下注的戰鬥');
+          this.currentBattle = null;
+          this.loading = false;
+        } else {
+          console.error('❌ [Arena] 載入當前戰鬥失敗:', error);
+          this.loading = false;
+        }
+      }
+    });
   }
   
   private loadSpecificBattle(battleId: string): void {
-    this.loading = true;
+    console.log('🔄 [Arena] 載入特定戰鬥:', battleId);
     this.bettingService.getBattleDetails(battleId).subscribe({
       next: (battle) => {
+        console.log('✅ [Arena] 特定戰鬥載入成功:', battle.status);
         this.currentBattle = battle;
+        // 避免在輪詢期間切換 loading 造成閃爍
+        if (!this.lastKnownStatus) {
         this.loading = false;
+        }
+        this.hasHandledExpiry = false; // 重置倒數處理標記
+        this.onBattleUpdated(battle);
       },
       error: (error) => {
-        console.error('載入戰鬥失敗:', error);
+        console.error('❌ [Arena] 載入特定戰鬥失敗:', error);
+        if (!this.lastKnownStatus) {
         this.loading = false;
-        // 如果載入失敗，回到當前戰鬥
+        }
+        // 如果載入失敗，嘗試載入當前戰鬥
         this.loadCurrentBattle();
       }
     });
@@ -395,8 +540,194 @@ export class ArenaComponent implements OnInit, OnDestroy {
         seconds: Math.floor((distance % (1000 * 60)) / 1000),
         isExpired: false
       };
+      // 重置標記，允許下次倒數完成時處理
+      this.hasHandledExpiry = false;
     } else {
       this.timeRemaining = { hours: 0, minutes: 0, seconds: 0, total: 0, isExpired: true };
+      
+      // 倒數完成，立即預測並更新本地狀態（只處理一次）
+      if (!this.hasHandledExpiry) {
+        this.hasHandledExpiry = true;
+        this.handleCountdownExpired();
+      }
+    }
+  }
+  
+  private smartPoll(battleId?: string): void {
+    const now = Date.now();
+    
+    // 如果還沒到預定調用時間，跳過
+    if (now < this.nextScheduledCallTime) {
+      return;
+    }
+    
+    if (battleId) {
+      // 有指定戰鬥ID，使用較短的輪詢間隔（5秒）
+      if (now - this.lastApiCallTime >= 5000) {
+        this.loadSpecificBattle(battleId);
+        this.lastApiCallTime = now;
+        this.nextScheduledCallTime = now + 5000;
+      }
+      return;
+    }
+    
+    if (!this.currentBattle) {
+      // 沒有當前戰鬥，每 10 秒檢查一次
+      if (now - this.lastApiCallTime >= 10000) {
+        this.loadCurrentBattle();
+        this.lastApiCallTime = now;
+        this.nextScheduledCallTime = now + 10000;
+      }
+      return;
+    }
+    
+    const status = this.currentBattle.status;
+    let pollInterval = 5000; // 預設 5 秒
+    
+    // 根據狀態決定輪詢間隔
+    if (status === 'betting_open') {
+      // 下注進行中：計算距離結束還有多久
+      const endTime = new Date(this.currentBattle.betting_end_time).getTime();
+      const timeUntilEnd = endTime - now;
+      
+      if (timeUntilEnd < 30000) {
+        // 最後 30 秒，每 2 秒輪詢一次
+        pollInterval = 2000;
+      } else if (timeUntilEnd < 60000) {
+        // 最後 1 分鐘，每 5 秒輪詢一次
+        pollInterval = 5000;
+      } else {
+        // 其他時間，每 15 秒輪詢一次
+        pollInterval = 15000;
+      }
+    } else if (status === 'betting_closed') {
+      // 等待戰鬥開始：計算距離開始還有多久
+      const startTime = new Date(this.currentBattle.scheduled_time).getTime();
+      const timeUntilStart = startTime - now;
+      
+      if (timeUntilStart < 10000) {
+        // 最後 10 秒，每 1 秒輪詢一次
+        pollInterval = 1000;
+      } else if (timeUntilStart < 30000) {
+        // 最後 30 秒，每 3 秒輪詢一次
+        pollInterval = 3000;
+      } else {
+        // 其他時間，每 10 秒輪詢一次
+        pollInterval = 10000;
+      }
+    } else if (status === 'in_progress') {
+      // 戰鬥進行中，每 3 秒輪詢一次
+      pollInterval = 3000;
+    } else if (status === 'completed') {
+      // 戰鬥已完成，停止輪詢
+      console.log('🏁 [Arena] 戰鬥已完成，停止輪詢');
+      return;
+    } else if (status === 'scheduled') {
+      // 準備階段，每 10 秒輪詢一次
+      pollInterval = 10000;
+    }
+    
+    // 檢查是否該調用 API
+    if (now - this.lastApiCallTime >= pollInterval) {
+      console.log(`📡 [Arena] 智能輪詢 - 狀態: ${status}, 間隔: ${pollInterval}ms`);
+      
+      if (status === 'scheduled') {
+        this.loadCurrentBattle();
+      } else {
+        this.loadSpecificBattle(this.currentBattle.id);
+      }
+      
+      this.lastApiCallTime = now;
+      this.nextScheduledCallTime = now + pollInterval;
+    }
+  }
+  
+  private handleCountdownExpired(): void {
+    if (!this.currentBattle) return;
+    
+    const currentStatus = this.currentBattle.status;
+    
+    console.log('⏰ [Arena] 倒數完成，當前狀態:', currentStatus);
+    
+    // 設定目標階段（只有在下注或切換到下注時才使用 overlay）
+    const now = Date.now();
+    this.overlayDeadline = now + 20000;
+    if (currentStatus === 'scheduled') {
+      this.overlayUntilStatus = 'betting_open';
+    } else if (currentStatus === 'betting_open') {
+      this.overlayUntilStatus = 'betting_closed';
+    } else if (currentStatus === 'betting_closed') {
+      this.overlayUntilStatus = 'in_progress';
+    } else {
+      this.overlayUntilStatus = null;
+    }
+    
+    // 只有需要等待下注階段切換時才顯示 overlay；
+    // 進入 in_progress 或之後不顯示 overlay
+    this.overlayActive = !!this.overlayUntilStatus;
+    
+    console.log(`🔄 [Arena] Overlay 啟動 - 等待狀態: ${this.overlayUntilStatus}, 超時時間: ${new Date(this.overlayDeadline).toLocaleTimeString()}`);
+    
+    // 立即刷新數據以獲取最新狀態，繞過輪詢間隔
+    this.lastApiCallTime = 0; // 重置，允許立即調用
+    this.nextScheduledCallTime = 0;
+    
+    if (currentStatus === 'scheduled') {
+      this.loadCurrentBattle();
+    } else {
+      this.loadSpecificBattle(this.currentBattle.id);
+    }
+  }
+
+  private onBattleUpdated(battle: ScheduledBattle): void {
+    const newStatus = battle.status;
+    
+    if (this.lastKnownStatus !== newStatus) {
+      console.log(`📊 [Arena] 戰鬥狀態更新: ${this.lastKnownStatus} → ${newStatus}`);
+    }
+    
+    // 一旦進入戰鬥或已完成，強制關閉 overlay
+    if (newStatus === 'in_progress' || newStatus === 'completed') {
+      this.overlayActive = false;
+      this.overlayUntilStatus = null;
+    } else {
+      this.maybeDismissOverlay(newStatus);
+    }
+    this.lastKnownStatus = newStatus;
+  }
+
+  private maybeDismissOverlay(newStatus: string): void {
+    if (!this.overlayActive) return;
+    
+    const now = Date.now();
+    
+    // 定義狀態順序（後面的狀態表示更進一步）
+    const statusOrder: { [key: string]: number } = {
+      'scheduled': 1,
+      'betting_open': 2,
+      'betting_closed': 3,
+      'in_progress': 4,
+      'completed': 5
+    };
+    
+    // 如果狀態已達到或超過期望的狀態，關閉 overlay
+    if (this.overlayUntilStatus) {
+      const expectedOrder = statusOrder[this.overlayUntilStatus] || 0;
+      const currentOrder = statusOrder[newStatus] || 0;
+      
+      if (currentOrder >= expectedOrder) {
+        console.log(`✅ [Arena] Overlay 關閉 - 狀態已達到: ${newStatus} (期望: ${this.overlayUntilStatus})`);
+        this.overlayActive = false;
+        this.overlayUntilStatus = null;
+        return;
+      }
+    }
+    
+    // 如果超過期限，強制關閉（避免永遠卡住）
+    if (now >= this.overlayDeadline) {
+      console.log(`⏰ [Arena] Overlay 超時關閉 - 當前狀態: ${newStatus}`);
+      this.overlayActive = false;
+      this.overlayUntilStatus = null;
     }
   }
   
@@ -530,7 +861,7 @@ export class ArenaComponent implements OnInit, OnDestroy {
       this.betAmount
     ).subscribe({
       next: (response) => {
-        alert('下注成功！');
+        this.dialogService.success('Bet Placed', 'Your bet has been placed successfully!');
         this.selectedFighter = null;
         this.betAmount = 100;
         // 重新載入戰鬥資料
@@ -540,7 +871,7 @@ export class ArenaComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: (error) => {
-        alert('下注失敗：' + (error.error?.error || '請稍後再試'));
+        this.dialogService.error('Bet Failed', error.error?.error || 'Please try again later');
         this.loading = false;
       }
     });
@@ -561,14 +892,24 @@ export class ArenaComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.bettingService.createTestBattle().subscribe({
       next: (response) => {
-        alert('測試戰鬥創建成功！');
+        this.dialogService.success('Battle Created', 'Test battle has been created successfully!');
         this.refreshData();
       },
       error: (error) => {
-        alert('創建失敗：' + (error.error?.error || '請稍後再試'));
+        this.dialogService.error('Creation Failed', error.error?.error || 'Please try again later');
         this.loading = false;
       }
     });
+  }
+  
+  // 判斷下注結果
+  getBetResult(): 'won' | 'lost' | null {
+    if (!this.currentBattle?.user_bet || !this.currentBattle.winner) {
+      return null;
+    }
+    return this.currentBattle.user_bet.chosen_fighter.id === this.currentBattle.winner.id 
+      ? 'won' 
+      : 'lost';
   }
   
   // 導航方法

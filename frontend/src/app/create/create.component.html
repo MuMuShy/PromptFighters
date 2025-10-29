@@ -2,8 +2,7 @@
 <div *ngIf="isGenerating" class="generation-progress">
   <div class="progress-container">
     <div class="progress-header">
-      <div class="progress-icon">✦</div>
-      <h3 class="progress-title">英雄創造中</h3>
+      <h3 class="progress-title">CREATING HERO</h3>
     </div>
     
     <div class="progress-bar-container">
@@ -30,21 +29,17 @@
 
 <div *ngIf="showSuccessModal" class="modal-success">
   <div class="modal-content">
-    <h2 class="modal-title">
-      <span class="success-icon">✦</span>
-      英雄創建成功！
-    </h2>
+    <h2 class="modal-title">HERO CREATED</h2>
     <div *ngIf="generatedCharacter" class="rarity-announcement">
       <div class="rarity-badge" [style.color]="getRarityInfo(generatedCharacter.rarity).color">
-        {{ getRarityInfo(generatedCharacter.rarity).stars }}
-        {{ getRarityInfo(generatedCharacter.rarity).name }}級英雄
+        {{ getRarityInfo(generatedCharacter.rarity).name }}
       </div>
     </div>
     <div class="modal-character-preview">
       <app-character-card *ngIf="generatedCharacter" [character]="generatedCharacter"></app-character-card>
     </div>
     <div class="modal-actions">
-      <button class="game-btn" (click)="closeModal()">確定</button>
+      <button class="game-btn" (click)="closeModal()">OK</button>
     </div>
   </div>
 </div>
@@ -123,37 +118,33 @@
         <!-- 召喚表單卡片 -->
         <div class="summon-circle-container">
           <!-- 簡潔的狀態指示器 -->
-          <div class="summon-indicator" [class.generating]="isGenerating">
-            {{ mode==='normal' ? '◉' : '✦' }}
-          </div>
+          <div class="summon-indicator" [class.generating]="isGenerating"></div>
           
           <div class="summon-form">
-            <h2 class="form-title">
-              {{ mode==='normal' ? '創建英雄' : '高級創建' }}
-            </h2>
+            <h2 class="form-title">{{ mode==='normal' ? 'CREATE HERO' : 'ADVANCED CREATE' }}</h2>
             
             <!-- 資源消耗提示 -->
             <div class="cost-display">
-              <div class="cost-label">創建消耗：</div>
+              <div class="cost-label">COST</div>
               <div class="cost-items">
                 <ng-container *ngIf="mode==='normal'">
                   <div class="cost-item" [class.insufficient]="resources.gold < 1000">
                     <img src="/assets/game/gold_coin.png" alt="Gold" class="cost-icon" />
-                    <span class="cost-text">1000 金幣</span>
+                  <span class="cost-text">1000 Gold</span>
                   </div>
                   <div class="cost-item" [class.insufficient]="resources.prompt_power < 1">
                     <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="cost-icon" />
-                    <span class="cost-text">1 Prompt Power</span>
+                  <span class="cost-text">1 Prompt Power</span>
                   </div>
                 </ng-container>
                 <ng-container *ngIf="mode==='advanced'">
                   <div class="cost-item" [class.insufficient]="resources.prompt < 5">
                     <img src="/assets/game/prompt.png" alt="Prompt" class="cost-icon" />
-                    <span class="cost-text">5 $PROMPT</span>
+                  <span class="cost-text">5 $PROMPT</span>
                   </div>
                   <div class="cost-item" [class.insufficient]="resources.prompt_power < 3">
                     <img src="/assets/game/prompt_power.png" alt="Prompt Power" class="cost-icon" />
-                    <span class="cost-text">3 Prompt Power</span>
+                  <span class="cost-text">3 Prompt Power</span>
                   </div>
                 </ng-container>
               </div>
@@ -163,14 +154,13 @@
             <ng-container *ngIf="mode==='normal'">
               <div class="input-group">
                 <label class="magic-label">
-                  <span class="label-icon">◈</span>
-                  <span class="label-text">英雄名字</span>
+                  <span class="label-text">Name</span>
                 </label>
                 <div class="magic-input-container">
                   <input 
                     type="text" 
                     [(ngModel)]="characterPrompt"
-                    placeholder="例如：炒麵戰士、Shadow Ninja..."
+                    placeholder="e.g. Shadow Ninja, Ramen Master"
                     class="magic-input"
                     [disabled]="isGenerating"
                     maxlength="50">
@@ -186,8 +176,7 @@
             <ng-container *ngIf="mode==='advanced'">
               <div class="input-group">
                 <label class="magic-label">
-                  <span class="label-icon">◈</span>
-                  <span class="label-text">英雄名字</span>
+                  <span class="label-text">Name</span>
                 </label>
                 <div class="magic-input-container">
                   <input 
@@ -202,21 +191,20 @@
               </div>
               <div class="input-group">
                 <label class="magic-label">
-                  <span class="label-icon">◎</span>
-                  <span class="label-text">英雄傳說</span>
+                  <span class="label-text">Backstory & Style</span>
                 </label>
                 <div class="magic-input-container">
                   <textarea 
                     [(ngModel)]="advancedPrompt" 
                     rows="4" 
-                    placeholder="描述你的英雄外觀、背景故事、特殊能力、武器裝備..." 
+                    placeholder="Describe appearance, story, abilities, weapons..." 
                     class="magic-input magic-textarea" 
                     [disabled]="isGenerating"
                     maxlength="500"></textarea>
                   <div class="input-glow"></div>
                 </div>
                 <p class="input-hint">
-                  詳細描述讓AI能創造出更獨特強大的英雄
+                  The more details, the better the result
                 </p>
               </div>
             </ng-container>
@@ -229,39 +217,26 @@
               [class.premium]="mode==='advanced'">
               <div class="button-glow"></div>
               <div class="button-content">
-                <span *ngIf="!isGenerating" class="button-text">
-                  <span class="button-icon">{{ mode==='normal' ? '◉' : '✦' }}</span>
-                  {{ mode==='normal' ? '創建英雄' : '高級創建' }}
-                </span>
-                <span *ngIf="isGenerating" class="button-loading">
-                  <span class="loading-icon">◉</span>
-                  創建中...
-                </span>
+                <span *ngIf="!isGenerating" class="button-text">{{ mode==='normal' ? 'CREATE' : 'ADVANCED CREATE' }}</span>
+                <span *ngIf="isGenerating" class="button-loading">Generating...</span>
               </div>
             </button>
             
             <div *ngIf="generatedCharacter && !isGenerating" class="success-notification">
               <div class="success-content">
-                <div class="success-icon">✦</div>
-                <h3 class="success-title">英雄創建成功！</h3>
+                <h3 class="success-title">Hero Ready</h3>
                 <div class="rarity-info">
                   <span class="rarity-badge" [style.color]="getRarityInfo(generatedCharacter.rarity).color">
-                    {{ getRarityInfo(generatedCharacter.rarity).stars }}
-                    {{ getRarityInfo(generatedCharacter.rarity).name }}級英雄
+                    {{ getRarityInfo(generatedCharacter.rarity).name }}
                   </span>
                 </div>
-                <p class="success-message">
-                  你的英雄已經誕生，準備踏上冒險之旅！
-                </p>
+                <p class="success-message">Your fighter is ready to join the arena.</p>
               </div>
               <button 
                 (click)="saveCharacter()"
                 class="battle-button">
                 <div class="battle-button-bg"></div>
-                <span class="battle-button-text">
-                  <span class="battle-icon">◈</span>
-                  前往戰場
-                </span>
+                <span class="battle-button-text">GO TO ARENA</span>
               </button>
             </div>
           </div>
@@ -269,12 +244,11 @@
         
         <!-- 角色預覽 -->
         <div class="character-preview-container">
-          <h2 class="preview-title">角色預覽</h2>
+          <h2 class="preview-title">PREVIEW</h2>
           <div class="preview-content">
             <div *ngIf="!generatedCharacter" class="empty-preview">
-              <div class="empty-icon">◉</div>
-              <h3>等待創建</h3>
-              <p>完成創建後，你的英雄將在此顯現</p>
+              <h3>Waiting for creation</h3>
+              <p>Your hero will appear here after creation.</p>
             </div>
             
             <!-- 生成中的神秘預覽 -->
@@ -282,7 +256,7 @@
               <div class="mystery-card">
                 <div class="mystery-image">
                   <div class="mystery-placeholder">
-                    <div class="mystery-icon">?</div>
+                    <div class="mystery-icon">···</div>
                     <div class="magic-sparkles">
                       <div class="sparkle sparkle-1">✦</div>
                       <div class="sparkle sparkle-2">✧</div>
@@ -294,20 +268,19 @@
                 <div class="mystery-info">
                   <div class="mystery-name">{{ generatedCharacter.name }}</div>
                   <div class="mystery-rarity">
-                    <span class="mystery-stars">★ ★ ★ ★ ★</span>
-                    <span class="mystery-text">稀有度計算中...</span>
+                    <span class="mystery-text">Calculating rarity...</span>
                   </div>
                   <div class="mystery-stats">
                     <div class="mystery-stat">
-                      <span class="stat-label">力量</span>
+                      <span class="stat-label">STR</span>
                       <span class="stat-mystery">???</span>
                     </div>
                     <div class="mystery-stat">
-                      <span class="stat-label">敏捷</span>
+                      <span class="stat-label">AGI</span>
                       <span class="stat-mystery">???</span>
                     </div>
                     <div class="mystery-stat">
-                      <span class="stat-label">幸運</span>
+                      <span class="stat-label">LUK</span>
                       <span class="stat-mystery">???</span>
                     </div>
                   </div>
@@ -380,7 +353,6 @@
               (click)="characterPrompt = example; mode='normal'"
               class="example-button"
               [disabled]="isGenerating">
-              <span class="example-emoji">{{getExampleEmoji(example)}}</span>
               <span class="example-name">{{example}}</span>
             </button>
           </div>

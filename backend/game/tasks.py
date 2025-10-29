@@ -183,45 +183,62 @@ REMINDER: The image must be completely text-free. No captions, labels, titles, o
         pass
 
 def validate_battle_result(battle_result, player, opponent):
-    """驗證戰鬥結果的一致性"""
+    """驗證戰鬥結果的一致性（優先使用ID，比對不過時回退比對名稱）"""
     try:
         battle_log = battle_result.get('battle_log', [])
-        winner_id = battle_result.get('winner')
+        winner_id = str(battle_result.get('winner'))
         
         # 追蹤血量
         player_hp = 100
         opponent_hp = 100
         
+        player_id_str = str(player.id)
+        opponent_id_str = str(opponent.id)
+        
         for i, log in enumerate(battle_log):
-            attacker = log.get('attacker')
-            defender = log.get('defender')
-            damage = log.get('damage', 0)
-            remaining_hp = log.get('remaining_hp', 0)
+            attacker = str(log.get('attacker'))
+            defender = str(log.get('defender'))
+            damage = int(log.get('damage', 0))
+            remaining_hp = int(log.get('remaining_hp', 0))
             
-            # 更新血量
-            if defender == player.name:
+            matched = False
+            # 先用ID比對
+            if defender == player_id_str:
                 player_hp = max(0, player_hp - damage)
+                matched = True
                 if remaining_hp != player_hp:
-                    print(f"血量不一致：回合 {i+1}，{player.name} 血量應該是 {player_hp}，但記錄為 {remaining_hp}")
+                    print(f"血量不一致(ID)：回合 {i+1}，{player.name} 血量應為 {player_hp}，記錄 {remaining_hp}")
                     return False
-            elif defender == opponent.name:
+            elif defender == opponent_id_str:
                 opponent_hp = max(0, opponent_hp - damage)
+                matched = True
                 if remaining_hp != opponent_hp:
-                    print(f"血量不一致：回合 {i+1}，{opponent.name} 血量應該是 {opponent_hp}，但記錄為 {remaining_hp}")
+                    print(f"血量不一致(ID)：回合 {i+1}，{opponent.name} 血量應為 {opponent_hp}，記錄 {remaining_hp}")
                     return False
             
-            # 檢查是否有人血量歸零
+            # 若ID未匹配，回退用名稱比對（兼容舊資料或模型輸出）
+            if not matched:
+                if defender == player.name:
+                    player_hp = max(0, player_hp - damage)
+                    if remaining_hp != player_hp:
+                        print(f"血量不一致(名稱)：回合 {i+1}，{player.name} 血量應為 {player_hp}，記錄 {remaining_hp}")
+                        return False
+                elif defender == opponent.name:
+                    opponent_hp = max(0, opponent_hp - damage)
+                    if remaining_hp != opponent_hp:
+                        print(f"血量不一致(名稱)：回合 {i+1}，{opponent.name} 血量應為 {opponent_hp}，記錄 {remaining_hp}")
+                        return False
+            
             if player_hp <= 0 or opponent_hp <= 0:
                 break
         
-        # 驗證勝者
-        actual_winner_id = player.id if opponent_hp <= 0 else opponent.id
-        if str(winner_id) != str(actual_winner_id):
-            print(f"勝者不一致：記錄的勝者是 {winner_id}，但實際勝者應該是 {actual_winner_id}")
+        # 以血量推算勝者
+        actual_winner_id = str(player.id) if opponent_hp <= 0 else str(opponent.id)
+        if winner_id != actual_winner_id:
+            print(f"勝者不一致：記錄 {winner_id}，實際應為 {actual_winner_id}")
             return False
-            
-        return True
         
+        return True
     except Exception as e:
         print(f"驗證戰鬥結果時發生錯誤：{e}")
         return False
@@ -336,7 +353,35 @@ def run_battle_task(battle_id):
             player = battle.character1
             opponent = battle.character2
 
-            # 準備戰鬥場景描述 (使用結構化輸出，簡化prompt)
+            # 準備戰鬥場景描述 (使用結構化輸出，加入屬性權重與微量幸運)
+            # 推導屬性引導參數（作為 LLM 參考，不是硬規則）
+            p_STR, p_AGI, p_LUK = player.strength, player.agility, player.luck
+            o_STR, o_AGI, o_LUK = opponent.strength, opponent.agility, opponent.luck
+
+            def dmg_params(STR, AGI):
+                base = 0.6*STR + 0.3*AGI
+                low = max(5, int(base*0.9))
+                high = int(base*1.1 + 5)
+                return low, high
+            p_low, p_high = dmg_params(p_STR, p_AGI)
+            o_low, o_high = dmg_params(o_STR, o_AGI)
+
+            def crit_rate(LUK):
+                return min(0.15, 0.005*LUK)  # 上限 15%
+            p_crit = crit_rate(p_LUK)
+            o_crit = crit_rate(o_LUK)
+
+            def dodge_suggestion(a_agi, d_agi):
+                diff = max(0, a_agi - d_agi)
+                return min(0.10, diff/200.0)  # 0%~10%
+            # 我方攻擊對手 → 對手的建議閃避率
+            o_vs_p_dodge = dodge_suggestion(p_AGI, o_AGI)
+            # 對手攻擊我方 → 我方的建議閃避率
+            p_vs_o_dodge = dodge_suggestion(o_AGI, p_AGI)
+
+            luck_one_off_p = min(0.10, 0.002*p_LUK)
+            luck_one_off_o = min(0.10, 0.002*o_LUK)
+
             battle_prompt = f"""
                         一場史詩般的對決即將展開！
 
@@ -348,7 +393,7 @@ def run_battle_task(battle_id):
 
                         **戰鬥員資料：**
 
-                        玩家角色：
+                        角色1：
                         ID：{player.id}
                         名稱：{player.name}
                         描述：{player.prompt}
@@ -357,7 +402,7 @@ def run_battle_task(battle_id):
                         幸運：{player.luck}
                         特殊能力：{player.skill_description}
 
-                        對手角色：
+                        角色2：
                         ID：{opponent.id}
                         名稱：{opponent.name}
                         描述：{opponent.prompt}
@@ -366,13 +411,24 @@ def run_battle_task(battle_id):
                         幸運：{opponent.luck}
                         特殊能力：{opponent.skill_description}
 
+                        **屬性權重與隨機機制（請遵循，允許 ±10% 的自然波動）：**
+                        - 傷害建議（角色1→角色2）：每回合在 [{p_low}, {p_high}] 間，並有 0~5 的微隨機。
+                        - 傷害建議（角色2→角色1）：每回合在 [{o_low}, {o_high}] 間，並有 0~5 的微隨機。
+                        - 暴擊率建議：角色1 {p_crit:.0%}、角色2 {o_crit:.0%}，暴擊約 1.5x。
+                        - 閃避率建議：角色1被攻時 ~{p_vs_o_dodge:.0%}，角色2被攻時 ~{o_vs_p_dodge:.0%}。
+                        - 幸運一次性意外：全場最多一次，角色1機率 {luck_one_off_p:.0%}、角色2機率 {luck_one_off_o:.0%}，可造成當次結果最高約 1.2x 偏移（可能有利或不利）。
+
+                        **先後手建議（每回合判定一次）：**
+                        - 基於敏捷，較高者約 60% 機率先手；剩餘 40% 視敘事交替。
+
                         **重要規則：**
-                        1. 3-5個回合的戰鬥。
+                        1. 5-10個回合的戰鬥。
                         2. 你想像出的戰鬥地點必須對戰局產生決定性或意想不到的影響。
                         3. 每個回合要有具體的動作和傷害值。
                         4. 要運用到角色的特殊能力。
                         5. 血量先歸零者輸，請嚴格按照血量計算決定勝負。
-                        6. 每個回合結束後，請仔細檢查剩餘血量，確保敘述與血量一致。
+                        6. 每個回合結束後，請仔細檢查剩餘血量，確保敘述與數據一致。
+                        7. 若有角色血量歸零，立即結束戰鬥，不要補多餘回合。
 
                         **血量追蹤規則：**
                         - 每個角色初始血量：100

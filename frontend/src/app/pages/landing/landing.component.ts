@@ -87,11 +87,6 @@ import { Subscription } from 'rxjs';
               </a>
             </div>
           </div>
-          
-          <div class="scroll-indicator">
-            <div class="scroll-arrow"></div>
-            <span>向下滾動探索更多</span>
-          </div>
         </div>
       </section>
 

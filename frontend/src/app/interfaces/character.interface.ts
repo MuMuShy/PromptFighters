@@ -18,4 +18,12 @@ export interface Character {
     player_display_name: string;
     experience: number;
     level: number;
+    
+    // NFT 相關欄位
+    is_minted?: boolean;
+    token_id?: number;
+    contract_address?: string;
+    owner_wallet?: string;
+    minted_at?: string;
+    tx_hash?: string;
 } 

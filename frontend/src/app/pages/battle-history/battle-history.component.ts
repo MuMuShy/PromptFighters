@@ -34,13 +34,16 @@ interface BattleHistory {
   imports: [CommonModule, MediaUrlPipe],
   template: `
     <div class="battle-history-page">
-      <!-- 簡潔背景 -->
-      <div class="history-background"></div>
+      <!-- 返回按鈕 -->
+      <button class="back-button" (click)="goBack()">
+        <span class="back-arrow">←</span>
+        <span class="back-text">BACK</span>
+      </button>
 
       <!-- 頁面標題 -->
       <div class="history-header">
-        <h1 class="history-title">歷史對戰</h1>
-        <p class="history-subtitle">回顧精彩的天梯戰鬥記錄</p>
+        <h1 class="history-title">BATTLE HISTORY</h1>
+        <p class="history-subtitle">Review Previous Arena Matches</p>
       </div>
 
       <!-- 戰鬥歷史列表 -->
@@ -63,7 +66,9 @@ interface BattleHistory {
                 <img [src]="battle.fighter1.image_url | mediaUrl" 
                      [alt]="battle.fighter1.name">
                 <div class="rank-badge">#{{ battle.fighter1.rank }}</div>
-                <div class="winner-crown" *ngIf="battle.winner?.is_fighter1"></div>
+                <!-- <div class="winner-badge" *ngIf="battle.winner?.is_fighter1">
+                  <span>WINNER</span>
+                </div> -->
               </div>
               
               <div class="fighter-info">
@@ -93,7 +98,9 @@ interface BattleHistory {
                 <img [src]="battle.fighter2.image_url | mediaUrl" 
                      [alt]="battle.fighter2.name">
                 <div class="rank-badge">#{{ battle.fighter2.rank }}</div>
-                <div class="winner-crown" *ngIf="battle.winner && !battle.winner.is_fighter1"></div>
+                <!-- <div class="winner-badge" *ngIf="battle.winner && !battle.winner.is_fighter1">
+                  <span>WINNER</span>
+                </div> -->
               </div>
               
               <div class="fighter-info">
@@ -131,12 +138,6 @@ interface BattleHistory {
         <p>載入歷史記錄...</p>
       </div>
 
-      <!-- 返回按鈕 -->
-      <div class="back-nav">
-        <button class="back-btn" (click)="goBack()">
-          <span>← 返回競技場</span>
-        </button>
-      </div>
     </div>
   `,
   styleUrls: ['./battle-history.component.scss']
@@ -197,7 +198,6 @@ export class BattleHistoryComponent implements OnInit {
   }
 
   viewBattleDetails(battle: BattleHistory): void {
-    // 導航到戰鬥詳情頁面
     this.router.navigate(['/battle-details', battle.id]);
   }
 

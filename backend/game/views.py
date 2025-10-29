@@ -733,3 +733,142 @@ class CharacterGrowthAPIView(APIView):
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'error': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)
+
+# ============== NFT 相關 API ==============
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def mint_character_nft(request, character_id):
+    """
+    鑄造角色 NFT
+    
+    POST /api/characters/<uuid>/mint/
+    Body: {
+        "wallet_address": "0x..."
+    }
+    """
+    from .nft_service import get_nft_service
+    from django.utils import timezone
+    
+    try:
+        character = Character.objects.get(id=character_id, player=request.user.player)
+    except Character.DoesNotExist:
+        return Response({'error': '角色不存在或無權限'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # 檢查是否已鑄造
+    if character.is_minted:
+        return Response({
+            'error': '該角色已鑄造為 NFT',
+            'token_id': character.token_id,
+            'contract_address': character.contract_address
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 獲取錢包地址
+    wallet_address = request.data.get('wallet_address')
+    if not wallet_address:
+        return Response({'error': '缺少 wallet_address'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 驗證錢包地址格式
+    if not wallet_address.startswith('0x') or len(wallet_address) != 42:
+        return Response({'error': '錢包地址格式錯誤'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 檢查角色是否有圖片
+    if not character.image_url or 'placeholder' in character.image_url:
+        return Response({
+            'error': '角色圖片尚未生成完成，請稍後再試'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 呼叫 NFT 服務鑄造
+    nft_service = get_nft_service()
+    
+    if not nft_service.enabled:
+        return Response({
+            'error': 'NFT 服務暫時不可用，請稍後再試'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    
+    result = nft_service.mint_character_nft(character, wallet_address)
+    
+    if not result['success']:
+        return Response({
+            'error': f"鑄造失敗: {result.get('error', '未知錯誤')}"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    # 檢查是否已有其他角色使用相同 token_id（處理重複鑄造的情況）
+    existing_char = Character.objects.filter(
+        token_id=result['token_id'],
+        contract_address=result['contract_address']
+    ).exclude(id=character.id).first()
+    
+    if existing_char:
+        # 如果已存在，說明這是重複鑄造，需要清除舊記錄的 token_id
+        existing_char.token_id = None
+        existing_char.is_minted = False
+        existing_char.save()
+    
+    # 更新角色資料
+    character.is_minted = True
+    character.token_id = result['token_id']
+    character.contract_address = result['contract_address']
+    character.owner_wallet = wallet_address.lower()
+    character.minted_at = timezone.now()
+    character.tx_hash = result['tx_hash']
+    character.save()
+    
+    # 返回成功資訊
+    chain_id = os.getenv('CHAIN_ID', '5001')
+    chain_name = 'mantle' if chain_id == '5000' else 'mantle-testnet'
+    
+    return Response({
+        'success': True,
+        'message': f'🎉 {character.name} 已成功鑄造為 NFT！',
+        'data': {
+            'token_id': result['token_id'],
+            'tx_hash': result['tx_hash'],
+            'contract_address': result['contract_address'],
+            'owner_wallet': wallet_address,
+            'opensea_url': f"https://opensea.io/assets/{chain_name}/{result['contract_address']}/{result['token_id']}",
+            'explorer_url': f"https://explorer.mantle.xyz/tx/{result['tx_hash']}" if chain_id == '5000' else f"https://explorer.testnet.mantle.xyz/tx/{result['tx_hash']}"
+        }
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def verify_character_ownership(request, character_id):
+    """
+    驗證角色 NFT 所有權
+    
+    GET /api/characters/<uuid>/verify-ownership/?wallet_address=0x...
+    """
+    from .nft_service import get_nft_service
+    
+    try:
+        character = Character.objects.get(id=character_id)
+    except Character.DoesNotExist:
+        return Response({'error': '角色不存在'}, status=status.HTTP_404_NOT_FOUND)
+    
+    if not character.is_minted:
+        return Response({
+            'is_owner': True,
+            'message': '該角色尚未鑄造為 NFT'
+        })
+    
+    wallet_address = request.query_params.get('wallet_address')
+    if not wallet_address:
+        return Response({'error': '缺少 wallet_address'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    nft_service = get_nft_service()
+    
+    if not nft_service.enabled:
+        return Response({
+            'error': 'NFT 服務暫時不可用'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    
+    is_owner = nft_service.verify_ownership(character.token_id, wallet_address)
+    
+    return Response({
+        'is_owner': is_owner,
+        'token_id': character.token_id,
+        'contract_address': character.contract_address,
+        'current_owner': character.owner_wallet
+    })

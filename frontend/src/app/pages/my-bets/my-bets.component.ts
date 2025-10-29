@@ -11,72 +11,62 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
   imports: [CommonModule, MediaUrlPipe],
   template: `
     <div class="my-bets-page">
-      <!-- 背景效果 -->
-      <div class="bets-background">
-        <div class="coin-particles">
-          <div class="coin-particle" *ngFor="let p of coinParticles" 
-               [style.left.%]="p.x" 
-               [style.top.%]="p.y"
-               [style.animation-delay.s]="p.delay">💰</div>
-        </div>
-      </div>
+      <!-- 返回按鈕 -->
+      <button class="back-button" (click)="goBack()">
+        <span class="back-arrow">←</span>
+        <span class="back-text">BACK</span>
+      </button>
 
       <!-- 頁面標題 -->
       <div class="bets-header">
-        <h1 class="bets-title">下注記錄</h1>
-        <p class="bets-subtitle">追蹤您的投注歷史與收益</p>
+        <h1 class="bets-title">MY BETS</h1>
+        <p class="bets-subtitle">Track Your Betting History</p>
       </div>
 
       <!-- 統計卡片 -->
       <div class="stats-section" *ngIf="stats">
         <div class="stats-grid">
           <div class="stat-card total-bets">
-            <div class="stat-icon">🎯</div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.total_bets }}</div>
-              <div class="stat-label">總下注次數</div>
+              <div class="stat-label">Total Bets</div>
             </div>
           </div>
 
           <div class="stat-card win-rate">
-            <div class="stat-icon">🏆</div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.win_rate }}%</div>
-              <div class="stat-label">勝率</div>
+              <div class="stat-label">Win Rate</div>
             </div>
           </div>
 
           <div class="stat-card total-amount">
-            <div class="stat-icon">💎</div>
             <div class="stat-info">
               <div class="stat-value">{{ bettingService.formatAmount(stats.total_bet_amount) }}</div>
-              <div class="stat-label">總下注金額</div>
+              <div class="stat-label">Total Amount</div>
             </div>
           </div>
 
           <div class="stat-card net-profit" [class.profit]="stats.net_profit > 0" [class.loss]="stats.net_profit < 0">
-            <div class="stat-icon">{{ stats.net_profit > 0 ? '📈' : '📉' }}</div>
             <div class="stat-info">
               <div class="stat-value">
                 {{ stats.net_profit > 0 ? '+' : '' }}{{ bettingService.formatAmount(stats.net_profit) }}
               </div>
-              <div class="stat-label">淨收益</div>
+              <div class="stat-label">Net Profit</div>
             </div>
           </div>
 
           <div class="stat-card current-streak">
-            <div class="stat-icon">🔥</div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.current_streak }}</div>
-              <div class="stat-label">當前{{ stats.current_streak >= 0 ? '連勝' : '連敗' }}</div>
+              <div class="stat-label">Current {{ stats.current_streak >= 0 ? 'Win' : 'Loss' }} Streak</div>
             </div>
           </div>
 
           <div class="stat-card best-streak">
-            <div class="stat-icon">⭐</div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.best_streak }}</div>
-              <div class="stat-label">最佳連勝</div>
+              <div class="stat-label">Best Streak</div>
             </div>
           </div>
         </div>
@@ -259,11 +249,11 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
       </div>
 
       <!-- 返回按鈕 -->
-      <div class="back-nav">
+      <!-- <div class="back-nav">
         <button class="back-btn" (click)="goBack()">
           <span>← 返回競技場</span>
         </button>
-      </div>
+      </div> -->
     </div>
   `,
   styleUrls: ['./my-bets.component.scss']

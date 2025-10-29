@@ -1,0 +1,85 @@
+<div class="nft-gallery-container">
+  <div class="gallery-header">
+    <h1 class="gallery-title">我的 NFT 收藏</h1>
+    <p class="gallery-subtitle">所有已鑄造為 NFT 的角色</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>載入中...</p>
+  </div>
+
+  <div *ngIf="!isLoading && nftCharacters.length === 0" class="empty-state">
+    <div class="empty-icon">📦</div>
+    <h3>尚無 NFT</h3>
+    <p>前往個人資料頁面鑄造你的第一個角色 NFT</p>
+  </div>
+
+  <div *ngIf="!isLoading && nftCharacters.length > 0" class="nft-grid">
+    <div *ngFor="let character of nftCharacters" class="nft-card" [class]="'rarity-' + getRarityClass(character.rarity)">
+      <div class="nft-image-container">
+        <img 
+          [src]="character.image_url || '/assets/placeholder-character.png'" 
+          [alt]="character.name"
+          class="nft-image"
+        />
+        <div class="nft-badge">
+          <span class="badge-text">Token #{{ character.token_id }}</span>
+        </div>
+        <div class="rarity-badge" [class]="'rarity-' + getRarityClass(character.rarity)">
+          {{ getRarityLabel(character.rarity) }}
+        </div>
+      </div>
+
+      <div class="nft-info">
+        <h3 class="nft-name">{{ character.name }}</h3>
+        <p class="nft-description">{{ character.prompt }}</p>
+
+        <div class="nft-stats">
+          <div class="stat">
+            <span class="stat-label">等級</span>
+            <span class="stat-value">{{ character.level }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">力量</span>
+            <span class="stat-value">{{ character.strength }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">敏捷</span>
+            <span class="stat-value">{{ character.agility }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">幸運</span>
+            <span class="stat-value">{{ character.luck }}</span>
+          </div>
+        </div>
+
+        <div class="nft-metadata">
+          <div class="metadata-row">
+            <span class="metadata-label">Token ID:</span>
+            <span class="metadata-value">#{{ character.token_id }}</span>
+          </div>
+          <div class="metadata-row">
+            <span class="metadata-label">合約地址:</span>
+            <span class="metadata-value contract-address">
+              {{ character.contract_address?.slice(0, 6) }}...{{ character.contract_address?.slice(-4) }}
+            </span>
+          </div>
+          <div class="metadata-row">
+            <span class="metadata-label">交易哈希:</span>
+            <span class="metadata-value tx-hash">
+              {{ character.tx_hash?.slice(0, 6) }}...{{ character.tx_hash?.slice(-4) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="nft-actions">
+          <button class="action-btn explorer" (click)="viewOnExplorer(character)">
+            在區塊鏈瀏覽器查看
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

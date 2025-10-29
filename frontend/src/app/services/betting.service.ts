@@ -60,6 +60,7 @@ export interface BattleBet {
   bet_amount: number;
   odds_at_bet: number;
   potential_payout: number;
+  actual_payout?: number;
   is_winner?: boolean;
   payout_amount: number;
   is_settled: boolean;

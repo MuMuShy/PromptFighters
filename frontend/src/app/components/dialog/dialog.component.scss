@@ -1,0 +1,247 @@
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.dialog-container {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-width: 500px;
+  width: 90%;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+}
+
+.dialog-header {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  &.success {
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+  }
+
+  &.error {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  }
+
+  &.warning {
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.05));
+  }
+
+  &.confirm {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  }
+}
+
+.dialog-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+
+  &::before {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  &.icon-success {
+    background: rgba(34, 197, 94, 0.2);
+    border: 2px solid #22c55e;
+
+    &::before {
+      content: '✓';
+      font-size: 28px;
+      color: #22c55e;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+
+  &.icon-error {
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid #ef4444;
+
+    &::before {
+      content: '✕';
+      font-size: 28px;
+      color: #ef4444;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+
+  &.icon-warning {
+    background: rgba(251, 191, 36, 0.2);
+    border: 2px solid #fbbf24;
+
+    &::before {
+      content: '!';
+      font-size: 32px;
+      color: #fbbf24;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+
+  &.icon-confirm {
+    background: rgba(59, 130, 246, 0.2);
+    border: 2px solid #3b82f6;
+
+    &::before {
+      content: '?';
+      font-size: 32px;
+      color: #3b82f6;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+
+  &.icon-info {
+    background: rgba(99, 102, 241, 0.2);
+    border: 2px solid #6366f1;
+
+    &::before {
+      content: 'i';
+      font-size: 28px;
+      color: #6366f1;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
+}
+
+.dialog-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.dialog-body {
+  padding: 24px;
+}
+
+.dialog-message {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  white-space: pre-line;
+}
+
+.dialog-footer {
+  padding: 16px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dialog-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  min-width: 80px;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.dialog-btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.dialog-btn-confirm {
+  background: #6366f1;
+  color: #fff;
+
+  &:hover {
+    background: #5558e3;
+  }
+}
+
+.dialog-btn-success {
+  background: #22c55e;
+
+  &:hover {
+    background: #16a34a;
+  }
+}
+
+.dialog-btn-error {
+  background: #ef4444;
+
+  &:hover {
+    background: #dc2626;
+  }
+}
+
+.dialog-btn-warning {
+  background: #fbbf24;
+  color: #000;
+
+  &:hover {
+    background: #f59e0b;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
