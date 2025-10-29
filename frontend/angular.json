@@ -28,7 +28,8 @@
               "namedChunks": false,
               "optimization": true,
               "outputHashing": "all",
-              "sourceMap": false
+              "sourceMap": false,
+              "baseHref": "/"
             }
           },
           "options": {
@@ -36,6 +37,7 @@
             "index": "src/index.html",
             "browser": "src/main.ts",
             "outputPath": "dist/demo",
+            "baseHref": "/",
             "polyfills": ["zone.js"],
             "scripts": [],
             "styles": [

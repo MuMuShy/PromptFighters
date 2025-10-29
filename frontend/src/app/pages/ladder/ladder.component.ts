@@ -26,7 +26,6 @@ import { MediaUrlPipe } from '../../pipes/media-url.pipe';
 
       <!-- 頁面標題 -->
       <div class="ladder-header">
-        <h1 class="ladder-title">🏆 天梯排行榜</h1>
         <p class="ladder-subtitle">爭奪榮耀 • 角逐王座 • 證明實力</p>
         
         <div class="season-info" *ngIf="seasonInfo">
