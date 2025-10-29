@@ -317,54 +317,6 @@ def get_battle_details(request, battle_id):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def create_test_battle(request):
-    """創建測試戰鬥（僅供開發使用）"""
-    try:
-        from .ladder_service import LadderService
-        from .models import LadderSeason
-        from django.utils import timezone
-        from datetime import timedelta
-        
-        # 獲取當前賽季
-        current_season = LadderSeason.objects.filter(is_active=True).first()
-        if not current_season:
-            return Response({'error': '沒有活躍的賽季'}, status=status.HTTP_404_NOT_FOUND)
-        
-        # 創建立即可下注的戰鬥
-        now = timezone.now()
-        battle_time = now + timedelta(minutes=3)  # 3分鐘後開始戰鬥
-        
-        # 選擇戰鬥對手
-        fighter1, fighter2 = LadderService.select_fighters(current_season)
-        if not fighter1 or not fighter2:
-            return Response({'error': '無法找到合適的戰鬥對手'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # 創建戰鬥
-        battle = ScheduledBattle.objects.create(
-            season=current_season,
-            fighter1=fighter1,
-            fighter2=fighter2,
-            scheduled_time=battle_time,
-            betting_start_time=now,  # 立即開放下注
-            betting_end_time=battle_time - timedelta(seconds=30),  # 戰鬥前30秒截止
-            status='betting_open'  # 直接設為開放下注
-        )
-        
-        # 計算初始賠率
-        battle.calculate_odds()
-        
-        serializer = ScheduledBattleSerializer(battle)
-        return Response({
-            'message': '測試戰鬥創建成功',
-            'battle': serializer.data
-        }, status=status.HTTP_201_CREATED)
-    
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def join_ladder(request):
     """加入天梯"""
     try:

@@ -177,11 +177,6 @@ export class BettingService {
     return this.http.get<any>(`${this.apiUrl}/battles/history/`);
   }
   
-  // 創建測試戰鬥
-  createTestBattle(): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/create-test-battle/`, {});
-  }
-  
   // 加入天梯
   joinLadder(characterId: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/join/`, {

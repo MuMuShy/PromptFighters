@@ -349,9 +349,6 @@ import { DialogService } from '../../services/dialog.service';
             <button class="refresh-btn" (click)="refreshData()">
               <span>REFRESH</span>
             </button>
-            <button class="create-battle-btn" (click)="createTestBattle()">
-              <span>CREATE TEST BATTLE</span>
-            </button>
           </div>
         </div>
       </div>
@@ -886,20 +883,6 @@ export class ArenaComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.loadCurrentBattle();
     this.loadInitialData();
-  }
-  
-  createTestBattle(): void {
-    this.loading = true;
-    this.bettingService.createTestBattle().subscribe({
-      next: (response) => {
-        this.dialogService.success('Battle Created', 'Test battle has been created successfully!');
-        this.refreshData();
-      },
-      error: (error) => {
-        this.dialogService.error('Creation Failed', error.error?.error || 'Please try again later');
-        this.loading = false;
-      }
-    });
   }
   
   // 判斷下注結果
