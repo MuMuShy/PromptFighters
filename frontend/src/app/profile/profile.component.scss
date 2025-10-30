@@ -101,6 +101,9 @@
   min-height: 100vh;
   padding: 2rem;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 // 魔法背景
@@ -225,6 +228,8 @@
   z-index: 2;
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 // 玩家資訊標頭
@@ -505,7 +510,7 @@
 // 英雄網格
 .heroes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.5rem;
 }
 
@@ -715,7 +720,7 @@
   }
   
   .heroes-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
   }
   
@@ -726,6 +731,12 @@
   .filter-btn {
     padding: 0.6rem 0.8rem;
     font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .heroes-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1755,6 +1766,7 @@
   border-radius: 16px;
   padding: 1.5rem;
   width: 280px;
+  max-width: 100%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;

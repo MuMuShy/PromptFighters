@@ -6,13 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { CharacterService } from '../services/character.service';
 import { BattleService, BattleStartResponse, BattleError } from '../services/battle.service';
 import { PlayerService } from '../services/player.service';
+import { OnchainService, BattleOnchainInfo } from '../services/onchain.service';
 import { Character } from '../interfaces/character.interface';
 import { Battle } from '../interfaces/battle.interface';
 
 
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MediaUrlPipe } from '../pipes/media-url.pipe';
-import { Subscription, timer } from 'rxjs';
+import { Subscription, timer, interval } from 'rxjs';
 import { switchMap, takeWhile, tap } from 'rxjs/operators';
 
 // Add this interface for clarity
@@ -46,10 +47,21 @@ interface BattleLogEntry {
       transition(':leave', [
         animate('300ms ease-in', style({ opacity: 0 }))
       ])
+    ]),
+    // Toast 進出動效（右側滑入、上移淡出）
+    trigger('toastAnim', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateX(120%)' }),
+        animate('250ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
+      ]),
+      transition(':leave', [
+        animate('250ms ease-in', style({ opacity: 0, transform: 'translateY(-10px)' }))
+      ])
     ])
   ]
 })
 export class BattleComponent implements OnInit, OnDestroy {
+  maxHp = 300; // 與後端同步的最大 HP
   playerCharacter: Character | null = null;
   opponent: Character | null = null;
   battleResult: Battle & { battle_log: { battle_log: BattleLogEntry[] } } | null = null;
@@ -57,12 +69,20 @@ export class BattleComponent implements OnInit, OnDestroy {
   battleStarted = false;
   showResultOverlay = false;
   currentRound = 0;
-  playerHealth = 100;
-  opponentHealth = 100;
+  playerHealth = this.maxHp; // 提高初始血量，配合後端
+  opponentHealth = this.maxHp;
   isPlayerBeingAttacked = false;
   isOpponentBeingAttacked = false;
   isBattleLogComplete = false;
+  // On-chain 通知
+  onchainNotice: string | null = null;
+  onchainLink: string | null = null;
+  onchainStatus: BattleOnchainInfo['onchain_status'] = null;
   
+  // 多條跑馬燈堆疊
+  toasts: { id: number; text: string; link?: string | null }[] = [];
+  private toastSeq = 0;
+
   // 體力和錯誤處理
   energyError: string | null = null;
   showRewards = false;
@@ -84,11 +104,13 @@ export class BattleComponent implements OnInit, OnDestroy {
 
   private pollingSubscription: Subscription | null = null;
   private characterSubscription: Subscription | null = null;
+  private onchainPollingSub: Subscription | null = null;
 
   constructor(
     private characterService: CharacterService,
     private battleService: BattleService,
-    private playerService: PlayerService
+    private playerService: PlayerService,
+    private onchainService: OnchainService
   ) {}
 
   ngOnInit(): void {
@@ -105,6 +127,7 @@ export class BattleComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.characterSubscription?.unsubscribe();
     this.stopPolling();
+    this.stopOnchainPolling();
   }
 
   findNewOpponent(): void {
@@ -229,6 +252,13 @@ export class BattleComponent implements OnInit, OnDestroy {
                 console.error("Battle completed but battle_log is null", battle);
                 this.battleStarted = false;
             }
+            // 嘗試拉取 on-chain 資訊，並顯示狀態序列（即便已確認也先顯示 Pending）
+            const bid = (this.battleResult as any)?.id || battleId;
+            if (bid) {
+              this.showOnchainToast('On-chain: Pending...');
+              this.fetchOnchainInfo(bid, true);
+              this.startOnchainPolling(bid);
+            }
           }
         },
         error: (error) => {
@@ -300,8 +330,8 @@ export class BattleComponent implements OnInit, OnDestroy {
   }
 
   private resetHealth(): void {
-    this.playerHealth = 100;
-    this.opponentHealth = 100;
+    this.playerHealth = this.maxHp;
+    this.opponentHealth = this.maxHp;
     this.isPlayerBeingAttacked = false;
     this.isOpponentBeingAttacked = false;
   }
@@ -366,6 +396,67 @@ export class BattleComponent implements OnInit, OnDestroy {
         }, 600);
       }
     }, 1200 + Math.random() * 800); // 隨機間隔 1.2-2 秒
+  }
+  
+  private showOnchainToast(text: string, link?: string) {
+    const id = ++this.toastSeq;
+    this.toasts.unshift({ id, text, link: link || null });
+    // 預設 5 秒後自動移除（若之後又推送 Confirmed 會再插入一條）
+    setTimeout(() => {
+      this.toasts = this.toasts.filter(t => t.id !== id);
+    }, 5000);
+  }
+
+  private fetchOnchainInfo(battleId: string, forceSequence = false): void {
+    this.onchainService.getBattleOnchain(battleId).subscribe({
+      next: (info) => {
+        this.onchainStatus = info.onchain_status || null;
+        // 即便已是 confirmed，也先跑一次 Pending -> Confirmed 的體驗
+        if (forceSequence && info.onchain_status === 'confirmed') {
+          this.showOnchainToast('On-chain: Pending...');
+          setTimeout(() => {
+            this.showOnchainToast('On-chain: Confirmed', info.explorer_url);
+          }, 1200);
+          return;
+        }
+        if (info.onchain_status === 'pending') {
+          this.showOnchainToast('On-chain: Pending...');
+        } else if (info.onchain_status === 'sent') {
+          this.showOnchainToast('On-chain: Sent', info.explorer_url);
+        } else if (info.onchain_status === 'confirmed') {
+          this.showOnchainToast('On-chain: Confirmed', info.explorer_url);
+          this.stopOnchainPolling();
+        } else if (info.onchain_status === 'failed') {
+          this.showOnchainToast('On-chain: Failed', info.explorer_url);
+          this.stopOnchainPolling();
+        }
+      },
+      error: () => {
+        // 忽略錯誤，不阻塞 UI
+      }
+    });
+  }
+
+  private startOnchainPolling(battleId: string): void {
+    this.stopOnchainPolling();
+    this.onchainPollingSub = interval(5000).subscribe(() => {
+      this.fetchOnchainInfo(battleId);
+    });
+  }
+
+  private stopOnchainPolling(): void {
+    if (this.onchainPollingSub) {
+      this.onchainPollingSub.unsubscribe();
+      this.onchainPollingSub = null;
+    }
+  }
+
+  // 將當前血量換算為百分比（0-100）
+  getHealthPercent(current: number): number {
+    const max = this.maxHp;
+    if (max <= 0) return 0;
+    const pct = (current / max) * 100;
+    return Math.max(0, Math.min(100, Math.round(pct)));
   }
 
   private calculatePower(character: Character): number {

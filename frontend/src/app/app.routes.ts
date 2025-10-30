@@ -55,11 +55,7 @@ export const routes: Routes = [
     loadComponent: () => import('./components/daily-quests/daily-quests.component').then(m => m.DailyQuestsComponent),
     canActivate: [authGuard]
   },
-  {
-    path: 'upgrade/:characterId',
-    loadComponent: () => import('./upgrade/upgrade.component').then(m => m.UpgradeComponent),
-    canActivate: [authGuard]
-  },
+  // 升級功能已移除
   {
     path: 'arena',
     loadComponent: () => import('./pages/arena/arena.component').then(m => m.ArenaComponent),
@@ -93,6 +89,11 @@ export const routes: Routes = [
   {
     path: 'battle-details/:id',
     loadComponent: () => import('./pages/battle-details/battle-details.component').then(m => m.BattleDetailsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'onchain-activity',
+    loadComponent: () => import('./pages/onchain-activity/onchain-activity.component').then(m => m.OnchainActivityComponent),
     canActivate: [authGuard]
   },
   { path: '', component: LandingComponent },

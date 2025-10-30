@@ -99,10 +99,9 @@ class LadderService:
         if not current_season:
             return None
         
-        # 開發模式：每5分鐘一場戰鬥
+        # 調整為：每小時一場（對齊整點）
         now = timezone.now()
-        next_battle_time = now + timedelta(minutes=5)
-        next_battle_time = next_battle_time.replace(second=0, microsecond=0)
+        next_battle_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
         
         # 檢查是否已經有排程的戰鬥
         existing_battle = ScheduledBattle.objects.filter(
@@ -118,14 +117,14 @@ class LadderService:
         if not fighter1 or not fighter2:
             return None
         
-        # 創建戰鬥（開發模式：提前2分鐘開放下注，提前30秒截止）
+        # 創建戰鬥：提前30分鐘開放下注，提前5分鐘截止
         battle = ScheduledBattle.objects.create(
             season=current_season,
             fighter1=fighter1,
             fighter2=fighter2,
             scheduled_time=next_battle_time,
-            betting_start_time=next_battle_time - timedelta(minutes=2),  # 提前2分鐘開放下注
-            betting_end_time=next_battle_time - timedelta(seconds=30),   # 戰鬥前30秒截止下注
+            betting_start_time=next_battle_time - timedelta(minutes=30),  # 提前30分鐘開放下注
+            betting_end_time=next_battle_time - timedelta(minutes=5),     # 戰鬥前5分鐘截止下注
             status='scheduled'
         )
         

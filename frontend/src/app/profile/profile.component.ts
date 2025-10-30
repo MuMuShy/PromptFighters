@@ -198,11 +198,7 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/battle']);
   }
 
-  goToUpgrade(character: Character, event: Event) {
-    event.stopPropagation();
-    event.preventDefault();
-    this.router.navigate(['/upgrade', character.id]);
-  }
+  // 升級功能已移除
 
   async mintNFT(character: Character, event: Event) {
     event.stopPropagation();

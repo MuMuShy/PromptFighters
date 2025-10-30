@@ -1,5 +1,12 @@
 <!-- 戰鬥競技場主容器 -->
 <div class="arena-container" [class.battle-mode]="battleStarted || battleResult">
+  <!-- On-chain Toasts Stack -->
+  <div class="onchain-toasts">
+    <div class="onchain-toast" *ngFor="let t of toasts" [@toastAnim]>
+      <span class="toast-text">{{ t.text }}</span>
+      <a *ngIf="t.link" [href]="t.link" target="_blank" rel="noopener" class="toast-link">VIEW</a>
+    </div>
+  </div>
   <!-- 競技場背景 -->
   <div class="arena-background">
     <div class="magical-atmosphere">
@@ -24,8 +31,8 @@
           <h3 class="champion-name">{{ playerCharacter.name }}</h3>
           <div class="health-container">
             <div class="health-bar player">
-              <div class="health-fill" [style.width.%]="playerHealth"></div>
-              <div class="health-text">{{ playerHealth }}/100</div>
+              <div class="health-fill" [style.width.%]="getHealthPercent(playerHealth)"></div>
+              <div class="health-text">{{ playerHealth }}/{{ maxHp }}</div>
             </div>
           </div>
         </div>
@@ -45,8 +52,8 @@
           <h3 class="champion-name">{{ opponent.name }}</h3>
           <div class="health-container">
             <div class="health-bar opponent">
-              <div class="health-fill" [style.width.%]="opponentHealth"></div>
-              <div class="health-text">{{ opponentHealth }}/100</div>
+              <div class="health-fill" [style.width.%]="getHealthPercent(opponentHealth)"></div>
+              <div class="health-text">{{ opponentHealth }}/{{ maxHp }}</div>
             </div>
           </div>
         </div>
@@ -65,9 +72,9 @@
           <div class="fighter-info">
             <div class="fighter-name">{{ playerCharacter.name }}</div>
             <div class="health-bar-mobile player">
-              <div class="health-fill-mobile" [style.width.%]="playerHealth"></div>
+              <div class="health-fill-mobile" [style.width.%]="getHealthPercent(playerHealth)"></div>
             </div>
-            <div class="health-value">{{ playerHealth }}/100</div>
+            <div class="health-value">{{ playerHealth }}/{{ maxHp }}</div>
           </div>
         </div>
         
@@ -79,9 +86,9 @@
           <div class="fighter-info">
             <div class="fighter-name">{{ opponent.name }}</div>
             <div class="health-bar-mobile opponent">
-              <div class="health-fill-mobile" [style.width.%]="opponentHealth"></div>
+              <div class="health-fill-mobile" [style.width.%]="getHealthPercent(opponentHealth)"></div>
             </div>
-            <div class="health-value">{{ opponentHealth }}/100</div>
+            <div class="health-value">{{ opponentHealth }}/{{ maxHp }}</div>
           </div>
           <img [src]="opponent.image_url | mediaUrl" [alt]="opponent.name" class="fighter-avatar">
         </div>
