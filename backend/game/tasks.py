@@ -15,6 +15,12 @@ from pydantic import BaseModel
 from typing import List
 import asyncio
 from .node_service import NodeManager
+from web3 import Web3
+import hashlib
+import requests
+
+# 戰鬥參數
+INITIAL_HP = int(os.getenv('BATTLE_INITIAL_HP', 300))  # 預設 300，可用環境變數覆寫
 
 # 定義戰鬥結果的Pydantic模型
 class BattleLogEntry(BaseModel):
@@ -189,8 +195,8 @@ def validate_battle_result(battle_result, player, opponent):
         winner_id = str(battle_result.get('winner'))
         
         # 追蹤血量
-        player_hp = 100
-        opponent_hp = 100
+        player_hp = INITIAL_HP
+        opponent_hp = INITIAL_HP
         
         player_id_str = str(player.id)
         opponent_id_str = str(opponent.id)
@@ -249,8 +255,8 @@ def fix_battle_result(battle_result, player, opponent):
         battle_log = battle_result.get('battle_log', [])
         
         # 重新計算血量 - 使用ID而不是name
-        player_hp = 100
-        opponent_hp = 100
+        player_hp = INITIAL_HP
+        opponent_hp = INITIAL_HP
         
         player_id_str = str(player.id)
         opponent_id_str = str(opponent.id)
@@ -359,9 +365,10 @@ def run_battle_task(battle_id):
             o_STR, o_AGI, o_LUK = opponent.strength, opponent.agility, opponent.luck
 
             def dmg_params(STR, AGI):
-                base = 0.6*STR + 0.3*AGI
-                low = max(5, int(base*0.9))
-                high = int(base*1.1 + 5)
+                # 進一步降低係數與上限，延長回合
+                base = 0.3*STR + 0.15*AGI
+                low = max(3, int(base*0.8))
+                high = int(min(low + 12, base*0.95 + 10))
                 return low, high
             p_low, p_high = dmg_params(p_STR, p_AGI)
             o_low, o_high = dmg_params(o_STR, o_AGI)
@@ -373,14 +380,14 @@ def run_battle_task(battle_id):
 
             def dodge_suggestion(a_agi, d_agi):
                 diff = max(0, a_agi - d_agi)
-                return min(0.10, diff/200.0)  # 0%~10%
+                return min(0.15, diff/180.0)  # 提升上限到 15%
             # 我方攻擊對手 → 對手的建議閃避率
             o_vs_p_dodge = dodge_suggestion(p_AGI, o_AGI)
             # 對手攻擊我方 → 我方的建議閃避率
             p_vs_o_dodge = dodge_suggestion(o_AGI, p_AGI)
 
-            luck_one_off_p = min(0.10, 0.002*p_LUK)
-            luck_one_off_o = min(0.10, 0.002*o_LUK)
+            luck_one_off_p = min(0.08, 0.0015*p_LUK)
+            luck_one_off_o = min(0.08, 0.0015*o_LUK)
 
             battle_prompt = f"""
                         一場史詩般的對決即將展開！
@@ -389,7 +396,7 @@ def run_battle_task(battle_id):
 
                         第一步：請你自行想像一個極具創意、天馬行空的戰鬥地點。
 
-                        第二步：基於這個你想像出來的地點，生成一場精彩的戰鬥過程。
+                        第二步：基於這個你想像出來的地點，生成一場精彩的戰鬥過程。請讓敘事具有電影感（環境描寫、音效感、鏡頭語言），巧妙融入場景對戰局的影響（例如地形、高度差、天氣、機關）。
 
                         **戰鬥員資料：**
 
@@ -411,27 +418,29 @@ def run_battle_task(battle_id):
                         幸運：{opponent.luck}
                         特殊能力：{opponent.skill_description}
 
-                        **屬性權重與隨機機制（請遵循，允許 ±10% 的自然波動）：**
-                        - 傷害建議（角色1→角色2）：每回合在 [{p_low}, {p_high}] 間，並有 0~5 的微隨機。
-                        - 傷害建議（角色2→角色1）：每回合在 [{o_low}, {o_high}] 間，並有 0~5 的微隨機。
-                        - 暴擊率建議：角色1 {p_crit:.0%}、角色2 {o_crit:.0%}，暴擊約 1.5x。
+                        **屬性權重與隨機機制（請遵循，允許 ±10% 的自然波動）：**（敘事可以天馬行空，但數值需遵守）
+                        - 傷害建議（角色1→角色2）：每回合在 [{p_low}, {p_high}] 間，並有 0~2 的微隨機。
+                        - 傷害建議（角色2→角色1）：每回合在 [{o_low}, {o_high}] 間，並有 0~2 的微隨機。
+                        - 暴擊率建議：角色1 {p_crit:.0%}、角色2 {o_crit:.0%}，暴擊約 1.35x。
+                        - 重要上限：單次傷害不應超過初始血量的 15%（≈ {int(INITIAL_HP*0.15)}）。
+                        - 場景影響：場景因素可偶爾影響單次傷害（±10% 以內）或觸發狀態（濕滑、致盲、重力變化），請在敘事中體現。
                         - 閃避率建議：角色1被攻時 ~{p_vs_o_dodge:.0%}，角色2被攻時 ~{o_vs_p_dodge:.0%}。
-                        - 幸運一次性意外：全場最多一次，角色1機率 {luck_one_off_p:.0%}、角色2機率 {luck_one_off_o:.0%}，可造成當次結果最高約 1.2x 偏移（可能有利或不利）。
+                        - 幸運一次性意外：全場最多一次，角色1機率 {luck_one_off_p:.0%}、角色2機率 {luck_one_off_o:.0%}，可造成當次結果最高約 1.15x 偏移（可能有利或不利）。
 
                         **先後手建議（每回合判定一次）：**
                         - 基於敏捷，較高者約 60% 機率先手；剩餘 40% 視敘事交替。
 
                         **重要規則：**
-                        1. 5-10個回合的戰鬥。
+                        1. 6-10 個回合的戰鬥（若過早致命，請以場景或動作安排讓戰鬥在規則內至少到第 6 回合才結束）。
                         2. 你想像出的戰鬥地點必須對戰局產生決定性或意想不到的影響。
-                        3. 每個回合要有具體的動作和傷害值。
-                        4. 要運用到角色的特殊能力。
+                        3. 每個回合要有具體的動作和傷害值，敘事請生動、具臨場感（可以使用擬聲詞）。
+                        4. 要運用到角色的特殊能力，且至少有一次「招牌技能」的戲劇性演出（同時數值仍需合規）。
                         5. 血量先歸零者輸，請嚴格按照血量計算決定勝負。
                         6. 每個回合結束後，請仔細檢查剩餘血量，確保敘述與數據一致。
                         7. 若有角色血量歸零，立即結束戰鬥，不要補多餘回合。
 
                         **血量追蹤規則：**
-                        - 每個角色初始血量：100
+                        - 每個角色初始血量：{INITIAL_HP}
                         - 每回合結束後，被攻擊者的剩餘血量 = 當前血量 - 受到的傷害
                         - 如果剩餘血量 <= 0，該角色立即敗北
                         - 最後一個血量 > 0 的角色獲勝
@@ -581,6 +590,162 @@ def run_battle_task(battle_id):
         
         player.save()
         opponent.save()
+
+        # ===== 上鏈存證（IPFS + 合約事件）=====
+        try:
+            print("==================== On-Chain Attestation Start ====================")
+            # 準備 JSON（確保可序列化）
+            result_json = json.dumps(battle_result, ensure_ascii=False).encode('utf-8')
+            # 計算 keccak256（與鏈上習慣對齊）
+            result_hash_hex = Web3.keccak(result_json).hex()
+            print(f"[OnChain] battle_id={battle.id}")
+            print(f"[OnChain] result_json_size={len(result_json)} bytes")
+            print(f"[OnChain] result_hash={result_hash_hex}")
+
+            # 上傳到 IPFS（沿用 Pinata 設定）
+            ipfs_cid = None
+            pinata_api_key = os.getenv('PINATA_API_KEY')
+            pinata_secret_key = os.getenv('PINATA_SECRET_KEY')
+            if pinata_api_key and pinata_secret_key:
+                print("[OnChain] Pinata 配置存在，開始上傳 JSON 到 IPFS...")
+                url = "https://api.pinata.cloud/pinning/pinJSONToIPFS"
+                headers = {
+                    "pinata_api_key": pinata_api_key,
+                    "pinata_secret_api_key": pinata_secret_key,
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "pinataContent": battle_result,
+                    "pinataMetadata": {"name": f"battle_{battle.id}.json"}
+                }
+                resp = requests.post(url, json=payload, headers=headers, timeout=30)
+                if resp.status_code == 200:
+                    ipfs_cid = resp.json().get('IpfsHash')
+                    print(f"[OnChain] IPFS 上傳成功: cid={ipfs_cid} gateway=https://gateway.pinata.cloud/ipfs/{ipfs_cid}")
+                else:
+                    print(f"[OnChain] IPFS 上傳失敗: status={resp.status_code} body={resp.text}")
+            
+            # 先寫入 DB 狀態為 pending/sent 之前的準備
+            battle.onchain_status = 'pending'
+            battle.result_hash = result_hash_hex
+            if ipfs_cid:
+                battle.ipfs_cid = ipfs_cid
+            battle.save(update_fields=['onchain_status','result_hash','ipfs_cid'])
+            print(f"[OnChain] DB 更新: status=pending, result_hash/ ipfs_cid 已寫入")
+
+            # 送交易（僅骨架，合約位址/ABI/PK 由環境變數提供）
+            registry_address = os.getenv('BATTLE_REGISTRY_ADDRESS')
+            rpc_url = os.getenv('RPC_URL', 'https://rpc.sepolia.mantle.xyz')
+            private_key = os.getenv('WALLET_PRIVATE_KEY')
+            chain_id = int(os.getenv('CHAIN_ID', '5003'))
+            # 讀取合約 ABI：優先使用環境變數字串，否則讀取檔案（預設 onchain/artifacts/BattleRegistry.abi.json）
+            registry_abi = os.getenv('BATTLE_REGISTRY_ABI_JSON')
+            if not registry_abi:
+                abi_path = os.getenv('BATTLE_REGISTRY_ABI_PATH', os.path.join(os.path.dirname(__file__), 'contracts', 'BattleRegistry.abi.json'))
+                try:
+                    with open(abi_path, 'r', encoding='utf-8') as f:
+                        registry_abi = f.read()
+                    print(f"[OnChain] 從檔案載入 ABI: {abi_path}")
+                except Exception:
+                    registry_abi = None
+                    print("[OnChain] 無法載入 ABI 檔案，且未提供環境變數 BATTLE_REGISTRY_ABI_JSON")
+
+            if registry_address and private_key and registry_abi:
+                print(f"[OnChain] 開始送出交易 -> registry={registry_address}, rpc={rpc_url}, chain_id={chain_id}")
+                w3 = Web3(Web3.HTTPProvider(rpc_url))
+                account = w3.eth.account.from_key(private_key)
+                abi_obj = json.loads(registry_abi) if isinstance(registry_abi, str) else registry_abi
+                contract = w3.eth.contract(address=Web3.to_checksum_address(registry_address), abi=abi_obj)
+
+                # 對應參數：battleId(bytes32), fighter1, fighter2, winner, resultHash(bytes32), ipfsCid
+                battle_id_bytes32 = Web3.keccak(text=str(battle.id))
+                f1_addr = (battle.character1.player.wallet_address or '0x0000000000000000000000000000000000000000')
+                f2_addr = (battle.character2.player.wallet_address or '0x0000000000000000000000000000000000000000')
+                winner_addr = (battle.winner.player.wallet_address if battle.winner and battle.winner.player.wallet_address else '0x0000000000000000000000000000000000000000')
+                print(f"[OnChain] 參數: f1={f1_addr}, f2={f2_addr}, winner={winner_addr}")
+
+                # 將 result_hash_hex 轉 bytes32（使用 web3 轉換，避免型別不匹配）
+                result_hash_bytes32 = Web3.to_bytes(hexstr=result_hash_hex)
+                try:
+                    # 確認長度 32 bytes
+                    if len(result_hash_bytes32) != 32:
+                        raise ValueError(f"result_hash_bytes32 長度錯誤: {len(result_hash_bytes32)}")
+                except Exception as _e:
+                    print(f"[OnChain] result_hash 轉換檢查失敗: {_e}")
+
+                nonce = w3.eth.get_transaction_count(account.address)
+                call = contract.functions.recordBattle(
+                    battle_id_bytes32,
+                    Web3.to_checksum_address(f1_addr) if f1_addr.startswith('0x') else '0x0000000000000000000000000000000000000000',
+                    Web3.to_checksum_address(f2_addr) if f2_addr.startswith('0x') else '0x0000000000000000000000000000000000000000',
+                    Web3.to_checksum_address(winner_addr) if winner_addr.startswith('0x') else '0x0000000000000000000000000000000000000000',
+                    result_hash_bytes32,
+                    ipfs_cid or ''
+                )
+
+                # 估算 gas 並加 buffer
+                try:
+                    gas_estimate = call.estimate_gas({'from': account.address})
+                    print(f"[OnChain] Gas 估算: {gas_estimate}")
+                except Exception as ge:
+                    print(f"[OnChain] Gas 估算失敗，改用預設: {ge}")
+                    gas_estimate = 2_000_000
+
+                # Mantle/OP 鏈建議帶 EIP-1559 欄位
+                base_gas_price = w3.eth.gas_price
+                max_fee = int(base_gas_price * 2)
+                max_priority = int(base_gas_price * 0.5)
+
+                tx = call.build_transaction({
+                    'chainId': chain_id,
+                    'from': account.address,
+                    'gas': int(gas_estimate * 1.2),
+                    'maxFeePerGas': max_fee,
+                    'maxPriorityFeePerGas': max_priority,
+                    'nonce': nonce,
+                })
+                print(f"[OnChain] 構建交易完成: from={account.address}, nonce={nonce}, gas={tx.get('gas')}, maxFeePerGas={tx.get('maxFeePerGas')}, maxPriorityFeePerGas={tx.get('maxPriorityFeePerGas')}")
+
+                signed = w3.eth.account.sign_transaction(tx, private_key)
+                # web3.py v6 使用 raw_transaction；v5 為 rawTransaction
+                raw_tx = getattr(signed, 'raw_transaction', None) or getattr(signed, 'rawTransaction')
+                tx_hash = w3.eth.send_raw_transaction(raw_tx)
+                print(f"[OnChain] 交易已發送: tx_hash={tx_hash.hex()}")
+                battle.onchain_status = 'sent'
+                battle.onchain_tx_hash = tx_hash.hex()
+                battle.onchain_contract = registry_address
+                battle.save(update_fields=['onchain_status','onchain_tx_hash','onchain_contract'])
+                print(f"[OnChain] DB 更新: status=sent, tx={tx_hash.hex()}")
+
+                # 等待確認（縮短等待避免阻塞過久，可改為後續任務輪詢）
+                receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=60)
+                if receipt and receipt.status == 1:
+                    print(f"[OnChain] 交易確認成功: block={receipt.blockNumber}")
+                    battle.onchain_status = 'confirmed'
+                    battle.onchain_block_number = receipt.blockNumber
+                    try:
+                        block = w3.eth.get_block(receipt.blockNumber)
+                        from django.utils import timezone
+                        battle.onchain_timestamp = timezone.datetime.fromtimestamp(block.timestamp, tz=timezone.get_current_timezone())
+                    except Exception:
+                        pass
+                    battle.save(update_fields=['onchain_status','onchain_block_number','onchain_timestamp'])
+                else:
+                    print("[OnChain] 交易確認失敗或逾時，標記 failed")
+                    battle.onchain_status = 'failed'
+                    battle.save(update_fields=['onchain_status'])
+            else:
+                # 未配置合約/金鑰，標記可後續補寫
+                print("[OnChain] 未配置 registry_address / private_key / abi，跳過送交易，狀態 pending")
+                battle.onchain_status = 'pending'
+                battle.onchain_error = 'Registry or keys not configured'
+                battle.save(update_fields=['onchain_status','onchain_error'])
+            print("==================== On-Chain Attestation End ======================")
+        except Exception as e:
+            print(f"[OnChain] 發生例外: {e}")
+            battle.onchain_status = 'failed'
+            battle.onchain_error = str(e)
+            battle.save(update_fields=['onchain_status','onchain_error'])
 
     except Exception as e:
         print(f"Error in run_battle_task for battle_id {battle_id}: {e}")

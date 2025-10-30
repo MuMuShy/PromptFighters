@@ -9,7 +9,7 @@ from .views import (
 from .betting_views import (
     get_ladder_rankings, get_upcoming_battles, get_current_betting_battle,
     place_bet, get_my_bets, get_betting_stats, get_battle_details, join_ladder,
-    get_battle_history
+    get_battle_history, get_battle_onchain, get_player_recent_onchain, get_character_onchain_history
 )
 from .node_views import (
     register_node, node_heartbeat, list_nodes, health_check_all, 
@@ -51,6 +51,10 @@ urlpatterns = [
     path('ladder/stats/', get_betting_stats, name='betting-stats'),
     path('ladder/join/', join_ladder, name='join-ladder'),
     path('ladder/battles/history/', get_battle_history, name='battle-history'),
+    # On-chain 查詢
+    path('battles/<uuid:battle_id>/onchain/', get_battle_onchain, name='battle-onchain'),
+    path('player/onchain/recent/', get_player_recent_onchain, name='player-recent-onchain'),
+    path('characters/<uuid:character_id>/onchain/history/', get_character_onchain_history, name='character-onchain-history'),
     
     # AI節點管理
     path('nodes/register/', register_node, name='register-node'),

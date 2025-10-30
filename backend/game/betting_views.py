@@ -15,6 +15,131 @@ from .serializers import (
     BattleBetSerializer, BettingStatsSerializer
 )
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_character_onchain_history(request, character_id):
+    """依角色ID回傳其 on-chain 戰鬥歷史（已上鏈者）"""
+    try:
+        from .models import Battle, Character, Player
+        limit = int(request.query_params.get('limit', '20'))
+        player = Player.objects.get(user=request.user)
+        character = Character.objects.get(id=character_id)
+
+        # 僅回傳與該角色相關，且已有 on-chain 狀態的戰鬥
+        battles = Battle.objects.filter(
+            Q(character1=character) | Q(character2=character),
+            onchain_status__isnull=False
+        ).order_by('-created_at')[:limit]
+
+        explorer_base = 'https://explorer.sepolia.mantle.xyz/tx/'
+        ipfs_gateway = 'https://gateway.pinata.cloud/ipfs/'
+        items = []
+        for b in battles:
+            is_left = (b.character1_id == character.id)
+            left_char = b.character1
+            right_char = b.character2
+            txh = b.onchain_tx_hash or ''
+            txh = txh if txh.startswith('0x') else (('0x' + txh) if txh else '')
+            items.append({
+                'battle_id': str(b.id),
+                'created_at': b.created_at,
+                'left_name': left_char.name,
+                'left_image_url': getattr(left_char, 'image_url', None),
+                'right_name': right_char.name,
+                'right_image_url': getattr(right_char, 'image_url', None),
+                'onchain_status': b.onchain_status,
+                'onchain_tx_hash': txh,
+                'onchain_timestamp': b.onchain_timestamp,
+                'explorer_url': (explorer_base + txh) if txh else None,
+                'ipfs_gateway_url': (ipfs_gateway + b.ipfs_cid) if b.ipfs_cid else None,
+                'winner_name': (b.winner.name if b.winner else None) if hasattr(b, 'winner') else None,
+            })
+        return Response({'character_id': str(character.id), 'items': items})
+    except Player.DoesNotExist:
+        return Response({'error': '玩家不存在'}, status=status.HTTP_404_NOT_FOUND)
+    except Character.DoesNotExist:
+        return Response({'error': '角色不存在'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_battle_onchain(request, battle_id):
+    """回傳指定 Battle（實際對戰，不是 ScheduledBattle）的鏈上資訊"""
+    try:
+        from .models import Battle
+        battle = Battle.objects.get(id=battle_id)
+        data = {
+            'id': str(battle.id),
+            'onchain_status': battle.onchain_status,
+            'tx_hash': battle.onchain_tx_hash,
+            'block_number': battle.onchain_block_number,
+            'timestamp': battle.onchain_timestamp,
+            'contract': battle.onchain_contract,
+            'ipfs_cid': battle.ipfs_cid,
+            'result_hash': battle.result_hash,
+        }
+        # 方便前端建立鏈上/閘道連結
+        if battle.onchain_tx_hash:
+            tx = battle.onchain_tx_hash
+            if not tx.startswith('0x'):
+                tx = '0x' + tx
+            data['explorer_url'] = f"https://explorer.sepolia.mantle.xyz/tx/{tx}"
+        if battle.ipfs_cid:
+            data['ipfs_gateway'] = f"https://gateway.pinata.cloud/ipfs/{battle.ipfs_cid}"
+        return Response(data)
+    except Battle.DoesNotExist:
+        return Response({'error': 'Battle 不存在'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_player_recent_onchain(request):
+    """回傳玩家名下角色最近 N 筆對戰的 on-chain 紀錄"""
+    try:
+        from .models import Battle, Character, Player
+        limit = int(request.query_params.get('limit', '10'))
+        player = Player.objects.get(user=request.user)
+        characters = Character.objects.filter(player=player)
+        # 僅撈與玩家相關，且已有 on-chain 狀態的紀錄，最新在前
+        battles = Battle.objects.filter(
+            Q(character1__in=characters) | Q(character2__in=characters),
+            onchain_status__isnull=False
+        ).order_by('-created_at')[:limit]
+
+        explorer_base = 'https://explorer.sepolia.mantle.xyz/tx/'
+        ipfs_gateway = 'https://gateway.pinata.cloud/ipfs/'
+        items = []
+        for b in battles:
+            # 以玩家視角拆出左右選手資訊
+            is_player_left = (b.character1.player == player)
+            player_char = b.character1 if is_player_left else b.character2
+            opp_char = b.character2 if is_player_left else b.character1
+            txh = b.onchain_tx_hash or ''
+            txh = txh if txh.startswith('0x') else (('0x' + txh) if txh else '')
+            items.append({
+                'battle_id': str(b.id),
+                'created_at': b.created_at,
+                'player_character_name': player_char.name,
+                'player_character_image_url': getattr(player_char, 'image_url', None),
+                'opponent_name': opp_char.name,
+                'opponent_image_url': getattr(opp_char, 'image_url', None),
+                'winner_name': (b.winner.name if b.winner else None) if hasattr(b, 'winner') else None,
+                'onchain_status': b.onchain_status,
+                'onchain_tx_hash': txh,
+                'onchain_timestamp': b.onchain_timestamp,
+                'onchain_contract': b.onchain_contract,
+                'ipfs_cid': b.ipfs_cid,
+                'explorer_url': (explorer_base + txh) if txh else None,
+                'ipfs_gateway_url': (ipfs_gateway + b.ipfs_cid) if b.ipfs_cid else None,
+            })
+        return Response({'recent_onchain_activity': items})
+    except Player.DoesNotExist:
+        return Response({'error': '玩家不存在'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

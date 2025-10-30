@@ -172,6 +172,16 @@ class Battle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=BATTLE_STATUS_CHOICES, default='PENDING')
 
+    # 鏈上存證欄位
+    onchain_status = models.CharField(max_length=16, null=True, blank=True, db_index=True)
+    onchain_tx_hash = models.CharField(max_length=66, null=True, blank=True)
+    onchain_block_number = models.BigIntegerField(null=True, blank=True)
+    onchain_timestamp = models.DateTimeField(null=True, blank=True)
+    onchain_contract = models.CharField(max_length=42, null=True, blank=True)
+    ipfs_cid = models.CharField(max_length=100, null=True, blank=True)
+    result_hash = models.CharField(max_length=66, null=True, blank=True)
+    onchain_error = models.TextField(null=True, blank=True)
+
     def __str__(self):
         return f"Battle between {self.character1.name} and {self.character2.name} at {self.created_at}"
 
