@@ -17,6 +17,6 @@ export const environment = {
   // 應用程式元數據
   appName: 'Prompt Fighters',
   appDescription: 'AI Hero Battle Game',
-  appUrl: 'https://promptfighters.com',
-  appIcon: 'https://promptfighters.com/icon.png',
+  appUrl: 'https://promptfighters.app',
+  appIcon: 'https://promptfighters.app/icon.png',
 };

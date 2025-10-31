@@ -4,7 +4,7 @@ from .views import (
     CharacterViewSet, BattleViewSet, PlayerProfileView, SocialLoginView, 
     LeaderboardView, Web3LoginView, Web3NonceView, health_check, 
     PlayerResourceView, SpendResourceView, DailyQuestView, CheckInView, QuestProgressView,
-    CharacterGrowthAPIView, mint_character_nft, verify_character_ownership
+    CharacterGrowthAPIView, mint_character_nft, verify_character_ownership, proxy_image
 )
 from .betting_views import (
     get_ladder_rankings, get_upcoming_battles, get_current_betting_battle,
@@ -63,4 +63,7 @@ urlpatterns = [
     path('nodes/health-check/', health_check_all, name='health-check-all'),
     path('nodes/<uuid:node_id>/', update_node, name='update-node'),
     path('nodes/<uuid:node_id>/remove/', remove_node, name='remove-node'),
+    
+    # 圖片代理（用於分享功能，解決 CORS 問題）
+    path('proxy-image/', proxy_image, name='proxy-image'),
 ]  

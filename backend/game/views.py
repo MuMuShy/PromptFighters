@@ -28,10 +28,14 @@ from django.conf import settings
 from django.db import models
 from django.db.models import F, ExpressionWrapper, FloatField
 import re
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+import base64
+import logging
 
 # 匯入新的服務
 from .services import CharacterService, CharacterGrowthService
+
+logger = logging.getLogger(__name__)
 
 # --- Web3 錢包登入驗證 ---
 from django.core.cache import cache
@@ -872,3 +876,92 @@ def verify_character_ownership(request, character_id):
         'contract_address': character.contract_address,
         'current_owner': character.owner_wallet
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # 允許任何人訪問（用於分享功能）
+def proxy_image(request):
+    """
+    代理圖片請求，解決 CORS 問題
+    用於分享功能中的 Canvas 繪製
+    """
+    image_url = request.query_params.get('url')
+    if not image_url:
+        return Response({'error': '缺少 url 參數'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        from .storage_service import CloudStorageService
+        
+        # 獲取配置的存儲服務信息
+        storage_service = CloudStorageService()
+        allowed_domains = []
+        
+        # 添加後端域名
+        allowed_domains.append('localhost')
+        allowed_domains.append('127.0.0.1')
+        if hasattr(settings, 'ALLOWED_HOSTS') and settings.ALLOWED_HOSTS:
+            allowed_domains.extend([h for h in settings.ALLOWED_HOSTS if h != '*'])
+        
+        # 添加 MEDIA_URL 域名
+        if settings.MEDIA_URL.startswith('http'):
+            try:
+                from urllib.parse import urlparse
+                media_domain = urlparse(settings.MEDIA_URL).netloc
+                allowed_domains.append(media_domain)
+            except:
+                pass
+        
+        # 添加存儲服務的 CDN URL（如果配置）
+        if storage_service.cdn_url:
+            try:
+                from urllib.parse import urlparse
+                cdn_domain = urlparse(storage_service.cdn_url).netloc
+                allowed_domains.append(cdn_domain)
+            except:
+                pass
+        
+        # 驗證 URL 是否合法（只允許來自我們自己的存儲或同源）
+        from urllib.parse import urlparse
+        parsed_url = urlparse(image_url)
+        
+        # 允許的域名列表
+        is_allowed = (
+            parsed_url.netloc in allowed_domains or
+            'r2.dev' in parsed_url.netloc or  # Cloudflare R2
+            image_url.startswith(settings.MEDIA_URL) or  # 相對路徑
+            parsed_url.netloc == ''  # 相對路徑
+        )
+        
+        if not is_allowed:
+            logger.warning(f'拒絕代理請求：無效的圖片 URL: {image_url}')
+            return Response({'error': '無效的圖片 URL'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 使用 requests 下載圖片
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (compatible; PromptFighters/1.0)'
+        }
+        response = requests.get(image_url, timeout=10, headers=headers)
+        response.raise_for_status()
+        
+        # 檢查響應類型是否是圖片
+        content_type = response.headers.get('Content-Type', '').lower()
+        if not content_type.startswith('image/'):
+            logger.warning(f'響應不是圖片類型: {content_type}')
+            return Response({'error': '響應不是圖片'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 返回圖片數據
+        image_response = HttpResponse(response.content, content_type=content_type)
+        
+        # 設置 CORS 標頭
+        image_response['Access-Control-Allow-Origin'] = '*'
+        image_response['Access-Control-Allow-Methods'] = 'GET'
+        image_response['Access-Control-Allow-Headers'] = 'Content-Type'
+        image_response['Cache-Control'] = 'public, max-age=31536000'  # 緩存 1 年
+        
+        return image_response
+    except requests.RequestException as e:
+        logger.error(f'代理圖片請求失敗: {e}')
+        return Response({'error': '無法加載圖片'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        logger.error(f'代理圖片請求出錯: {e}')
+        return Response({'error': '服務器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

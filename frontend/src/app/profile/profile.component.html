@@ -75,10 +75,24 @@
             </div>
           </div>
         </div>
-        <div class="onchain-actions" style="margin-top: 10px; display:flex; gap:10px;">
+        <div class="onchain-actions" style="margin-top: 10px; display:flex; gap:10px; flex-wrap: wrap;">
           <a routerLink="/onchain-activity" class="game-button secondary">
             ON-CHAIN ACTIVITY
           </a>
+          <button 
+            *ngIf="currentCharacter && !isViewMode" 
+            (click)="openShareDialog(currentCharacter)" 
+            class="game-button share-button"
+            style="background: linear-gradient(135deg, #ff3c6e, #ff6b9d);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            SHARE
+          </button>
         </div>
         
         <div class="stats-row">
@@ -199,4 +213,12 @@
       </div>
     </div>
   </div>
+  
+  <!-- Share Dialog -->
+  <app-share-dialog
+    *ngIf="showShareDialog && shareCharacter"
+    [character]="shareCharacter"
+    [playerStats]="playerStatsForShare"
+    (closed)="closeShareDialog()">
+  </app-share-dialog>
 </div> 

@@ -65,65 +65,10 @@ export interface WalletLoginEvent {
         </button>
       </div>
       
-      <!-- Email 和手機登入選項（所有設備都顯示） -->
-      <div class="wallet-grid" style="margin-top:1.2rem;grid-template-columns:repeat(2,1fr);gap:1.2rem 1.2rem;">
-        <button 
-          (click)="connectOther('email')" 
-          class="wallet-btn long"
-          [disabled]="isConnecting"
-          [class.loading]="connectingType === 'email'">
-          <span class="wallet-name">Email登入</span>
-        </button>
-        <button 
-          (click)="connectOther('phone')" 
-          class="wallet-btn long"
-          [disabled]="isConnecting"
-          [class.loading]="connectingType === 'phone'">
-          <span class="wallet-name">手機登入</span>
-        </button>
-      </div>
       <!-- 連接狀態指示器 -->
       <div *ngIf="isConnecting" class="connecting-overlay">
         <div class="connecting-spinner"></div>
         <p class="connecting-text">正在連接 {{ getConnectingText() }}...</p>
-      </div>
-      <!-- Email/Phone 輸入彈窗 -->
-      <div *ngIf="showInputModal" class="modal-overlay" (click)="closeModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>{{ modalData.title }}</h3>
-            <button class="modal-close" (click)="closeModal()">×</button>
-          </div>
-          <div class="modal-body">
-            <input 
-              #inputField
-              [type]="modalData.inputType"
-              [placeholder]="modalData.placeholder"
-              [(ngModel)]="inputValue"
-              class="modal-input"
-              (keyup.enter)="confirmInput()"
-              autofocus>
-            <div *ngIf="showCodeInput" class="verification-section">
-              <p class="verification-hint">請檢查您的{{ modalData.type === 'email' ? 'Email' : '手機簡訊' }}，輸入收到的驗證碼</p>
-              <input 
-                type="text"
-                placeholder="請輸入 6 位數驗證碼"
-                [(ngModel)]="verificationCode"
-                class="modal-input verification-input"
-                maxlength="6"
-                (keyup.enter)="confirmVerification()">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-cancel" (click)="closeModal()">取消</button>
-            <button 
-              class="btn-confirm" 
-              (click)="showCodeInput ? confirmVerification() : confirmInput()"
-              [disabled]="!inputValue || (showCodeInput && !verificationCode)">
-              {{ showCodeInput ? '驗證' : '發送驗證碼' }}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   `,
@@ -135,22 +80,6 @@ export class Web3WalletComponent {
 
   isConnecting = false;
   connectingType: string | null = null;
-  showInputModal = false;
-  showCodeInput = false;
-  inputValue = '';
-  verificationCode = '';
-  
-  modalData: {
-    type: 'email' | 'phone';
-    title: string;
-    placeholder: string;
-    inputType: string;
-  } = {
-    type: 'email',
-    title: '',
-    placeholder: '',
-    inputType: 'text'
-  };
 
   constructor(
     private web3Service: Web3Service,
@@ -213,73 +142,6 @@ export class Web3WalletComponent {
       this.loginResult.emit({
         type: 'error',
         message: `${provider} 社交登入失敗: ${error.message}`
-      });
-    } finally {
-      this.isConnecting = false;
-      this.connectingType = null;
-    }
-  }
-
-  // 連接其他方式
-  async connectOther(type: 'email' | 'phone') {
-    if (this.isConnecting) return;
-    
-    this.modalData = {
-      type,
-      title: type === 'email' ? '請輸入 Email 地址' : '請輸入手機號碼',
-      placeholder: type === 'email' ? '例如: user@example.com' : '例如: +886912345678',
-      inputType: type === 'email' ? 'email' : 'tel'
-    };
-    
-    this.inputValue = '';
-    this.verificationCode = '';
-    this.showCodeInput = false;
-    this.showInputModal = true;
-  }
-
-  // 確認輸入
-  async confirmInput() {
-    if (!this.inputValue.trim()) return;
-
-    this.isConnecting = true;
-    this.connectingType = this.modalData.type;
-
-    try {
-      // 發送驗證碼
-      await this.web3Service.sendVerificationCode(this.modalData.type, this.inputValue);
-      this.showCodeInput = true;
-    } catch (error: any) {
-      console.error('發送驗證碼失敗:', error);
-      this.loginResult.emit({
-        type: 'error',
-        message: '發送驗證碼失敗: ' + error.message
-      });
-      this.closeModal();
-    }
-  }
-
-  // 確認驗證碼
-  async confirmVerification() {
-    if (!this.verificationCode.trim()) return;
-
-    try {
-      const address = await this.web3Service.connectWithVerification(
-        this.modalData.type,
-        this.inputValue,
-        this.verificationCode
-      );
-
-      if (!address) {
-        throw new Error('驗證失敗');
-      }
-
-      await this.performWeb3Login(address, this.modalData.type);
-      this.closeModal();
-    } catch (error: any) {
-      console.error('驗證失敗:', error);
-      this.loginResult.emit({
-        type: 'error',
-        message: '驗證失敗: ' + error.message
       });
     } finally {
       this.isConnecting = false;
@@ -357,16 +219,6 @@ export class Web3WalletComponent {
     }
   }
 
-  // 關閉彈窗
-  closeModal() {
-    this.showInputModal = false;
-    this.showCodeInput = false;
-    this.inputValue = '';
-    this.verificationCode = '';
-    this.isConnecting = false;
-    this.connectingType = null;
-  }
-
   // 取得連接中的文字
   getConnectingText(): string {
     const textMap: { [key: string]: string } = {
@@ -375,9 +227,7 @@ export class Web3WalletComponent {
       'coinbase': 'Coinbase Wallet',
       'google': 'Google 社交錢包',
       'facebook': 'Facebook 社交錢包',
-      'apple': 'Apple 社交錢包',
-      'email': 'Email 錢包',
-      'phone': '手機錢包'
+      'apple': 'Apple 社交錢包'
     };
     return textMap[this.connectingType || ''] || '錢包';
   }

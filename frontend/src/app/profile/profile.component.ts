@@ -13,10 +13,12 @@ import { Router } from '@angular/router';
 import { NftService } from '../services/nft.service';
 import { Web3Service } from '../services/web3.service';
 import { DialogService } from '../services/dialog.service';
+import { ShareDialogComponent } from '../components/share-dialog/share-dialog.component';
+
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, CharacterCardComponent, FormsModule],
+  imports: [CommonModule, RouterModule, CharacterCardComponent, FormsModule, ShareDialogComponent],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
@@ -34,6 +36,8 @@ export class ProfileComponent implements OnInit {
   editNicknameMode: boolean = false;
   isMinting: boolean = false;
   mintingCharacterId: string | null = null;
+  showShareDialog: boolean = false;
+  shareCharacter: Character | null = null;
   
   rarityFilters = [
     { value: null, label: 'ALL', icon: '◉', count: 0 },
@@ -163,6 +167,29 @@ export class ProfileComponent implements OnInit {
       5: '傳說'
     };
     return rarityMap[rarity] || '普通';
+  }
+
+  get urCount(): number {
+    return this.getRarityCount(5);
+  }
+
+  get playerStatsForShare() {
+    return {
+      totalFighters: this.totalCharacters,
+      totalBattles: this.totalBattles,
+      winRate: this.overallWinRate,
+      urCount: this.urCount
+    };
+  }
+
+  openShareDialog(character: Character) {
+    this.shareCharacter = character;
+    this.showShareDialog = true;
+  }
+
+  closeShareDialog() {
+    this.showShareDialog = false;
+    this.shareCharacter = null;
   }
 
   logout(): void {

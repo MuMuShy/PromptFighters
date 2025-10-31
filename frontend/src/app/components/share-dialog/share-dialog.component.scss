@@ -1,0 +1,215 @@
+.share-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.share-dialog-content {
+  background: linear-gradient(135deg, #1a1f3a 0%, #0a0f1c 100%);
+  border-radius: 20px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 32px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(90deg);
+    }
+  }
+}
+
+.dialog-body {
+  padding: 28px;
+}
+
+.preview-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+
+  .preview-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.generating-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #fff;
+
+  .spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+
+  p {
+    font-size: 18px;
+    color: #888;
+    margin: 0;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-container {
+  text-align: center;
+  padding: 40px 20px;
+  color: #fff;
+
+  .error-text {
+    color: #ff3c6e;
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+
+  .retry-btn {
+    background: linear-gradient(135deg, #ff3c6e, #ff6b9d);
+    border: none;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.dialog-footer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 24px 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  &.twitter {
+    background: linear-gradient(135deg, #1da1f2, #0d8bd9);
+    
+    &:hover {
+      background: linear-gradient(135deg, #0d8bd9, #1da1f2);
+    }
+  }
+
+  &.facebook {
+    background: linear-gradient(135deg, #1877f2, #0e63c4);
+    
+    &:hover {
+      background: linear-gradient(135deg, #0e63c4, #1877f2);
+    }
+  }
+
+  &.download {
+    background: linear-gradient(135deg, #4fd2ff, #2196f3);
+    
+    &:hover {
+      background: linear-gradient(135deg, #2196f3, #4fd2ff);
+    }
+  }
+
+  &.copy {
+    background: linear-gradient(135deg, #a259ff, #7f53ac);
+    
+    &:hover {
+      background: linear-gradient(135deg, #7f53ac, #a259ff);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .share-dialog-content {
+    margin: 10px;
+    max-height: 95vh;
+  }
+
+  .dialog-footer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
