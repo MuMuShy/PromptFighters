@@ -10,9 +10,9 @@ export const environment = {
   walletConnectProjectId: 'your_walletconnect_project_id', // 需要從 WalletConnect 取得
   
   // Mantle 鏈配置
-  mantleChainId: 5000,
-  mantleRpcUrl: 'https://rpc.mantle.xyz',
-  mantleExplorerUrl: 'https://explorer.mantle.xyz',
+  mantleChainId: 5003,
+  mantleRpcUrl: 'https://rpc.sepolia.mantle.xyz',
+  mantleExplorerUrl: 'https://explorer.sepolia.mantle.xyz',
   
   // 應用程式元數據
   appName: 'Prompt Fighters',

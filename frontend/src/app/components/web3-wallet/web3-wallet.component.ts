@@ -168,12 +168,14 @@ export class Web3WalletComponent {
 
     try {
       let address: string | null = null;
-      address = await this.web3Service.connectWithThirdweb(type);
-      // if (type === 'metamask') {
-      //   address = await this.web3Service.connectMetamask();
-      // } else {
-      //   address = await this.web3Service.connectWithThirdweb(type);
-      // }
+      if (type === 'metamask') {
+        if (!(window as any).ethereum) {
+          throw new Error('未偵測到 MetaMask，請先安裝或開啟擴充套件');
+        }
+        address = await this.web3Service.connectMetamask();
+      } else {
+        address = await this.web3Service.connectWithThirdweb(type);
+      }
 
       if (!address) {
         throw new Error('錢包連接失敗');
@@ -302,9 +304,20 @@ export class Web3WalletComponent {
       let socialEmail: string | undefined;
       
       if (loginMethod === 'metamask') {
-        const provider = new ethers.providers.Web3Provider((window as any).ethereum);
-        const signer = await provider.getSigner();
-        signature = await signer.signMessage(message);
+        // 優先使用 thirdweb 當前錢包簽名（避免 unknown account #0）
+        if (this.web3Service.currentWallet) {
+          const sig = await this.web3Service.signMessage(message);
+          if (!sig) throw new Error('簽名失敗');
+          signature = sig;
+        } else {
+          // 回退到原生 MetaMask：先請求帳戶，再取得 signer
+          const eth = (window as any).ethereum;
+          if (!eth) throw new Error('未偵測到 MetaMask');
+          await eth.request({ method: 'eth_requestAccounts' });
+          const provider = new ethers.providers.Web3Provider(eth);
+          const signer = await provider.getSigner();
+          signature = await signer.signMessage(message);
+        }
       } else {
         const sig = await this.web3Service.signMessage(message);
         if (!sig) {
