@@ -109,4 +109,20 @@ export class CharacterService {
       { headers }
     );
   }
+
+  /**
+   * 根據 token_id 獲取角色信息（用於市場展示）
+   */
+  getCharacterByTokenId(tokenId: number): Observable<{
+    success: boolean;
+    data?: Character;
+    error?: string;
+  }> {
+    // 這個 API 不需要認證（AllowAny）
+    return this.http.get<{
+      success: boolean;
+      data?: Character;
+      error?: string;
+    }>(`${environment.backendBaseUrl}/api/characters/token/${tokenId}/`);
+  }
 }

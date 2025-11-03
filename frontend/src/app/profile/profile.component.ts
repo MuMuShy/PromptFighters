@@ -14,6 +14,7 @@ import { NftService } from '../services/nft.service';
 import { Web3Service } from '../services/web3.service';
 import { DialogService } from '../services/dialog.service';
 import { ShareDialogComponent } from '../components/share-dialog/share-dialog.component';
+import { MarketplaceService } from '../services/marketplace.service';
 
 @Component({
   selector: 'app-profile',
@@ -39,6 +40,20 @@ export class ProfileComponent implements OnInit {
   showShareDialog: boolean = false;
   shareCharacter: Character | null = null;
   
+  // 上架相關
+  showListDialog: boolean = false;
+  listingCharacter: Character | null = null;
+  listingPrice: string = '';
+  isListing: boolean = false;
+  isCheckingApproval: boolean = false;
+  
+  // 取消上架相關
+  isCancelling: boolean = false;
+  cancellingCharacterId: string | null = null;
+  
+  // NFT 同步相關
+  isSyncingNFTs: boolean = false;
+  
   rarityFilters = [
     { value: null, label: 'ALL', icon: '◉', count: 0 },
     { value: 1, label: 'N', icon: '●', count: 0 },
@@ -57,14 +72,15 @@ export class ProfileComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private nftService: NftService,
-    private web3Service: Web3Service
+    public web3Service: Web3Service, // 改為 public，以便模板訪問
+    private marketplaceService: MarketplaceService
   ) {}
 
   ngOnInit(): void {
     const playerId = this.route.snapshot.paramMap.get('playerId');
     this.isViewMode = !!playerId;
     this.playerService.getProfile(playerId || undefined).subscribe({
-      next: (profile: any) => {
+      next: async (profile: any) => {
         if (this.isViewMode) {
           this.displayName = profile.player.nickname || profile.player.display_name || '';
         } else {
@@ -74,6 +90,18 @@ export class ProfileComponent implements OnInit {
           this.displayName = profile.player.nickname || profile.player.display_name || '';
         }
         this.allCharacters = profile.characters;
+        
+        // 如果是自己的 Profile 且有錢包連接，從鏈上同步 listing 狀態和 NFT 持有
+        if (!this.isViewMode && this.web3Service.isWalletConnected()) {
+          await this.syncListingsFromChain();
+          // 購買後可能需要同步 NFT 持有（靜默執行，不顯示錯誤）
+          try {
+            await this.syncOwnedNFTsFromChainSilent();
+          } catch (e) {
+            // 靜默失敗，用戶可以手動點擊按鈕同步
+          }
+        }
+        
         if (profile.characters.length > 0 && !this.isViewMode) {
           const initialCharacter = profile.characters[0];
           this.currentCharacter = initialCharacter;
@@ -157,7 +185,7 @@ export class ProfileComponent implements OnInit {
     };
     return rarityMap[rarity] || 'N';
   }
-
+  
   getRarityText(rarity: number): string {
     const rarityMap: { [key: number]: string } = {
       1: '普通',
@@ -302,5 +330,525 @@ export class ProfileComponent implements OnInit {
         }
       }
     );
+  }
+
+  // 上架角色到市場
+  openListDialog(character: Character, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    // 檢查是否已鑄造
+    if (!character.is_minted || !character.token_id) {
+      this.dialogService.warning('尚未鑄造', '請先將角色鑄造為 NFT 才能上架');
+      return;
+    }
+
+    // 檢查是否已連接錢包
+    if (!this.web3Service.isWalletConnected()) {
+      this.dialogService.warning('請連接錢包', '請先連接錢包才能上架角色');
+      return;
+    }
+
+    this.listingCharacter = character;
+    this.listingPrice = '';
+    this.showListDialog = true;
+  }
+
+  closeListDialog() {
+    this.showListDialog = false;
+    this.listingCharacter = null;
+    this.listingPrice = '';
+  }
+
+  isPriceValid(): boolean {
+    if (!this.listingPrice) {
+      return false;
+    }
+    const price = parseFloat(this.listingPrice);
+    return !isNaN(price) && price > 0;
+  }
+
+  async listCharacterForSale() {
+    if (!this.listingCharacter || !this.listingPrice) {
+      this.dialogService.error('錯誤', '請輸入價格');
+      return;
+    }
+
+    const price = parseFloat(this.listingPrice);
+    if (isNaN(price) || price <= 0) {
+      this.dialogService.error('錯誤', '請輸入有效的價格（大於 0）');
+      return;
+    }
+
+    if (!this.listingCharacter.token_id) {
+      this.dialogService.error('錯誤', '角色尚未鑄造為 NFT');
+      return;
+    }
+
+    // 確認對話框
+    const confirmed = await new Promise<boolean>((resolve) => {
+      this.dialogService.confirm(
+        '確認上架',
+        `確定要以 ${this.listingPrice} ETH 上架「${this.listingCharacter!.name}」嗎？\n\n` +
+        `此操作將：\n` +
+        `• 創建鏈上上架記錄\n` +
+        `• 其他玩家可以購買此角色\n` +
+        `• 你可以隨時取消上架`,
+        () => resolve(true),
+        () => resolve(false)
+      );
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.isListing = true;
+    this.dialogService.loading('上架中', '正在處理上架交易...');
+
+    try {
+      const walletAddress = this.web3Service.getWalletAddress();
+      if (!walletAddress) {
+        throw new Error('無法獲取錢包地址');
+      }
+
+      // 步驟 1: 檢查 NFT 是否已批准 Marketplace
+      this.isCheckingApproval = true;
+      const isApproved = await this.marketplaceService.checkNFTApproval(
+        this.listingCharacter.token_id!,
+        walletAddress
+      );
+
+      if (!isApproved) {
+        // 步驟 2: 批准 Marketplace
+        this.dialogService.loading('批准中', '正在批准 Marketplace 轉移 NFT...');
+        const approveTxHash = await this.marketplaceService.approveNFTForMarketplace(
+          this.listingCharacter.token_id!
+        );
+        this.dialogService.success('批准成功', `交易哈希: ${approveTxHash}`);
+        
+        // 等待批准交易確認
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+
+      // 步驟 3: 上架
+      this.dialogService.loading('上架中', '正在創建上架記錄...');
+      const result = await this.marketplaceService.listCharacter(
+        this.listingCharacter.token_id!,
+        this.listingPrice
+      );
+
+      // 步驟 4: 通知後端索引（可選）
+      if (result.listingId !== undefined) {
+        try {
+          console.log('通知後端索引上架:', {
+            txHash: result.txHash,
+            listingId: result.listingId,
+            characterId: this.listingCharacter!.id,
+            price: this.listingPrice
+          });
+          
+          await new Promise((resolve, reject) => {
+            this.marketplaceService.notifyListingCreated(
+              result.txHash,
+              result.listingId!,
+              this.listingCharacter!.id,
+              this.listingPrice  // 傳遞價格
+            ).subscribe({
+              next: (response) => {
+                console.log('後端索引成功:', response);
+                resolve(undefined);
+              },
+              error: (error) => {
+                console.error('後端索引失敗:', error);
+                reject(error);
+              }
+            });
+          });
+          
+          console.log('✅ 後端索引完成');
+        } catch (e: any) {
+          console.error('通知後端索引失敗:', e);
+          console.error('錯誤詳情:', e.message || e);
+          // 不影響上架流程，但記錄錯誤
+        }
+      } else {
+        console.warn('⚠️ 無法獲取 listingId，跳過後端索引');
+      }
+
+      this.dialogService.success(
+        '上架成功',
+        `交易哈希: ${result.txHash}\n\n` +
+        `角色已成功上架到市場！\n` +
+        `其他人現在可以購買此角色。`
+      );
+
+      // 重新從鏈上同步狀態（確保數據準確，包括 listing ID）
+      await this.syncListingsFromChain();
+      
+      // 更新角色狀態（標記為已上架）
+      // 同步後應該已經更新了 is_listed 和 chain_listing_id
+      const updatedCharacter = this.allCharacters.find(c => c.id === this.listingCharacter!.id);
+      if (updatedCharacter) {
+        this.listingCharacter = updatedCharacter;
+      }
+      
+      // 關閉對話框
+      this.closeListDialog();
+
+      // 可選：導航到市場頁面查看
+      setTimeout(() => {
+        this.router.navigate(['/marketplace']);
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('上架失敗:', error);
+      this.dialogService.error(
+        '上架失敗',
+        error.message || '交易失敗，請檢查錢包餘額和網絡設置'
+      );
+    } finally {
+      this.isListing = false;
+      this.isCheckingApproval = false;
+    }
+  }
+
+  /**
+   * 取消上架（直接從鏈上獲取 listing ID）
+   */
+  async cancelListing(character: Character, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    // 檢查是否已鑄造
+    if (!character.is_minted || !character.token_id) {
+      this.dialogService.warning('未鑄造', '此角色尚未鑄造為 NFT');
+      return;
+    }
+
+    // 檢查是否已連接錢包
+    if (!this.web3Service.isWalletConnected()) {
+      this.dialogService.warning('請連接錢包', '請先連接錢包才能取消上架');
+      return;
+    }
+
+    // 直接從鏈上獲取所有 listing 信息（可能有多個）
+    let chainListingIds: number[] = [];
+    
+    try {
+      const allListings = await this.marketplaceService.getAllListingsByTokenId(character.token_id!);
+
+      if (!allListings || allListings.length === 0) {
+        this.dialogService.warning('未上架', '此角色在鏈上未找到上架記錄');
+        return;
+      }
+
+      chainListingIds = allListings.map(l => l.listingId!);
+      console.log(`從鏈上獲取的 listing 信息:`, allListings);
+      
+      // 如果有多個 listing，提示用戶並選擇要取消的
+      if (allListings.length > 1) {
+        // 格式化價格（從 wei 轉換為 ETH）
+        const formatPrice = (priceInWei: string) => {
+          const num = BigInt(priceInWei);
+          const eth = Number(num) / 1e18;
+          if (eth >= 1) {
+            return eth.toFixed(2);
+          } else if (eth >= 0.01) {
+            return eth.toFixed(4);
+          } else {
+            return eth.toFixed(6);
+          }
+        };
+        
+        const listingTexts = allListings.map((l) => 
+          `Listing ${l.listingId}: ${formatPrice(l.price)} ETH`
+        ).join('\n');
+        
+        const confirmMultiple = await new Promise<boolean>((resolve) => {
+          this.dialogService.confirm(
+            '發現多個上架',
+            `此角色有 ${allListings.length} 個上架記錄：\n\n${listingTexts}\n\n` +
+            `將取消所有上架記錄。確定要繼續嗎？`,
+            () => resolve(true),
+            () => resolve(false)
+          );
+        });
+        
+        if (!confirmMultiple) {
+          return;
+        }
+      }
+    } catch (error: any) {
+      console.error('從鏈上獲取上架信息失敗:', error);
+      this.dialogService.error(
+        '獲取上架信息失敗',
+        error.message || '無法從鏈上獲取上架信息，請稍後再試'
+      );
+      return;
+    }
+
+    // 確認對話框
+    const listingCount = chainListingIds.length;
+    const confirmed = await new Promise<boolean>((resolve) => {
+      this.dialogService.confirm(
+        '確認取消上架',
+        `確定要取消「${character.name}」的${listingCount > 1 ? ` ${listingCount} 個` : ''}上架嗎？\n\n` +
+        `此操作將：\n` +
+        `• 取消鏈上上架記錄${listingCount > 1 ? '（所有）' : ''}\n` +
+        `• 其他玩家將無法購買此角色\n` +
+        `• 你可以稍後重新上架`,
+        () => resolve(true),
+        () => resolve(false)
+      );
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.isCancelling = true;
+    this.cancellingCharacterId = character.id;
+    this.dialogService.loading('取消上架中', `正在處理${listingCount > 1 ? ` ${listingCount} 個` : ''}取消上架交易...`);
+
+    try {
+      // 取消所有 listing
+      const txHashes: string[] = [];
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const listingId of chainListingIds) {
+        try {
+          console.log(`🔄 取消 listing ID: ${listingId}`);
+          const txHash = await this.marketplaceService.cancelListing(listingId);
+          txHashes.push(txHash);
+          successCount++;
+          console.log(`✅ Listing ${listingId} 取消成功: ${txHash}`);
+          
+          // 如果有多個，稍等一下再取消下一個，避免 nonce 衝突
+          if (chainListingIds.length > 1 && listingId !== chainListingIds[chainListingIds.length - 1]) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 等待 1 秒
+          }
+        } catch (error: any) {
+          failCount++;
+          console.error(`❌ 取消 listing ${listingId} 失敗:`, error);
+          // 繼續取消其他的
+        }
+      }
+
+      if (successCount > 0) {
+        const txHashText = txHashes.map((hash, idx) => `Listing ${chainListingIds[idx]}: ${hash}`).join('\n');
+        this.dialogService.success(
+          '取消上架成功',
+          `成功取消 ${successCount} 個上架記錄${failCount > 0 ? `，失敗 ${failCount} 個` : ''}：\n\n${txHashText}`
+        );
+      } else {
+        throw new Error('所有取消操作都失敗了');
+      }
+
+      // 更新角色狀態（標記為未上架）
+      character.is_listed = false;
+      character.chain_listing_id = undefined;
+
+      // 重新從鏈上同步狀態（確保數據準確）
+      await this.syncListingsFromChain();
+
+    } catch (error: any) {
+      console.error('取消上架失敗:', error);
+      this.dialogService.error(
+        '取消上架失敗',
+        error.message || '交易失敗，請檢查錢包餘額和網絡設置'
+      );
+    } finally {
+      this.isCancelling = false;
+      this.cancellingCharacterId = null;
+    }
+  }
+
+  /**
+   * 從鏈上同步所有 listing 狀態
+   */
+  async syncListingsFromChain() {
+    try {
+      // 獲取所有已鑄造的角色
+      const mintedCharacters = this.allCharacters.filter(c => c.is_minted && c.token_id);
+      
+      if (mintedCharacters.length === 0) {
+        console.log('沒有已鑄造的角色，跳過同步');
+        return;
+      }
+
+      console.log(`開始同步鏈上 listing 狀態，已鑄造角色數: ${mintedCharacters.length}`);
+
+      // 從鏈上獲取所有 listing
+      const allListings = await this.marketplaceService.getAllListingsFromChain();
+      
+      console.log('從鏈上獲取的 listing:', allListings);
+      console.log('已鑄造的角色 Token IDs:', mintedCharacters.map(c => c.token_id));
+      
+      // 更新角色的 listing 狀態
+      let matchedCount = 0;
+      for (const character of mintedCharacters) {
+        if (!character.token_id) continue;
+        
+        // 查找對應的 listing（嚴格匹配 tokenId）
+        const listing = allListings.find(
+          l => l.tokenId === character.token_id && l.status === 1 // status 1 表示 active
+        );
+        
+        if (listing) {
+          // 角色已上架
+          character.is_listed = true;
+          character.chain_listing_id = listing.listingId;
+          matchedCount++;
+          console.log(`✅ 角色 ${character.name} (Token ID: ${character.token_id}) 已上架，Listing ID: ${listing.listingId}, Price: ${listing.price}`);
+        } else {
+          // 角色未上架
+          character.is_listed = false;
+          character.chain_listing_id = undefined;
+          console.log(`❌ 角色 ${character.name} (Token ID: ${character.token_id}) 未上架`);
+        }
+      }
+      
+      console.log(`同步完成，匹配到 ${matchedCount} 個上架的角色`);
+    } catch (error: any) {
+      console.error('從鏈上同步 listing 狀態失敗:', error);
+      // 失敗不影響頁面載入
+    }
+  }
+
+  /**
+   * 靜默同步 NFT（不顯示對話框，用於自動同步）
+   */
+  async syncOwnedNFTsFromChainSilent() {
+    try {
+      if (!this.web3Service.currentWallet) return;
+      const account = this.web3Service.currentWallet.getAccount();
+      if (!account || !account.address) return;
+
+      const result = await this.marketplaceService.syncOwnedNFTsFromChain();
+      if (result.success && result.syncedTokens.length > 0) {
+        // 如果有新同步的 NFT，重新加載 Profile
+        this.loadProfile();
+      }
+    } catch (error) {
+      // 靜默失敗
+      console.warn('靜默同步 NFT 失敗:', error);
+    }
+  }
+
+  /**
+   * 從鏈上掃描並同步用戶持有的所有 NFT 到後端（帶 UI 提示）
+   * 這會更新 Character 的 player 和 owner_wallet，使購買的 NFT 顯示在 Profile 中
+   */
+  async syncOwnedNFTsFromChain() {
+    try {
+      // 需已連接錢包
+      if (!this.web3Service.currentWallet) {
+        this.dialogService.error('未連接錢包', '請先連接錢包才能同步 NFT');
+        return;
+      }
+      const account = this.web3Service.currentWallet.getAccount();
+      if (!account || !account.address) {
+        this.dialogService.error('無法獲取賬戶', '無法獲取錢包地址');
+        return;
+      }
+
+      this.isSyncingNFTs = true;
+      this.dialogService.loading('同步中', '正在從鏈上掃描你持有的 NFT...');
+
+      console.log('🔄 開始同步持有的 NFT 到後端...');
+      
+      // 使用 marketplaceService 的同步方法
+      const result = await this.marketplaceService.syncOwnedNFTsFromChain();
+      
+      if (result.success) {
+        console.log(`✅ 同步成功: ${result.message}`, result.syncedTokens);
+        
+        // 重新加載 Profile 以獲取更新後的 characters
+        this.loadProfile();
+        
+        this.dialogService.success(
+          '同步成功',
+          result.syncedTokens.length > 0 
+            ? `成功同步 ${result.syncedTokens.length} 個 NFT 到你的 Profile！`
+            : '未找到新的 NFT，你的 Profile 已是最新狀態。'
+        );
+      } else {
+        console.warn('⚠️ NFT 同步完成但可能有錯誤:', result);
+        this.dialogService.error('同步失敗', result.message || '同步過程中出現錯誤');
+      }
+    } catch (error: any) {
+      console.error('❌ 同步 NFT 失敗:', error);
+      this.dialogService.error('同步失敗', error.message || '無法從鏈上同步 NFT');
+    } finally {
+      this.isSyncingNFTs = false;
+    }
+  }
+
+  /**
+   * 重新加載 Profile 數據
+   */
+  loadProfile() {
+    this.isLoading = true;
+    this.playerService.getProfile().subscribe({
+      next: async (profile: any) => {
+        this.walletAddress = profile.player.wallet_address || '';
+        this.nickname = profile.player.nickname || '';
+        this.nicknameChanged = profile.player.nickname_changed || false;
+        this.displayName = profile.player.nickname || profile.player.display_name || '';
+        this.allCharacters = profile.characters;
+        
+        if (profile.characters.length > 0) {
+          const initialCharacter = profile.characters[0];
+          this.currentCharacter = initialCharacter;
+          this.characterService.saveCharacter(initialCharacter);
+        }
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      }
+    });
+  }
+
+  /**
+   * 從鏈上校驗當前玩家對各 NFT 的實際持有狀態（僅校驗，不更新）
+   */
+  async syncOwnershipFromChain() {
+    try {
+      // 需已連接錢包
+      if (!this.web3Service.currentWallet) {
+        console.log('錢包未連接，跳過擁有權校驗');
+        return;
+      }
+      const account = this.web3Service.currentWallet.getAccount();
+      if (!account || !account.address) {
+        console.log('無法獲取賬戶地址，跳過擁有權校驗');
+        return;
+      }
+      const walletAddress = String(account.address).toLowerCase();
+
+      // 只對已鑄造且有 tokenId 的角色進行校驗
+      const mintedCharacters = this.allCharacters.filter(c => c.is_minted && c.token_id !== undefined);
+      if (mintedCharacters.length === 0) {
+        return;
+      }
+
+      // 逐一透過 ownerOf 校驗
+      for (const character of mintedCharacters) {
+        if (character.token_id === undefined) continue;
+        const owner = await this.marketplaceService.ownerOf(character.token_id);
+        character.is_owned = !!owner && owner === walletAddress;
+      }
+
+      // 可選：顯示不一致狀態於日誌
+      const mismatches = mintedCharacters.filter(c => c.is_owned === false);
+      if (mismatches.length > 0) {
+        console.warn('發現鏈上不屬於當前錢包的角色（將不視為持有）:', mismatches.map(c => ({ name: c.name, tokenId: c.token_id })));
+      }
+    } catch (error) {
+      console.error('鏈上擁有權校驗失敗:', error);
+    }
   }
 }

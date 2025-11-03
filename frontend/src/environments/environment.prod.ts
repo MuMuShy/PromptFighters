@@ -13,6 +13,11 @@ export const environment = {
   mantleChainId: 5000,
   mantleRpcUrl: 'https://rpc.mantle.xyz',
   mantleExplorerUrl: 'https://explorer.mantle.xyz',
+
+  // 智能合約地址
+  marketplaceContractAddress: '0xb29Bd79b4Df92BBb0A718cE45ADe1f3096a145d0', // 部署後填入 MarketplaceV3 合約地址
+  nftContractAddress: '0x68785e6460200e22Af7F41121d4B29D7cA7aF4e3', // 填入 NFT Collection 合約地址
+  
   
   // 應用程式元數據
   appName: 'Prompt Fighters',

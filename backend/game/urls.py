@@ -4,7 +4,8 @@ from .views import (
     CharacterViewSet, BattleViewSet, PlayerProfileView, SocialLoginView, 
     LeaderboardView, Web3LoginView, Web3NonceView, health_check, 
     PlayerResourceView, SpendResourceView, DailyQuestView, CheckInView, QuestProgressView,
-    CharacterGrowthAPIView, mint_character_nft, verify_character_ownership, proxy_image
+    CharacterGrowthAPIView, mint_character_nft, verify_character_ownership, proxy_image,
+    get_character_by_token_id, sync_owned_nfts
 )
 from .betting_views import (
     get_ladder_rankings, get_upcoming_battles, get_current_betting_battle,
@@ -14,6 +15,10 @@ from .betting_views import (
 from .node_views import (
     register_node, node_heartbeat, list_nodes, health_check_all, 
     remove_node, update_node
+)
+from .marketplace_views import (
+    browse_marketplace, notify_listing_created, notify_listing_cancelled,
+    marketplace_stats, character_price_history, get_character_listing
 )
 
 router = DefaultRouter()
@@ -32,6 +37,8 @@ urlpatterns = [
     # NFT 功能（必須在 character-growth 之前）
     path('characters/<uuid:character_id>/mint/', mint_character_nft, name='mint-character-nft'),
     path('characters/<uuid:character_id>/verify-ownership/', verify_character_ownership, name='verify-character-ownership'),
+    path('characters/token/<int:token_id>/', get_character_by_token_id, name='get-character-by-token-id'),
+    path('characters/sync-owned-nfts/', sync_owned_nfts, name='sync-owned-nfts'),
     
     path('characters/<uuid:character_id>/<str:action>/', CharacterGrowthAPIView.as_view(), name='character-growth'),
     path('', include(router.urls)),
@@ -66,4 +73,12 @@ urlpatterns = [
     
     # 圖片代理（用於分享功能，解決 CORS 問題）
     path('proxy-image/', proxy_image, name='proxy-image'),
+    
+    # Marketplace（用戶直接鏈上交易，後端僅提供索引和查詢）
+    path('marketplace/', browse_marketplace, name='browse-marketplace'),
+    path('marketplace/list/', notify_listing_created, name='notify-listing-created'),
+    path('marketplace/listings/<uuid:listing_id>/cancel/', notify_listing_cancelled, name='notify-listing-cancelled'),
+    path('marketplace/stats/', marketplace_stats, name='marketplace-stats'),
+    path('marketplace/characters/<uuid:character_id>/listing/', get_character_listing, name='get-character-listing'),
+    path('marketplace/characters/<uuid:character_id>/price-history/', character_price_history, name='character-price-history'),
 ]  

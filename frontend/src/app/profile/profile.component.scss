@@ -1394,6 +1394,50 @@
       }
     }
 
+    &.list-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+    }
+
+    &.cancel-list-btn {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+      
+      @media (hover: hover) {
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, #f87171, #ef4444);
+        }
+      }
+    }
+
+    &.marketplace-btn {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      text-decoration: none;
+      display: block;
+      
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
     @media (hover: hover) {
       &:hover:not(:disabled) {
         transform: translateY(-2px);
@@ -1905,6 +1949,216 @@
       
       .fighter-info {
         text-align: center;
+      }
+    }
+  }
+}
+
+// 上架對話框樣式
+.list-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.list-dialog {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(26, 32, 44, 0.95) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 28px;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+    }
+  }
+
+  .dialog-content {
+    padding: 24px;
+
+    .character-preview {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+
+      .character-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 8px;
+      }
+
+      .character-info {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+
+        .rarity-badge {
+          padding: 4px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .token-id {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.6);
+        }
+      }
+    }
+
+    .price-input-group {
+      margin-bottom: 24px;
+
+      label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 8px;
+      }
+
+      .price-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 16px;
+        transition: all 0.2s;
+
+        &:focus {
+          outline: none;
+          border-color: rgba(99, 102, 241, 0.5);
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      .price-hint {
+        margin-top: 8px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+
+    .dialog-info {
+      padding: 16px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 8px;
+
+      p {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+        line-height: 1.6;
+
+        li {
+          margin-bottom: 6px;
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    button {
+      flex: 1;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.9);
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    }
+
+    .btn-confirm {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+      border: none;
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(168, 85, 247, 1));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
       }
     }
   }

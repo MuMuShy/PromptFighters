@@ -67,10 +67,10 @@ export class Web3Service {
     }
   }
 
-  // 檢查 MetaMask 是否已連接
+  // 檢查 MetaMask 是否已連接，並恢復 currentWallet
   private async checkMetamaskConnection() {
     try {
-      if ((window as any).ethereum) {
+      if ((window as any).ethereum && this.client) {
         const accounts = await (window as any).ethereum.request({ 
           method: 'eth_accounts' 
         });
@@ -78,6 +78,17 @@ export class Web3Service {
         if (accounts && accounts.length > 0) {
           const address = accounts[0];
           console.log('🔗 檢測到已連接的 MetaMask 錢包:', address);
+          
+          // 恢復 thirdweb wallet 實例
+          try {
+            const wallet = createWallet('io.metamask');
+            // 嘗試重新連接（如果已經連接，這不會失敗）
+            await wallet.connect({ client: this.client, chain: this.mantleChain });
+            this.currentWallet = wallet;
+            console.log('✅ MetaMask wallet 實例已恢復');
+          } catch (e) {
+            console.warn('恢復 MetaMask wallet 實例失敗，可能需要重新連接:', e);
+          }
           
           this.connectionStatus.next({
             connected: true,
@@ -95,26 +106,32 @@ export class Web3Service {
     return this.connectionStatus.asObservable();
   }
 
-  // 連接 Metamask（保留原有功能，但使用舊版 ethers 語法）
+  /**
+   * 獲取 thirdweb client（供其他服務使用）
+   */
+  getClient() {
+    if (!this.client) {
+      throw new Error('thirdweb client 未初始化');
+    }
+    return this.client;
+  }
+
+  /**
+   * 獲取 Mantle Chain 配置
+   */
+  getMantleChain() {
+    return this.mantleChain;
+  }
+
+  // 連接 Metamask（使用 thirdweb，設置 currentWallet）
   async connectMetamask(): Promise<string | null> {
     try {
-      if (!(window as any).ethereum) {
-        alert('請先安裝 Metamask');
-        return null;
+      if (!this.client) {
+        throw new Error('thirdweb client 未初始化');
       }
-      // 請求帳戶授權
-      const provider = new ethers.providers.Web3Provider((window as any).ethereum);
-      await provider.send('eth_requestAccounts', []);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      
-      this.connectionStatus.next({
-        connected: true,
-        address,
-        walletType: 'metamask'
-      });
-      
-      return address;
+
+      // 使用 thirdweb 連接 MetaMask
+      return await this.connectWithThirdweb('metamask');
     } catch (err) {
       console.error('連接 Metamask 失敗', err);
       return null;
@@ -179,11 +196,8 @@ export class Web3Service {
           break;
         }
         case 'social': {
-          wallet = inAppWallet();
-          const provider = prompt('請輸入社交登入方式（google/facebook/apple）');
-          if (!provider || !['google', 'facebook', 'apple'].includes(provider)) throw new Error('provider 必填且必須為 google/facebook/apple');
-          await wallet.connect({ client: this.client, strategy: provider as any });
-          break;
+          // 社交登入應該通過 connectSocial 方法調用，這裡不應該直接調用
+          throw new Error('請使用 connectSocial() 方法進行社交登入');
         }
         default:
           throw new Error('不支援的錢包類型');
@@ -215,19 +229,27 @@ export class Web3Service {
   // 社交登入（Google, Facebook, Apple 等）
   async connectSocial(provider: 'google' | 'facebook' | 'apple'): Promise<string | null> {
     try {
+      if (!this.client) {
+        throw new Error('thirdweb client 未初始化');
+      }
+
       const wallet = inAppWallet();
       await wallet.connect({ client: this.client, strategy: provider });
+      
       const account = wallet.getAccount();
       if (!account) {
         throw new Error('社交登入失敗');
       }
+      
       const address = account.address;
-      this.currentWallet = wallet;
+      this.currentWallet = wallet; // 設置 currentWallet
+      
       this.connectionStatus.next({
         connected: true,
         address,
         walletType: 'social'
       });
+      
       return address;
     } catch (error) {
       console.error('社交登入失敗:', error);

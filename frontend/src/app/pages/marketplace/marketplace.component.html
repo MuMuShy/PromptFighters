@@ -1,0 +1,167 @@
+<div class="marketplace-container">
+  <!-- 統計卡片 -->
+  <div class="marketplace-stats" *ngIf="stats">
+    <div class="stat-card">
+      <div class="stat-label">總上架數</div>
+      <div class="stat-value">{{ stats.total_listings }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">總交易量</div>
+      <div class="stat-value">{{ stats.total_sold }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">平均價格</div>
+      <div class="stat-value">{{ formatPrice(stats.price_stats.average) }} MNT</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">24h 交易量</div>
+      <div class="stat-value">{{ formatPrice(stats.volume['24h']) }} MNT</div>
+    </div>
+  </div>
+
+  <!-- 篩選和搜索 -->
+  <div class="marketplace-filters">
+    <div class="filters-row">
+      <!-- 搜索框 -->
+      <div class="search-box">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="applyFilters()"
+          placeholder="搜索角色名稱..."
+          class="search-input"
+        />
+      </div>
+
+      <!-- 稀有度篩選 -->
+      <div class="filter-group">
+        <label>稀有度</label>
+        <div class="rarity-buttons">
+          <button
+            *ngFor="let filter of rarityFilters"
+            (click)="selectedRarity = filter.value; applyFilters()"
+            [class.active]="selectedRarity === filter.value"
+            class="rarity-filter-btn"
+          >
+            {{ filter.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 價格範圍 -->
+      <div class="filter-group">
+        <label>價格範圍</label>
+        <div class="price-inputs">
+          <input 
+            type="number" 
+            [(ngModel)]="minPrice"
+            placeholder="最低"
+            class="price-input"
+          />
+          <span class="price-separator">-</span>
+          <input 
+            type="number" 
+            [(ngModel)]="maxPrice"
+            placeholder="最高"
+            class="price-input"
+          />
+        </div>
+      </div>
+
+      <!-- 排序 -->
+      <div class="filter-group">
+        <label>排序</label>
+        <select [(ngModel)]="sortBy" (change)="applyFilters()" class="sort-select">
+          <option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- 重置按鈕 -->
+      <button (click)="resetFilters()" class="reset-btn">重置</button>
+    </div>
+  </div>
+
+  <!-- 加載狀態 -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>加載中...</p>
+  </div>
+
+  <!-- 市場列表 -->
+  <div *ngIf="!isLoading" class="marketplace-content">
+    <!-- 空狀態 -->
+    <div *ngIf="listings.length === 0" class="empty-state">
+      <p>暫無上架的角色</p>
+    </div>
+
+    <!-- 角色卡片網格 -->
+    <div *ngIf="listings.length > 0" class="listings-grid">
+      <div *ngFor="let listing of listings" class="listing-card">
+        <div class="listing-character">
+          <app-character-card [character]="listingToCharacter(listing)"></app-character-card>
+        </div>
+        
+        <div class="listing-info">
+          <div class="listing-price">
+            <span class="price-label">價格</span>
+            <span class="price-value">{{ formatPrice(listing.price) }} MNT</span>
+          </div>
+          
+          <div class="listing-seller">
+            <span class="seller-label">賣家</span>
+            <span class="seller-name">{{ listing.seller.nickname }}</span>
+          </div>
+          
+          <div class="listing-actions">
+            <button
+              class="buy-btn"
+              [disabled]="!isWalletConnected || purchasingListingId === listing.listing_id"
+              (click)="buyCharacter(listing)"
+            >
+              <span *ngIf="purchasingListingId !== listing.listing_id">購買</span>
+              <span *ngIf="purchasingListingId === listing.listing_id">處理中...</span>
+            </button>
+            
+            <button
+              class="details-btn"
+              [routerLink]="['/profile', listing.character.id]"
+            >
+              詳情
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分頁 -->
+    <div *ngIf="totalPages > 1" class="pagination">
+      <button
+        (click)="onPageChange(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="page-btn"
+      >
+        上一頁
+      </button>
+      
+      <span class="page-info">
+        第 {{ currentPage }} / {{ totalPages }} 頁（共 {{ totalItems }} 個）
+      </span>
+      
+      <button
+        (click)="onPageChange(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
+        class="page-btn"
+      >
+        下一頁
+      </button>
+    </div>
+  </div>
+
+  <!-- 錢包未連接提示 -->
+  <div *ngIf="!isWalletConnected" class="wallet-hint">
+    <p>請連接錢包以購買角色</p>
+  </div>
+</div>
+

@@ -96,6 +96,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/onchain-activity/onchain-activity.component').then(m => m.OnchainActivityComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'marketplace',
+    loadComponent: () => import('./pages/marketplace/marketplace.component').then(m => m.MarketplaceComponent)
+  },
   { path: '', component: LandingComponent },
   {
     path: 'privacy',

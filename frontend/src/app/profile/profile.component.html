@@ -80,6 +80,19 @@
             ON-CHAIN ACTIVITY
           </a>
           <button 
+            *ngIf="!isViewMode" 
+            (click)="syncOwnedNFTsFromChain()" 
+            [disabled]="isSyncingNFTs || !web3Service.isWalletConnected()"
+            class="game-button"
+            style="background: linear-gradient(135deg, #667eea, #764ba2);"
+            title="從鏈上掃描並同步你持有的 NFT 到 Profile">
+            <svg *ngIf="!isSyncingNFTs" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+            </svg>
+            <span *ngIf="!isSyncingNFTs">SYNC NFTs</span>
+            <span *ngIf="isSyncingNFTs">SYNCING...</span>
+          </button>
+          <button 
             *ngIf="currentCharacter && !isViewMode" 
             (click)="openShareDialog(currentCharacter)" 
             class="game-button share-button"
@@ -198,6 +211,29 @@
                 <span *ngIf="!(isMinting && mintingCharacterId === character.id)">MINT NFT</span>
                 <span *ngIf="isMinting && mintingCharacterId === character.id">MINTING...</span>
               </button>
+              <button 
+                class="action-btn list-btn" 
+                *ngIf="character.is_minted && !character.is_listed"
+                [disabled]="isListing && listingCharacter?.id === character.id"
+                (click)="openListDialog(character, $event)">
+                <span *ngIf="!(isListing && listingCharacter?.id === character.id)">LIST FOR SALE</span>
+                <span *ngIf="isListing && listingCharacter?.id === character.id">LISTING...</span>
+              </button>
+              <button 
+                class="action-btn cancel-list-btn" 
+                *ngIf="character.is_listed && !isViewMode"
+                [disabled]="isCancelling && cancellingCharacterId === character.id"
+                (click)="cancelListing(character, $event)">
+                <span *ngIf="!(isCancelling && cancellingCharacterId === character.id)">CANCEL LISTING</span>
+                <span *ngIf="isCancelling && cancellingCharacterId === character.id">CANCELLING...</span>
+              </button>
+              <a 
+                class="action-btn marketplace-btn" 
+                *ngIf="character.is_listed"
+                [routerLink]="['/marketplace']"
+                (click)="$event.stopPropagation();">
+                VIEW ON MARKETPLACE
+              </a>
             </div>
           </div>
         </div>
@@ -221,4 +257,63 @@
     [playerStats]="playerStatsForShare"
     (closed)="closeShareDialog()">
   </app-share-dialog>
+
+  <!-- List for Sale Dialog -->
+  <div *ngIf="showListDialog && listingCharacter" class="list-dialog-overlay" (click)="closeListDialog()">
+    <div class="list-dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h3>上架角色到市場</h3>
+        <button class="close-btn" (click)="closeListDialog()">×</button>
+      </div>
+      
+      <div class="dialog-content">
+        <div class="character-preview">
+          <div class="character-name">{{ listingCharacter.name }}</div>
+          <div class="character-info">
+            <span class="rarity-badge rarity-{{ listingCharacter.rarity }}">{{ listingCharacter.rarity_name }}</span>
+            <span class="token-id">Token ID: #{{ listingCharacter.token_id }}</span>
+          </div>
+        </div>
+
+        <div class="price-input-group">
+          <label>價格 (ETH)</label>
+          <input 
+            type="number" 
+            [(ngModel)]="listingPrice"
+            placeholder="0.0"
+            step="0.001"
+            min="0.001"
+            class="price-input"
+            [disabled]="isListing"
+          />
+          <div class="price-hint">輸入你想要出售的價格</div>
+        </div>
+
+        <div class="dialog-info">
+          <p>上架後：</p>
+          <ul>
+            <li>其他玩家可以購買此角色</li>
+            <li>你隨時可以取消上架</li>
+            <li>購買完成後，NFT 將轉移給買家</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button 
+          class="btn-cancel" 
+          (click)="closeListDialog()"
+          [disabled]="isListing">
+          取消
+        </button>
+        <button 
+          class="btn-confirm" 
+          (click)="listCharacterForSale()"
+          [disabled]="isListing || !isPriceValid()">
+          <span *ngIf="!isListing">確認上架</span>
+          <span *ngIf="isListing">處理中...</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div> 

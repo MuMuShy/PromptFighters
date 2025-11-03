@@ -4,7 +4,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import Player, Character, Battle, DailyQuest, PlayerDailyQuest
+from .models import Player, Character, Battle, DailyQuest, PlayerDailyQuest, MarketTransaction
 from .serializers import PlayerSerializer, CharacterSerializer, BattleSerializer, DailyStatsSerializer, ClaimRewardSerializer
 from .daily_quest_service import DailyQuestService
 from django.shortcuts import get_object_or_404
@@ -876,6 +876,208 @@ def verify_character_ownership(request, character_id):
         'contract_address': character.contract_address,
         'current_owner': character.owner_wallet
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_character_by_token_id(request, token_id):
+    """
+    根據 token_id 獲取角色信息（允許任何人訪問，用於市場展示）
+    
+    GET /api/characters/token/<token_id>/
+    """
+    try:
+        character = Character.objects.get(token_id=token_id)
+        serializer = CharacterSerializer(character)
+        return Response({
+            'success': True,
+            'data': serializer.data
+        })
+    except Character.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': '角色不存在'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"根據 token_id 獲取角色失敗: {e}")
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def sync_owned_nfts(request):
+    """
+    同步用戶錢包持有的 NFT 到後端數據庫
+    
+    POST /api/characters/sync-owned-nfts/
+    Body: {
+        "wallet_address": "0x...",
+        "token_ids": [21, 22, 23]
+    }
+    
+    此 API 會：
+    1. 驗證 token_ids 中每個 token 的實際持有者（鏈上查詢）
+    2. 將屬於該錢包的 Character 記錄更新 owner_wallet 和 player
+    3. 返回同步結果
+    """
+    from .nft_service import get_nft_service
+    from .models import Player
+    
+    try:
+        wallet_address = request.data.get('wallet_address', '').lower()
+        token_ids = request.data.get('token_ids', [])
+        
+        if not wallet_address:
+            return Response({
+                'success': False,
+                'error': '缺少 wallet_address'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 獲取當前用戶的 Player
+        player = request.user.player
+        
+        # 驗證錢包地址是否匹配（可選，如果要嚴格驗證）
+        if player.wallet_address and player.wallet_address.lower() != wallet_address:
+            return Response({
+                'success': False,
+                'error': '錢包地址不匹配'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # 更新玩家錢包地址（如果尚未設置）
+        if not player.wallet_address:
+            player.wallet_address = wallet_address
+            player.save()
+        
+        nft_service = get_nft_service()
+        if not nft_service.enabled:
+            return Response({
+                'success': False,
+                'error': 'NFT 服務暫時不可用'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        
+        synced_tokens = []
+        errors = []
+        
+        # 如果提供了 token_ids，只同步這些 token
+        # 否則需要從合約查詢所有持有的 token（這需要合約支持 Enumerable）
+        tokens_to_check = token_ids if token_ids else []
+        
+        if not tokens_to_check:
+            # 優化：如果沒有提供 token_ids，智能過濾只檢查可能有變化的 token
+            # 1. 優先檢查該錢包可能擁有的 token（根據 owner_wallet）
+            wallet_owned_chars = Character.objects.filter(
+                owner_wallet__iexact=wallet_address,
+                is_minted=True,
+                token_id__isnull=False
+            ).values_list('token_id', flat=True)
+            
+            # 2. 檢查最近交易的 token（通過 MarketTransaction）
+            from django.utils import timezone
+            from datetime import timedelta
+            recent_transactions = MarketTransaction.objects.filter(
+                created_at__gte=timezone.now() - timedelta(days=7)  # 最近 7 天
+            ).values_list('character__token_id', flat=True).distinct()
+            
+            # 3. 如果還是沒有，才檢查所有已鑄造的 token（但要限制數量）
+            if wallet_owned_chars.exists() or recent_transactions.exists():
+                tokens_to_check = list(set(list(wallet_owned_chars) + list(recent_transactions)))
+                logger.info(f"智能過濾：檢查錢包相關和最近交易的 token: {len(tokens_to_check)} 個")
+            else:
+                # 限制最多檢查 1000 個，避免過慢
+                all_minted_chars = Character.objects.filter(
+                    is_minted=True,
+                    token_id__isnull=False
+                ).values_list('token_id', flat=True)[:1000]
+                tokens_to_check = list(all_minted_chars)
+                logger.info(f"未提供 token_ids，檢查最多 1000 個已鑄造的 token: {len(tokens_to_check)} 個")
+        
+        # 使用並發查詢加速（並發數限制避免過載）
+        import concurrent.futures
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        def check_token_ownership(token_id):
+            """檢查單個 token 的所有權並更新"""
+            try:
+                # 從鏈上查詢實際持有者
+                current_owner = nft_service.get_nft_owner(token_id)
+                
+                if not current_owner:
+                    logger.warning(f"無法獲取 Token ID {token_id} 的持有者")
+                    return None
+                
+                current_owner = current_owner.lower()
+                
+                # 檢查是否屬於該錢包
+                if current_owner == wallet_address:
+                    # 查找對應的 Character
+                    character = Character.objects.filter(token_id=token_id).first()
+                    
+                    if character:
+                        # 更新 owner_wallet 和 player
+                        old_owner = character.owner_wallet
+                        character.owner_wallet = wallet_address
+                        character.player = player
+                        character.save()
+                        
+                        if old_owner and old_owner.lower() != wallet_address:
+                            logger.info(f"📝 Token ID {token_id} 從 {old_owner} 轉移到 {wallet_address}")
+                        
+                        return token_id
+                    else:
+                        logger.warning(f"⚠️ Token ID {token_id} 在鏈上存在，但後端數據庫中沒有對應的 Character 記錄")
+                        return f"ERROR:Token {token_id} 不存在於數據庫"
+                else:
+                    logger.debug(f"Token ID {token_id} 不屬於錢包 {wallet_address} (屬於 {current_owner})")
+                    return None
+            except Exception as e:
+                logger.error(f"處理 Token ID {token_id} 時出錯: {e}")
+                return f"ERROR:Token {token_id}: {str(e)}"
+        
+        # 使用線程池並發查詢（限制並發數為 10，避免過載 RPC）
+        max_workers = min(10, len(tokens_to_check)) if tokens_to_check else 1
+        logger.info(f"🚀 使用 {max_workers} 個並發線程查詢 {len(tokens_to_check)} 個 token 的所有權")
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # 提交所有任務
+            future_to_token = {
+                executor.submit(check_token_ownership, token_id): token_id 
+                for token_id in tokens_to_check
+            }
+            
+            # 收集結果
+            for future in as_completed(future_to_token):
+                token_id = future_to_token[future]
+                try:
+                    result = future.result()
+                    if result:
+                        if isinstance(result, int):
+                            synced_tokens.append(result)
+                            logger.debug(f"✅ Token ID {result} 已同步")
+                        elif isinstance(result, str) and result.startswith("ERROR:"):
+                            errors.append(result.replace("ERROR:", ""))
+                except Exception as e:
+                    logger.error(f"Token ID {token_id} 查詢異常: {e}")
+                    errors.append(f"Token {token_id}: {str(e)}")
+        
+        return Response({
+            'success': True,
+            'synced_tokens': synced_tokens,
+            'synced_count': len(synced_tokens),
+            'message': f'成功同步 {len(synced_tokens)} 個 NFT' + (f'，{len(errors)} 個錯誤' if errors else ''),
+            'errors': errors if errors else None
+        })
+        
+    except Exception as e:
+        logger.error(f"同步 NFT 失敗: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

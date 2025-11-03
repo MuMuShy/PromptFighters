@@ -321,7 +321,8 @@ class NFTService:
         try:
             owner = self.contract.functions.ownerOf(token_id).call()
             owner = owner.lower()
-            logger.info(f"🔍 Token ID {token_id} 的持有者: {owner}")
+            # 降低日誌級別，避免並發時日誌過多
+            logger.debug(f"🔍 Token ID {token_id} 的持有者: {owner}")
             return owner
         except Exception as e:
             logger.error(f"❌ 查詢 NFT 持有者失敗 (Token ID: {token_id}): {e}")
@@ -341,6 +342,43 @@ class NFTService:
         is_owner = owner == wallet_address.lower()
         logger.info(f"🔐 所有權驗證: Token ID {token_id} - {wallet_address} = {'✅' if is_owner else '❌'}")
         return is_owner
+    
+    def get_nft_owners_batch(self, token_ids: list) -> dict:
+        """
+        批量查詢 NFT 持有者（使用並發）
+        
+        Args:
+            token_ids: Token ID 列表
+        
+        Returns:
+            dict: {token_id: owner_address} 映射
+        """
+        if not self.enabled:
+            return {}
+        
+        import concurrent.futures
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        results = {}
+        
+        def query_single(token_id):
+            try:
+                owner = self.contract.functions.ownerOf(token_id).call()
+                return token_id, owner.lower() if owner else None
+            except Exception as e:
+                logger.error(f"❌ 批量查詢 Token ID {token_id} 失敗: {e}")
+                return token_id, None
+        
+        # 使用線程池並發查詢
+        max_workers = min(10, len(token_ids)) if token_ids else 1
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(query_single, tid): tid for tid in token_ids}
+            for future in as_completed(futures):
+                token_id, owner = future.result()
+                if owner:
+                    results[token_id] = owner
+        
+        return results
 
 
 # 單例模式

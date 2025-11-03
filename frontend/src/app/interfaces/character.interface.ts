@@ -26,4 +26,7 @@ export interface Character {
     owner_wallet?: string;
     minted_at?: string;
     tx_hash?: string;
+    is_listed?: boolean; // 是否已上架到市場
+    chain_listing_id?: number; // 鏈上 Listing ID（用於取消上架）
+    is_owned?: boolean; // 是否為目前錢包實際持有
 } 

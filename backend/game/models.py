@@ -644,3 +644,100 @@ class BattleVotingRecord(models.Model):
         verbose_name = '戰鬥投票記錄'
         verbose_name_plural = '戰鬥投票記錄'
         unique_together = ['battle', 'node']  # 每個節點每場戰鬥只能投票一次
+
+
+# ============== Marketplace 相關模型 ==============
+
+class CharacterListing(models.Model):
+    """角色上架記錄"""
+    STATUS_CHOICES = [
+        ('active', '上架中'),
+        ('sold', '已售出'),
+        ('cancelled', '已取消'),
+        ('expired', '已過期'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    character = models.OneToOneField(Character, on_delete=models.CASCADE, related_name='listing')
+    seller = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='listings')
+    
+    # 上架信息
+    listing_id = models.BigIntegerField(null=True, blank=True, unique=True, verbose_name='鏈上 Listing ID')
+    price = models.DecimalField(max_digits=18, decimal_places=8, verbose_name='價格')
+    # EVM 鏈通用的原生代幣假地址 (0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE)
+    # 在 Mantle 上代表 MNT，在 Ethereum 上代表 ETH，以此類推
+    currency = models.CharField(max_length=42, default='0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', verbose_name='支付代幣地址')
+    
+    # 狀態
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # 時間
+    listed_at = models.DateTimeField(auto_now_add=True)
+    sold_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    
+    # 鏈上數據
+    tx_hash = models.CharField(max_length=66, null=True, blank=True, verbose_name='上架交易哈希')
+    cancel_tx_hash = models.CharField(max_length=66, null=True, blank=True, verbose_name='取消交易哈希')
+    
+    # 購買信息（售出後填充）
+    buyer = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchases')
+    buy_tx_hash = models.CharField(max_length=66, null=True, blank=True, verbose_name='購買交易哈希')
+    
+    def __str__(self):
+        return f"{self.character.name} - {self.price} (Listing ID: {self.listing_id})"
+    
+    class Meta:
+        verbose_name = '角色上架'
+        verbose_name_plural = '角色上架'
+        ordering = ['-listed_at']
+
+
+class MarketTransaction(models.Model):
+    """市場交易記錄"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    listing = models.ForeignKey(CharacterListing, on_delete=models.CASCADE, related_name='transactions')
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='market_transactions')
+    
+    buyer = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='purchase_transactions')
+    seller = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='sale_transactions')
+    
+    price = models.DecimalField(max_digits=18, decimal_places=8, verbose_name='交易價格')
+    currency = models.CharField(max_length=42, verbose_name='支付代幣地址')
+    
+    # 鏈上數據
+    tx_hash = models.CharField(max_length=66, unique=True, verbose_name='交易哈希')
+    block_number = models.BigIntegerField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.character.name} sold for {self.price} (TX: {self.tx_hash[:10]}...)"
+    
+    class Meta:
+        verbose_name = '市場交易'
+        verbose_name_plural = '市場交易'
+        ordering = ['-created_at']
+
+
+class CharacterPriceHistory(models.Model):
+    """角色價格歷史（每筆交易記錄）"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='price_history')
+    transaction = models.ForeignKey(MarketTransaction, on_delete=models.CASCADE, null=True, blank=True)
+    
+    price = models.DecimalField(max_digits=18, decimal_places=8, verbose_name='價格')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    # 鏈上數據（用於驗證）
+    tx_hash = models.CharField(max_length=66, null=True, blank=True)
+    block_number = models.BigIntegerField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.character.name} - {self.price} at {self.timestamp}"
+    
+    class Meta:
+        verbose_name = '價格歷史'
+        verbose_name_plural = '價格歷史'
+        ordering = ['-timestamp']
