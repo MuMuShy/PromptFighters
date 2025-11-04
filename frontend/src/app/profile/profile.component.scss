@@ -95,6 +95,39 @@
 .progress-dots span:nth-child(2) { animation-delay: 0.5s; }
 .progress-dots span:nth-child(3) { animation-delay: 1s; }
 
+// 角色列表載入中
+.characters-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  min-height: 300px;
+  
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  .loading-text {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 // 主要容器
 .game-profile-container {
   position: relative;
@@ -1421,7 +1454,7 @@
         transform: scale(0.98);
       }
       
-      @media (hover: hover) {
+    @media (hover: hover) {
         &:hover:not(:disabled) {
           background: linear-gradient(135deg, #f87171, #ef4444);
         }
@@ -1576,7 +1609,7 @@
   
   input {
     flex: 1;
-    padding: 6px 12px;
+  padding: 6px 12px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
@@ -1629,6 +1662,188 @@
   font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
   width: fit-content;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    
+    .copy-icon {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+  
+  .copy-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+}
+
+// MNT 餘額顯示
+.mnt-balance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(252, 211, 77, 0.15), rgba(245, 158, 11, 0.15));
+  border: 1px solid rgba(252, 211, 77, 0.3);
+  border-radius: 8px;
+  margin-top: 8px;
+  
+  .balance-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .mnt-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+  
+  .balance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    
+    .balance-label {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .balance-value {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fcd34d;
+      text-shadow: 0 0 10px rgba(252, 211, 77, 0.3);
+      
+      .balance-currency {
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(252, 211, 77, 0.8);
+      }
+    }
+  }
+}
+
+// Tab 切換按鈕
+.profile-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 0 4px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: -2px;
+    
+    .tab-icon {
+      font-size: 18px;
+    }
+    
+    .tab-label {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    &:hover {
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    &.active {
+      color: #fcd34d;
+      border-bottom-color: #fcd34d;
+      background: rgba(252, 211, 77, 0.05);
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #fcd34d, transparent);
+        box-shadow: 0 0 10px rgba(252, 211, 77, 0.5);
+      }
+    }
+  }
+}
+
+// Tab 內容區域
+.tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 響應式設計
+@media (max-width: 768px) {
+  .profile-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+    
+    .tab-btn {
+      padding: 10px 16px;
+      font-size: 12px;
+      
+      .tab-icon {
+        font-size: 16px;
+      }
+    }
+  }
+  
+  .mnt-balance {
+    padding: 6px 10px;
+    
+    .balance-icon .mnt-icon {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .balance-info .balance-value {
+      font-size: 14px;
+      
+      .balance-currency {
+  font-size: 11px;
+      }
+    }
+  }
   
   .wallet-icon {
     font-size: 14px;
@@ -1712,6 +1927,92 @@
     text-align: center;
   }
   
+  // 錢包連接提示
+  .wallet-connect-prompt {
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+
+    .prompt-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+
+      .prompt-icon {
+        font-size: 48px;
+        filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+      }
+
+      .prompt-text {
+        text-align: center;
+
+        .prompt-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #fff;
+          margin-bottom: 12px;
+        }
+
+        .prompt-desc {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 8px;
+        }
+
+        .prompt-features {
+          list-style: none;
+          padding: 0;
+          margin: 12px 0;
+          text-align: left;
+          display: inline-block;
+
+          li {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 6px 0;
+            padding-left: 20px;
+            position: relative;
+
+            &::before {
+              content: '✓';
+              position: absolute;
+              left: 0;
+              color: #667eea;
+  font-weight: bold;
+            }
+          }
+        }
+      }
+
+      .connect-wallet-btn {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+
   .wallet-address {
     margin: 0 auto;
   }
@@ -1726,12 +2027,12 @@
 }
 
 .player-info-card {
-  background: rgba(26, 26, 46, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -1753,52 +2054,109 @@
 .stats-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 24px;
   justify-content: space-between;
+  padding: 0;
   
   .stat-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
+    gap: 6px;
     flex: 1;
     min-width: 0;
+    padding: 0;
+    // 覆蓋舊樣式，移除所有背景和邊框
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-image: none !important;
     
-    &.legendary .stat-icon {
-      filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+    // 移除偽元素裝飾
+    &::before,
+    &::after {
+      display: none !important;
     }
     
-    .stat-icon {
-      font-size: 32px;
-      flex-shrink: 0;
+    .stat-icon-wrapper {
+      display: none;
     }
     
     .stat-content {
-      flex: 1;
-      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
     }
     
     .stat-value {
-      font-size: 24px;
+      font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+      font-size: 28px;
       font-weight: 700;
-      color: #fff;
       line-height: 1;
-      margin-bottom: 0.25rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 0 !important;
+      text-shadow: none !important;
+    }
+    
+    &.stat-fighters .stat-value {
+      color: #60a5fa;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: #60a5fa !important;
+      background-clip: unset !important;
+    }
+    
+    &.stat-battles .stat-value {
+      color: #f87171;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: #f87171 !important;
+      background-clip: unset !important;
+    }
+    
+    &.stat-winrate .stat-value {
+      color: #34d399;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: #34d399 !important;
+      background-clip: unset !important;
+    }
+    
+    &.stat-ur .stat-value {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     
     .stat-label {
       font-size: 11px;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.5);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       font-weight: 500;
       white-space: nowrap;
+      opacity: 1 !important;
+      
+      // 移除下劃線裝飾
+      &::after {
+        display: none !important;
+      }
+    }
+    
+    // 移除 hover 效果
+    &:hover {
+      transform: none !important;
     }
   }
   
   .stat-divider {
     width: 1px;
-    height: 40px;
-    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
+    height: 24px;
+    background: rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
   }
 }
@@ -1913,22 +2271,22 @@
   .stats-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 20px;
+    padding: 0;
     
     .stat-divider {
       display: none;
     }
     
     .stat-item {
-      flex-direction: column;
-      text-align: center;
-      
-      .stat-icon {
-        font-size: 28px;
-      }
+      gap: 4px;
       
       .stat-value {
-        font-size: 20px;
+        font-size: 24px;
+      }
+      
+      .stat-label {
+        font-size: 10px;
       }
     }
   }

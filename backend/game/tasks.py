@@ -18,6 +18,10 @@ from .node_service import NodeManager
 from web3 import Web3
 import hashlib
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
+from .marketplace_sync_task import sync_marketplace_listings
 
 # 戰鬥參數
 INITIAL_HP = int(os.getenv('BATTLE_INITIAL_HP', 300))  # 預設 300，可用環境變數覆寫
@@ -900,7 +904,21 @@ def cleanup_old_battles():
     return f"Cleaned up {count} old battles"
 
 
-@shared_task 
+@shared_task
+def sync_marketplace_listings_task():
+    """
+    定期同步 marketplace listings 到數據庫
+    
+    使用 totalListings() 和 getAllListings() 從鏈上獲取所有 listing
+    並根據 listingCreator 和 status 索引到數據庫
+    """
+    try:
+        sync_marketplace_listings()
+        logger.info("✅ Marketplace listings 同步任務完成")
+    except Exception as e:
+        logger.error(f"❌ Marketplace listings 同步任務失敗: {e}", exc_info=True)
+
+@shared_task
 def check_node_health():
     """定期檢查節點健康狀態，標記離線節點"""
     from .models import AINode

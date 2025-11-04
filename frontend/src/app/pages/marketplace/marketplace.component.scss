@@ -5,6 +5,78 @@
   min-height: calc(100vh - 200px);
 }
 
+// 錢包餘額顯示
+.wallet-balance-section {
+  margin-bottom: 24px;
+  
+  .balance-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    
+    .balance-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(252, 211, 77, 0.2), rgba(245, 158, 11, 0.2));
+      border-radius: 12px;
+      padding: 8px;
+      
+      .mnt-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+    
+    .balance-info {
+      flex: 1;
+      
+      .balance-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+      }
+      
+      .balance-value {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        font-size: 24px;
+        font-weight: 700;
+        color: #fcd34d;
+        text-shadow: 0 0 10px rgba(252, 211, 77, 0.3);
+        
+        .loading-dots {
+          color: rgba(255, 255, 255, 0.5);
+          font-weight: 400;
+        }
+        
+        .balance-currency {
+          font-size: 16px;
+          font-weight: 600;
+          color: rgba(252, 211, 77, 0.8);
+        }
+      }
+    }
+  }
+}
+
 // 統計卡片
 .marketplace-stats {
   display: grid;
@@ -28,9 +100,20 @@
     }
     
     .stat-value {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 24px;
       font-weight: 600;
       color: #fff;
+      
+      .mnt-icon-stat {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
     }
   }
 }
@@ -220,115 +303,346 @@
   font-size: 18px;
 }
 
-// 市場列表
+// 市場列表 - 緊湊的市場風格
 .listings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
   margin-bottom: 32px;
 }
 
 .listing-card {
-  background: rgba(17, 24, 39, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   
   &:hover {
-    border-color: rgba(99, 102, 241, 0.4);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.25);
+    background: rgba(17, 24, 39, 0.95);
   }
   
-  .listing-character {
-    padding: 16px;
-    background: rgba(0, 0, 0, 0.2);
-  }
-  
-  .listing-info {
-    padding: 20px;
+  // 圖片區域
+  .card-image-section {
+    position: relative;
+    width: 100%;
+    padding-top: 100%; // 1:1 比例
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+    overflow: hidden;
     
-    .listing-price {
+    .image-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      
+      .character-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+      }
+    }
+    
+    .image-overlay {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      
+      .rarity-badge {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        backdrop-filter: blur(8px);
+        
+        &.rarity-1 { background: rgba(156, 163, 175, 0.9); color: #1f2937; }
+        &.rarity-2 { background: rgba(59, 130, 246, 0.9); color: #fff; }
+        &.rarity-3 { background: rgba(139, 92, 246, 0.9); color: #fff; }
+        &.rarity-4 { background: rgba(236, 72, 153, 0.9); color: #fff; }
+        &.rarity-5 { background: linear-gradient(135deg, rgba(251, 191, 36, 0.95), rgba(245, 158, 11, 0.95)); color: #1f2937; }
+      }
+    }
+    
+    &:hover .character-image {
+      transform: scale(1.1);
+    }
+  }
+  
+  // 卡片內容
+  .card-content {
+    padding: 12px;
+    
+    // 角色名稱和等級
+    .character-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      
+      .character-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+      
+      .level-badge {
+        padding: 2px 6px;
+        background: rgba(99, 102, 241, 0.2);
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #a5b4fc;
+        margin-left: 8px;
+      }
+    }
+    
+    // 屬性行
+    .attributes-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      
+      .attr-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 4px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 4px;
+        
+        .attr-label {
+          font-size: 9px;
+          color: rgba(255, 255, 255, 0.5);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .attr-value {
+          font-size: 12px;
+          font-weight: 600;
+          color: #fff;
+          margin-top: 2px;
+        }
+      }
+    }
+    
+    // 戰鬥統計
+    .battle-stats {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      
+      .stat-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        
+        .stat-label {
+          font-size: 9px;
+          color: rgba(255, 255, 255, 0.5);
+          text-transform: uppercase;
+          margin-bottom: 2px;
+        }
+        
+        .stat-value {
+          font-size: 11px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.9);
+          
+          &.win-rate {
+            color: #34d399;
+          }
+        }
+      }
+    }
+    
+    // 價格區域
+    .price-section {
+      margin-bottom: 8px;
+      
+      .price-label {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+      }
+      
+      .price-value {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #fcd34d;
+        text-shadow: 0 0 10px rgba(252, 211, 77, 0.3);
+        margin-bottom: 6px;
+        
+        .mnt-icon-small {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          object-fit: cover;
+          flex-shrink: 0;
+        }
+      }
+      
+      // 歷史價格統計
+      .price-history {
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        min-height: 48px; // 預留空間，確保按鈕位置一致
+        
+        .history-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 4px;
+          font-size: 9px;
+          min-height: 14px; // 確保每個項目都有固定高度
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          .history-label {
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+          }
+          
+          .history-value {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            font-size: 9px;
+            
+            .mnt-icon-tiny {
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              object-fit: cover;
+              flex-shrink: 0;
+            }
+            
+            &.empty {
+              color: rgba(255, 255, 255, 0.3);
+              font-style: normal;
+            }
+            
+            &.min {
+              color: #34d399; // 綠色表示最低價
+            }
+            
+            &.max {
+              color: #f87171; // 紅色表示最高價
+            }
+          }
+        }
+      }
+    }
+    
+    // 賣家信息
+    .seller-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      
-      .price-label {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.7);
-      }
-      
-      .price-value {
-        font-size: 20px;
-        font-weight: 600;
-        color: #fcd34d;
-      }
-    }
-    
-    .listing-seller {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+      font-size: 10px;
       
       .seller-label {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(255, 255, 255, 0.5);
       }
       
       .seller-name {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.9);
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
       }
     }
     
-    .listing-actions {
+    // 操作按鈕
+    .card-actions {
       display: flex;
-      gap: 12px;
+      gap: 8px;
       
       .buy-btn {
         flex: 1;
-        padding: 12px 20px;
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
         border: none;
         border-radius: 8px;
         color: #fff;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
         
         &:hover:not(:disabled) {
-          background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(168, 85, 247, 1));
+          background: linear-gradient(135deg, #7c3aed, #a855f7);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+        }
+        
+        &:active:not(:disabled) {
+          transform: translateY(0);
         }
         
         &:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+          transform: none;
         }
       }
       
-      .details-btn {
-        padding: 12px 20px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+      .cancel-btn {
+        flex: 1;
+        padding: 10px 16px;
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.5);
         border-radius: 8px;
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 14px;
+        color: #f87171;
+        font-size: 12px;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
-        text-decoration: none;
-        display: inline-block;
         
-        &:hover {
-          background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.3);
+        &:hover:not(:disabled) {
+          background: rgba(239, 68, 68, 0.3);
+          border-color: rgba(239, 68, 68, 0.7);
+          transform: translateY(-2px);
+        }
+        
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          transform: none;
         }
       }
     }
@@ -384,6 +698,35 @@
   font-size: 14px;
   z-index: 1000;
   backdrop-filter: blur(10px);
+  text-align: center;
+  
+  .connect-link {
+    display: block;
+    margin-top: 8px;
+    color: #fff;
+    text-decoration: underline;
+    font-weight: 600;
+    
+    &:hover {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+// 高亮顯示指定的 listing
+.listing-card.highlighted-listing {
+  animation: highlightPulse 2s ease-in-out;
+  border: 2px solid #fcd34d;
+  box-shadow: 0 0 20px rgba(252, 211, 77, 0.5);
+}
+
+@keyframes highlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(252, 211, 77, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(252, 211, 77, 0.8);
+  }
 }
 
 // 響應式設計
@@ -419,8 +762,34 @@
   }
   
   .listings-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  
+  .listing-card {
+    .card-content {
+      padding: 10px;
+      
+      .character-name {
+        font-size: 12px;
+      }
+      
+      .attributes-row .attr-item {
+        padding: 3px;
+        
+        .attr-label {
+          font-size: 8px;
+        }
+        
+        .attr-value {
+          font-size: 11px;
+        }
+      }
+      
+      .price-value {
+        font-size: 16px;
+      }
+    }
   }
   
   .pagination {

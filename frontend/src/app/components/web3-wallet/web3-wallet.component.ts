@@ -203,6 +203,11 @@ export class Web3WalletComponent {
       // 後端驗證，傳送登入方法和社交 email
       this.authService.web3Login(address, signature, nonce, loginMethod, socialEmail).subscribe({
         next: (res) => {
+          // 確保 wallet 實例已保存並更新連接狀態
+          if (this.web3Service.currentWallet) {
+            this.web3Service.updateConnectionStatus(true, address, 'social');
+            console.log('✅ 社交登入成功，已更新連接狀態:', address);
+          }
           this.loginResult.emit({ type: 'success' });
           this.router.navigate(['/profile']);
         },

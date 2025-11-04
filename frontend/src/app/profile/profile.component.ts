@@ -15,11 +15,13 @@ import { Web3Service } from '../services/web3.service';
 import { DialogService } from '../services/dialog.service';
 import { ShareDialogComponent } from '../components/share-dialog/share-dialog.component';
 import { MarketplaceService } from '../services/marketplace.service';
+import { DailyQuestsComponent } from '../components/daily-quests/daily-quests.component';
+import { NftGalleryComponent } from '../nft-gallery/nft-gallery.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, CharacterCardComponent, FormsModule, ShareDialogComponent],
+  imports: [CommonModule, RouterModule, CharacterCardComponent, FormsModule, ShareDialogComponent, DailyQuestsComponent, NftGalleryComponent],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
@@ -35,6 +37,8 @@ export class ProfileComponent implements OnInit {
   nicknameChanged: boolean = false;
   displayName: string = '';
   editNicknameMode: boolean = false;
+  loginMethod: string = ''; // 登入方式
+  showWalletConnectPrompt: boolean = false; // 是否顯示錢包連接提示
   isMinting: boolean = false;
   mintingCharacterId: string | null = null;
   showShareDialog: boolean = false;
@@ -53,6 +57,13 @@ export class ProfileComponent implements OnInit {
   
   // NFT 同步相關
   isSyncingNFTs: boolean = false;
+  
+  // Tab 切換
+  activeTab: 'fighters' | 'daily' | 'gallery' = 'fighters';
+  
+  // MNT 餘額
+  mntBalance: string = '0.00';
+  isLoadingBalance: boolean = false;
   
   rarityFilters = [
     { value: null, label: 'ALL', icon: '◉', count: 0 },
@@ -100,7 +111,17 @@ export class ProfileComponent implements OnInit {
           } catch (e) {
             // 靜默失敗，用戶可以手動點擊按鈕同步
           }
+          // 加載 MNT 餘額
+          this.loadMNTBalance();
         }
+        
+        // 監聽錢包連接狀態變化
+        this.web3Service.connectionStatus$.subscribe(status => {
+          if (status.connected && status.address && !this.isViewMode) {
+            this.walletAddress = status.address;
+            this.loadMNTBalance();
+          }
+        });
         
         if (profile.characters.length > 0 && !this.isViewMode) {
           const initialCharacter = profile.characters[0];
@@ -224,6 +245,27 @@ export class ProfileComponent implements OnInit {
     this.authService.logout();
   }
 
+  copyWalletAddress(): void {
+    if (!this.walletAddress) return;
+    
+    navigator.clipboard.writeText(this.walletAddress).then(() => {
+      this.dialogService.success('已複製', '錢包地址已複製到剪貼板');
+    }).catch(() => {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = this.walletAddress;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        this.dialogService.success('已複製', '錢包地址已複製到剪貼板');
+      } catch (err) {
+        this.dialogService.error('複製失敗', '無法複製地址，請手動複製');
+      }
+      document.body.removeChild(textArea);
+    });
+  }
+
   saveNickname() {
     if (this.nicknameChanged) {
       // 顯示提示：只能免費改一次
@@ -267,14 +309,95 @@ export class ProfileComponent implements OnInit {
 
     // 檢查是否有連接錢包
     if (!this.web3Service.isWalletConnected()) {
-      this.dialogService.warning('請連接錢包', '請先連接 MetaMask 錢包才能鑄造 NFT');
+      // 如果是社交登入用戶，提示連接 thirdweb in-app wallet
+      if (['google', 'facebook', 'apple', 'social'].includes(this.loginMethod)) {
+        this.dialogService.warning(
+          '需要連接錢包',
+          '鑄造 NFT 需要連接 Web3 錢包。\n\n請前往登入頁面，使用 Google/Facebook/Apple 連接錢包。'
+        );
+        this.router.navigate(['/login']);
+      } else {
+        this.dialogService.warning('請連接錢包', '請先連接錢包才能鑄造 NFT');
+      }
       return;
     }
 
-    const walletAddress = this.web3Service.getWalletAddress();
-    if (!walletAddress) {
-      this.dialogService.error('錯誤', '無法取得錢包地址，請重新連接錢包');
-      return;
+    // 對於社交登入用戶，必須確保使用 thirdweb in-app wallet
+    // 獲取當前連接的錢包地址（優先使用當前連接的錢包）
+    let walletAddress = this.web3Service.getWalletAddress();
+    
+    // 如果沒有獲取到地址，嘗試從 currentWallet 獲取
+    if (!walletAddress && this.web3Service.currentWallet) {
+      try {
+        const account = this.web3Service.currentWallet.getAccount();
+        walletAddress = account?.address;
+        console.log('從 currentWallet 獲取地址:', walletAddress);
+      } catch (e) {
+        console.warn('無法從 currentWallet 獲取地址:', e);
+      }
+    }
+
+    // 對於社交登入用戶，如果沒有連接 thirdweb in-app wallet，需要重新連接
+    if (['google', 'facebook', 'apple', 'social'].includes(this.loginMethod)) {
+      if (!walletAddress) {
+        // 沒有連接錢包，提示用戶連接
+        this.dialogService.warning(
+          '需要連接錢包',
+          '鑄造 NFT 需要連接 Web3 錢包。\n\n請前往登入頁面，使用 Google/Facebook/Apple 連接 thirdweb 錢包。'
+        );
+        this.router.navigate(['/login']);
+        return;
+      }
+
+      // 檢查是否連接了正確的錢包（對於社交登入，應該使用 thirdweb in-app wallet）
+      // 如果後端有保存地址，應該使用那個地址；如果沒有，使用當前連接的地址
+      const targetWalletAddress = this.walletAddress || walletAddress;
+      
+      // 如果當前連接的地址與目標地址不一致，提示用戶
+      if (this.walletAddress && walletAddress && this.walletAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+        console.warn('⚠️ 錢包地址不一致:', {
+          backend: this.walletAddress,
+          connected: walletAddress,
+          loginMethod: this.loginMethod
+        });
+        
+        // 提示用戶，並建議使用後端保存的地址（即 thirdweb in-app wallet 地址）
+        const confirmed = await new Promise<boolean>((resolve) => {
+          this.dialogService.confirm(
+            '錢包地址不一致',
+            `你當前連接的錢包地址是：${walletAddress!.slice(0, 6)}...${walletAddress!.slice(-4)}\n\n` +
+            `但你的帳號關聯的 thirdweb 錢包地址是：${this.walletAddress.slice(0, 6)}...${this.walletAddress.slice(-4)}\n\n` +
+            `建議使用與帳號關聯的 thirdweb 錢包地址進行鑄造。\n\n` +
+            `是否要繼續使用當前連接的錢包？`,
+            () => resolve(true),
+            () => resolve(false)
+          );
+        });
+
+        if (!confirmed) {
+          // 用戶選擇不使用當前錢包，提示重新連接正確的錢包
+          this.dialogService.warning(
+            '請連接正確的錢包',
+            '請前往登入頁面，使用 Google/Facebook/Apple 連接 thirdweb 錢包。'
+          );
+          this.router.navigate(['/login']);
+          return;
+        }
+      } else if (!this.walletAddress) {
+        // 後端沒有保存地址，使用當前連接的地址
+        // 這表示用戶第一次連接錢包，使用當前連接的地址是正確的
+        console.log('✅ 使用當前連接的錢包地址（首次連接）:', walletAddress);
+      } else {
+        // 地址一致，使用後端保存的地址（確保使用正確的地址）
+        walletAddress = this.walletAddress;
+        console.log('✅ 使用後端保存的錢包地址:', walletAddress);
+      }
+    } else {
+      // 非社交登入用戶，直接使用當前連接的地址
+      if (!walletAddress) {
+        this.dialogService.error('錯誤', '無法取得錢包地址，請重新連接錢包');
+        return;
+      }
     }
 
     // 確認對話框
@@ -374,6 +497,15 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    // 檢查是否已連接錢包
+    if (!this.web3Service.isWalletConnected()) {
+      this.dialogService.warning(
+        '需要連接錢包',
+        '上架 NFT 需要連接 Web3 錢包。\n\n請點擊右上角的「連接錢包」按鈕，或前往登入頁面連接錢包。'
+      );
+      return;
+    }
+
     const price = parseFloat(this.listingPrice);
     if (isNaN(price) || price <= 0) {
       this.dialogService.error('錯誤', '請輸入有效的價格（大於 0）');
@@ -385,11 +517,76 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    // 檢查是否已經上架（後端數據）
+    if (this.listingCharacter.is_listed) {
+      this.dialogService.warning(
+        '已上架',
+        '此角色已經上架中，請先取消現有上架再重新上架。'
+      );
+      return;
+    }
+
+    // 額外檢查：從鏈上驗證是否已有 active listing（防止鏈上有但後端未同步的情況）
+    if (this.listingCharacter.token_id) {
+      try {
+        const existingListings = await this.marketplaceService.getAllListingsByTokenId(
+          this.listingCharacter.token_id
+        );
+        
+        const activeListings = existingListings.filter(l => l.status === 1); // status 1 = active
+        
+        if (activeListings.length > 0) {
+          const listingTexts = activeListings.map(l => 
+            `Listing ${l.listingId}: ${parseFloat(l.price).toFixed(4)} MNT`
+          ).join('\n');
+          
+          const confirmed = await new Promise<boolean>((resolve) => {
+            this.dialogService.confirm(
+              '已上架',
+              `此角色在鏈上已有 ${activeListings.length} 個 active 上架：\n\n${listingTexts}\n\n` +
+              `請先取消所有現有上架再重新上架。是否要取消現有上架？`,
+              () => resolve(true),
+              () => resolve(false)
+            );
+          });
+
+          if (confirmed) {
+            // 取消所有現有上架
+            for (const listing of activeListings) {
+              try {
+                await this.marketplaceService.cancelListing(listing.listingId);
+                console.log(`✅ 已取消 Listing ${listing.listingId}`);
+                // 等待一下避免 nonce 衝突
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              } catch (error: any) {
+                console.error(`❌ 取消 Listing ${listing.listingId} 失敗:`, error);
+                this.dialogService.error(
+                  '取消失敗',
+                  `無法取消 Listing ${listing.listingId}，請手動取消後再試。`
+                );
+                return;
+              }
+            }
+            
+            // 重新同步狀態
+            await this.syncListingsFromChain();
+            this.dialogService.success('已取消', '所有現有上架已取消，請重新上架。');
+            return;
+          } else {
+            return; // 用戶取消操作
+          }
+        }
+      } catch (error) {
+        console.warn('檢查鏈上 listing 失敗:', error);
+        // 繼續執行，不阻止上架流程（但會由後端 API 驗證）
+      }
+    }
+
     // 確認對話框
     const confirmed = await new Promise<boolean>((resolve) => {
       this.dialogService.confirm(
         '確認上架',
-        `確定要以 ${this.listingPrice} ETH 上架「${this.listingCharacter!.name}」嗎？\n\n` +
+        `確定要以 ${this.listingPrice} MNT 上架「${this.listingCharacter!.name}」嗎？\n\n` +
         `此操作將：\n` +
         `• 創建鏈上上架記錄\n` +
         `• 其他玩家可以購買此角色\n` +
@@ -461,7 +658,18 @@ export class ProfileComponent implements OnInit {
               },
               error: (error) => {
                 console.error('後端索引失敗:', error);
-                reject(error);
+                // 如果錯誤是因為已有 active 上架，顯示友好提示
+                if (error.error && error.error.error && error.error.error.includes('已經上架中')) {
+                  this.dialogService.warning(
+                    '上架失敗',
+                    '此角色已經上架中，請先取消現有上架再重新上架。'
+                  );
+                  reject(error);
+                } else {
+                  // 其他錯誤不阻止流程，但記錄
+                  console.warn('後端索引失敗但不影響上架:', error);
+                  resolve(undefined);
+                }
               }
             });
           });
@@ -744,8 +952,11 @@ export class ProfileComponent implements OnInit {
   async syncOwnedNFTsFromChain() {
     try {
       // 需已連接錢包
-      if (!this.web3Service.currentWallet) {
-        this.dialogService.error('未連接錢包', '請先連接錢包才能同步 NFT');
+      if (!this.web3Service.isWalletConnected()) {
+        this.dialogService.warning(
+          '需要連接錢包',
+          '同步 NFT 需要連接 Web3 錢包。\n\n請點擊右上角的「連接錢包」按鈕，或前往登入頁面連接錢包。'
+        );
         return;
       }
       const account = this.web3Service.currentWallet.getAccount();
@@ -797,7 +1008,21 @@ export class ProfileComponent implements OnInit {
         this.nickname = profile.player.nickname || '';
         this.nicknameChanged = profile.player.nickname_changed || false;
         this.displayName = profile.player.nickname || profile.player.display_name || '';
+        this.loginMethod = profile.player.login_method || '';
+        
+        // 檢查是否為 social login 且沒有連接錢包
+        const isSocialLogin = ['google', 'facebook', 'apple', 'social'].includes(this.loginMethod);
+        const hasWallet = this.walletAddress && this.walletAddress.length > 0;
+        const isWalletConnected = this.web3Service.isWalletConnected();
+        
+        // 如果是 social login 且沒有錢包地址或未連接錢包，顯示提示
+        this.showWalletConnectPrompt = isSocialLogin && (!hasWallet || !isWalletConnected);
         this.allCharacters = profile.characters;
+        
+        // 如果是自己的 Profile 且有錢包連接，從鏈上同步 listing 狀態
+        if (!this.isViewMode && this.web3Service.isWalletConnected()) {
+          await this.syncListingsFromChain();
+        }
         
         if (profile.characters.length > 0) {
           const initialCharacter = profile.characters[0];
@@ -812,6 +1037,50 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  /**
+   * 加載 MNT 餘額
+   */
+  async loadMNTBalance(): Promise<void> {
+    let address = this.walletAddress;
+    
+    // 如果沒有地址，嘗試從 currentWallet 獲取
+    if (!address) {
+      const currentWallet = this.web3Service.currentWallet;
+      if (currentWallet) {
+        try {
+          const account = currentWallet.getAccount();
+          address = account?.address;
+        } catch (e) {
+          console.warn('無法從 currentWallet 獲取地址:', e);
+        }
+      }
+    }
+    
+    if (!address) {
+      this.mntBalance = '0.00';
+      return;
+    }
+
+    this.isLoadingBalance = true;
+    try {
+      const balance = await this.marketplaceService.checkNativeBalance(address);
+      const balanceMNT = Number(balance) / 1e18;
+      this.mntBalance = balanceMNT >= 0.0001 ? balanceMNT.toFixed(4) : balanceMNT.toFixed(6);
+    } catch (error) {
+      console.error('加載 MNT 餘額失敗:', error);
+      this.mntBalance = '0.00';
+    } finally {
+      this.isLoadingBalance = false;
+    }
+  }
+  
+  /**
+   * 切換 Tab
+   */
+  setActiveTab(tab: 'fighters' | 'daily' | 'gallery'): void {
+    this.activeTab = tab;
+  }
+  
   /**
    * 從鏈上校驗當前玩家對各 NFT 的實際持有狀態（僅校驗，不更新）
    */

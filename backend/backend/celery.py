@@ -58,6 +58,12 @@ app.conf.beat_schedule = {
         'task': 'game.tasks.check_node_health',
         'schedule': 30.0,  # 每30秒執行
     },
+    
+    # 每2分鐘同步 marketplace listings
+    'sync-marketplace-listings': {
+        'task': 'game.tasks.sync_marketplace_listings_task',
+        'schedule': 120.0,  # 每2分鐘執行
+    },
 }
 
 app.conf.timezone = 'Asia/Taipei' 

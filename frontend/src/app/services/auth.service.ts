@@ -49,6 +49,8 @@ export class AuthService {
       tap(response => {
         console.log('Social login response:', response);
         this.setTokens(response.access, response.refresh);
+        // 保存登入方式到 localStorage
+        localStorage.setItem('login_method', provider);
       })
     );
   }

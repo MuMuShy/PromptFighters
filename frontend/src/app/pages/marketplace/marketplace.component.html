@@ -1,4 +1,21 @@
 <div class="marketplace-container">
+  <!-- 錢包餘額顯示 -->
+  <div class="wallet-balance-section" *ngIf="isWalletConnected">
+    <div class="balance-card">
+      <div class="balance-icon">
+        <img src="assets/icons/mantle.jpg" alt="MNT" class="mnt-icon" />
+      </div>
+      <div class="balance-info">
+        <div class="balance-label">錢包餘額</div>
+        <div class="balance-value">
+          <span *ngIf="isLoadingBalance" class="loading-dots">...</span>
+          <span *ngIf="!isLoadingBalance">{{ mntBalance }}</span>
+          <span class="balance-currency">MNT</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 統計卡片 -->
   <div class="marketplace-stats" *ngIf="stats">
     <div class="stat-card">
@@ -11,11 +28,17 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">平均價格</div>
-      <div class="stat-value">{{ formatPrice(stats.price_stats.average) }} MNT</div>
+      <div class="stat-value">
+        <span>{{ formatPrice(stats.price_stats.average) }}</span>
+        <img src="assets/icons/mantle.jpg" alt="MNT" class="mnt-icon-stat" />
+      </div>
     </div>
     <div class="stat-card">
       <div class="stat-label">24h 交易量</div>
-      <div class="stat-value">{{ formatPrice(stats.volume['24h']) }} MNT</div>
+      <div class="stat-value">
+        <span>{{ formatPrice(stats.volume['24h']) }}</span>
+        <img src="assets/icons/mantle.jpg" alt="MNT" class="mnt-icon-stat" />
+      </div>
     </div>
   </div>
 
@@ -98,37 +121,122 @@
 
     <!-- 角色卡片網格 -->
     <div *ngIf="listings.length > 0" class="listings-grid">
-      <div *ngFor="let listing of listings" class="listing-card">
-        <div class="listing-character">
-          <app-character-card [character]="listingToCharacter(listing)"></app-character-card>
+      <div *ngFor="let listing of listings" class="listing-card" [attr.data-listing-id]="listing.chain_listing_id || listing.listing_id">
+        <!-- 圖片區域 -->
+        <div class="card-image-section">
+          <div class="image-wrapper">
+            <img 
+              [src]="getCharacterImage(listing)" 
+              [alt]="listing.character.name"
+              class="character-image"
+              (error)="onImageError($event)"
+            />
+            <div class="image-overlay">
+              <div class="rarity-badge" [ngClass]="'rarity-' + listing.character.rarity">
+                {{ getRarityLabel(listing.character.rarity) }}
+              </div>
+            </div>
+          </div>
         </div>
         
-        <div class="listing-info">
-          <div class="listing-price">
-            <span class="price-label">價格</span>
-            <span class="price-value">{{ formatPrice(listing.price) }} MNT</span>
+        <!-- 卡片內容 -->
+        <div class="card-content">
+          <!-- 角色名稱和等級 -->
+          <div class="character-header">
+            <h3 class="character-name">{{ listing.character.name }}</h3>
+            <span class="level-badge">Lv.{{ listing.character.level }}</span>
           </div>
           
-          <div class="listing-seller">
+          <!-- 屬性 -->
+          <div class="attributes-row">
+            <div class="attr-item">
+              <span class="attr-label">STR</span>
+              <span class="attr-value">{{ listing.character.strength }}</span>
+            </div>
+            <div class="attr-item">
+              <span class="attr-label">AGI</span>
+              <span class="attr-value">{{ listing.character.agility }}</span>
+            </div>
+            <div class="attr-item">
+              <span class="attr-label">LUK</span>
+              <span class="attr-value">{{ listing.character.luck }}</span>
+            </div>
+          </div>
+          
+          <!-- 戰鬥統計 -->
+          <div class="battle-stats">
+            <div class="stat-item">
+              <span class="stat-label">勝率</span>
+              <span class="stat-value win-rate">{{ getWinRate(listing.character) }}%</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">戰績</span>
+              <span class="stat-value">{{ listing.character.win_count }}-{{ listing.character.loss_count }}</span>
+            </div>
+          </div>
+          
+          <!-- 價格區域 -->
+          <div class="price-section">
+            <div class="price-label">價格</div>
+            <div class="price-value">
+              <span>{{ formatPrice(listing.price) }}</span>
+              <img src="assets/icons/mantle.jpg" alt="MNT" class="mnt-icon-small" />
+            </div>
+            
+            <!-- 歷史價格統計 -->
+            <div class="price-history">
+              <div class="history-item">
+                <span class="history-label">最近成交</span>
+                <span class="history-value" *ngIf="listing.priceHistory?.lastSale">
+                  {{ formatPrice(listing.priceHistory!.lastSale!) }} <img src="assets/icons/mantle.jpg" alt="MNT" class="mnt-icon-tiny" />
+                </span>
+                <span class="history-value empty" *ngIf="!listing.priceHistory?.lastSale">—</span>
+              </div>
+              <div class="history-item">
+                <span class="history-label">最低價</span>
+                <span class="history-value min" *ngIf="listing.priceHistory?.min">
+                  {{ formatPrice(listing.priceHistory!.min!) }} <img src="assets/icons/mantle.jpg" alt="MNT" class="mnt-icon-tiny" />
+                </span>
+                <span class="history-value empty" *ngIf="!listing.priceHistory?.min">—</span>
+              </div>
+              <div class="history-item">
+                <span class="history-label">最高價</span>
+                <span class="history-value max" *ngIf="listing.priceHistory?.max">
+                  {{ formatPrice(listing.priceHistory!.max!) }} <img src="assets/icons/mantle.jpg" alt="MNT" class="mnt-icon-tiny" />
+                </span>
+                <span class="history-value empty" *ngIf="!listing.priceHistory?.max">—</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 賣家信息 -->
+          <div class="seller-info">
             <span class="seller-label">賣家</span>
             <span class="seller-name">{{ listing.seller.nickname }}</span>
           </div>
           
-          <div class="listing-actions">
+          <!-- 操作按鈕 -->
+          <div class="card-actions">
+            <!-- 如果是自己的 listing，顯示取消按鈕 -->
             <button
+              *ngIf="isMyListing(listing)"
+              class="cancel-btn"
+              [disabled]="!isWalletConnected || cancellingListingId === listing.listing_id"
+              (click)="cancelListing(listing)"
+            >
+              <span *ngIf="cancellingListingId !== listing.listing_id">取消上架</span>
+              <span *ngIf="cancellingListingId === listing.listing_id">處理中...</span>
+            </button>
+            
+            <!-- 如果不是自己的 listing，顯示購買按鈕 -->
+            <button
+              *ngIf="!isMyListing(listing)"
               class="buy-btn"
               [disabled]="!isWalletConnected || purchasingListingId === listing.listing_id"
               (click)="buyCharacter(listing)"
             >
-              <span *ngIf="purchasingListingId !== listing.listing_id">購買</span>
+              <span *ngIf="purchasingListingId !== listing.listing_id">立即購買</span>
               <span *ngIf="purchasingListingId === listing.listing_id">處理中...</span>
-            </button>
-            
-            <button
-              class="details-btn"
-              [routerLink]="['/profile', listing.character.id]"
-            >
-              詳情
             </button>
           </div>
         </div>
@@ -162,6 +270,7 @@
   <!-- 錢包未連接提示 -->
   <div *ngIf="!isWalletConnected" class="wallet-hint">
     <p>請連接錢包以購買角色</p>
+    <a routerLink="/login" class="connect-link">前往連接錢包</a>
   </div>
 </div>
 

@@ -18,7 +18,8 @@ from .node_views import (
 )
 from .marketplace_views import (
     browse_marketplace, notify_listing_created, notify_listing_cancelled,
-    marketplace_stats, character_price_history, get_character_listing
+    marketplace_stats, character_price_history, get_character_listing,
+    notify_purchase
 )
 
 router = DefaultRouter()
@@ -77,6 +78,7 @@ urlpatterns = [
     # Marketplace（用戶直接鏈上交易，後端僅提供索引和查詢）
     path('marketplace/', browse_marketplace, name='browse-marketplace'),
     path('marketplace/list/', notify_listing_created, name='notify-listing-created'),
+    path('marketplace/buy/', notify_purchase, name='notify-purchase'),
     path('marketplace/listings/<uuid:listing_id>/cancel/', notify_listing_cancelled, name='notify-listing-cancelled'),
     path('marketplace/stats/', marketplace_stats, name='marketplace-stats'),
     path('marketplace/characters/<uuid:character_id>/listing/', get_character_listing, name='get-character-listing'),

@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect
 from .models import (
     Player, Character, Battle, DailyQuest, PlayerDailyQuest, PlayerLoginRecord,
     LadderSeason, LadderRank, ScheduledBattle, BattleBet, BettingStats,
-    AINode, BattleVotingRecord
+    AINode, BattleVotingRecord,CharacterListing,MarketTransaction
 )
 from .ladder_service import LadderService
 from django.shortcuts import redirect
@@ -764,3 +764,184 @@ class BattleVotingRecordAdmin(admin.ModelAdmin):
             obj.node.name
         )
     node_name.short_description = '節點'
+
+@admin.register(CharacterListing)
+class CharacterListingAdmin(admin.ModelAdmin):
+    """角色上架管理"""
+    list_display = [
+        'character_name', 'seller_name', 'price_display', 'currency_display', 
+        'status_display', 'listing_id', 'buyer_name', 'listed_at', 'sold_at'
+    ]
+    list_filter = ['status', 'currency', 'listed_at', 'sold_at']
+    search_fields = [
+        'character__name', 
+        'seller__user__username', 
+        'seller__nickname',
+        'buyer__user__username',
+        'buyer__nickname',
+        'listing_id',
+        'tx_hash',
+        'buy_tx_hash'
+    ]
+    readonly_fields = [
+        'id', 'character', 'seller', 'listing_id', 'listed_at', 
+        'sold_at', 'cancelled_at', 'tx_hash', 'cancel_tx_hash', 
+        'buyer', 'buy_tx_hash'
+    ]
+    fieldsets = (
+        ('上架信息', {
+            'fields': ('character', 'seller', 'listing_id', 'price', 'currency', 'status')
+        }),
+        ('時間信息', {
+            'fields': ('listed_at', 'sold_at', 'cancelled_at', 'expires_at'),
+            'classes': ('collapse',)
+        }),
+        ('鏈上數據', {
+            'fields': ('tx_hash', 'cancel_tx_hash', 'buy_tx_hash'),
+            'classes': ('collapse',)
+        }),
+        ('購買信息', {
+            'fields': ('buyer',),
+        }),
+        ('系統信息', {
+            'fields': ('id',),
+            'classes': ('collapse',)
+        }),
+    )
+    actions = ['mark_as_sold', 'mark_as_cancelled', 'mark_as_active']
+    
+    def character_name(self, obj):
+        return obj.character.name
+    character_name.short_description = '角色'
+    
+    def seller_name(self, obj):
+        return obj.seller.nickname or obj.seller.user.username
+    seller_name.short_description = '賣家'
+    
+    def buyer_name(self, obj):
+        if obj.buyer:
+            return obj.buyer.nickname or obj.buyer.user.username
+        return '-'
+    buyer_name.short_description = '買家'
+    
+    def price_display(self, obj):
+        return f"{obj.price} MNT"
+    price_display.short_description = '價格'
+    
+    def currency_display(self, obj):
+        if obj.currency == '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE':
+            return 'MNT (原生代幣)'
+        return obj.currency[:10] + '...'
+    currency_display.short_description = '貨幣'
+    
+    def status_display(self, obj):
+        colors = {
+            'active': 'green',
+            'sold': 'blue',
+            'cancelled': 'red',
+            'expired': 'gray'
+        }
+        color = colors.get(obj.status, 'black')
+        return format_html('<span style="color: {};">{}</span>', color, obj.get_status_display())
+    status_display.short_description = '狀態'
+    
+    def mark_as_sold(self, request, queryset):
+        """標記為已售出"""
+        count = 0
+        for listing in queryset:
+            if listing.status != 'sold':
+                listing.status = 'sold'
+                if not listing.sold_at:
+                    listing.sold_at = timezone.now()
+                listing.save()
+                count += 1
+        messages.success(request, f'已將 {count} 個上架標記為已售出')
+    mark_as_sold.short_description = '標記為已售出'
+    
+    def mark_as_cancelled(self, request, queryset):
+        """標記為已取消"""
+        count = 0
+        for listing in queryset:
+            if listing.status != 'cancelled':
+                listing.status = 'cancelled'
+                if not listing.cancelled_at:
+                    listing.cancelled_at = timezone.now()
+                listing.save()
+                count += 1
+        messages.success(request, f'已將 {count} 個上架標記為已取消')
+    mark_as_cancelled.short_description = '標記為已取消'
+    
+    def mark_as_active(self, request, queryset):
+        """標記為上架中"""
+        queryset.update(status='active')
+        messages.success(request, f'已將 {queryset.count()} 個上架標記為上架中')
+    mark_as_active.short_description = '標記為上架中'
+
+
+@admin.register(MarketTransaction)
+class MarketTransactionAdmin(admin.ModelAdmin):
+    """市場交易記錄管理"""
+    list_display = [
+        'character_name', 'seller_name', 'buyer_name', 'price_display', 
+        'currency_display', 'tx_hash_short', 'block_number', 'created_at'
+    ]
+    list_filter = ['currency', 'created_at', 'block_number']
+    search_fields = [
+        'character__name',
+        'seller__user__username',
+        'seller__nickname',
+        'buyer__user__username',
+        'buyer__nickname',
+        'tx_hash',
+        'listing__listing_id'
+    ]
+    readonly_fields = [
+        'id', 'listing', 'character', 'buyer', 'seller', 'price', 
+        'currency', 'tx_hash', 'block_number', 'created_at'
+    ]
+    fieldsets = (
+        ('交易信息', {
+            'fields': ('listing', 'character', 'buyer', 'seller', 'price', 'currency')
+        }),
+        ('鏈上數據', {
+            'fields': ('tx_hash', 'block_number'),
+            'classes': ('collapse',)
+        }),
+        ('系統信息', {
+            'fields': ('id', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    date_hierarchy = 'created_at'
+    
+    def character_name(self, obj):
+        return obj.character.name
+    character_name.short_description = '角色'
+    
+    def seller_name(self, obj):
+        return obj.seller.nickname or obj.seller.user.username
+    seller_name.short_description = '賣家'
+    
+    def buyer_name(self, obj):
+        return obj.buyer.nickname or obj.buyer.user.username
+    buyer_name.short_description = '買家'
+    
+    def price_display(self, obj):
+        return f"{obj.price} MNT"
+    price_display.short_description = '價格'
+    
+    def currency_display(self, obj):
+        if obj.currency == '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE':
+            return 'MNT (原生代幣)'
+        return obj.currency[:10] + '...'
+    currency_display.short_description = '貨幣'
+    
+    def tx_hash_short(self, obj):
+        if obj.tx_hash:
+            return format_html(
+                '<a href="https://explorer.testnet.mantle.xyz/tx/{}" target="_blank">{}</a>',
+                obj.tx_hash,
+                obj.tx_hash[:10] + '...' + obj.tx_hash[-8:]
+            )
+        return '-'
+    tx_hash_short.short_description = '交易哈希'

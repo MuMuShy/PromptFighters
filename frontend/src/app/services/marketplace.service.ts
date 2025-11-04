@@ -11,7 +11,8 @@ import {
   waitForReceipt,
   readContract,
   getContractEvents,
-  prepareEvent
+  prepareEvent,
+  getRpcClient
 } from 'thirdweb';
 import { cancelListing as cancelListingExtension } from 'thirdweb/extensions/marketplace';
 
@@ -42,6 +43,12 @@ export interface MarketplaceListing {
   currency: string;
   listed_at: string;
   expires_at?: string;
+  priceHistory?: {
+    lastSale?: string; // 最近成交價
+    min?: string; // 最低價
+    max?: string; // 最高價
+    count?: number; // 交易次數
+  };
 }
 
 export interface MarketplaceStats {
@@ -94,15 +101,102 @@ export class MarketplaceService {
    * 獲取當前連接的賬戶
    */
   private async getAccount() {
-    const wallet = this.web3Service.currentWallet;
+    // 先嘗試從 currentWallet 獲取
+    let wallet = this.web3Service.currentWallet;
+    
+    // 如果沒有 wallet，但用戶是社交登入，嘗試恢復
+    if (!wallet) {
+      const loginMethod = localStorage.getItem('login_method') || '';
+      const isSocialLogin = ['google', 'facebook', 'apple', 'social'].includes(loginMethod);
+      const walletAddress = localStorage.getItem('wallet_address');
+      
+      if (isSocialLogin && walletAddress) {
+        console.log('🔍 嘗試恢復社交登入錢包...');
+        // 嘗試靜默恢復
+        const restoredAddress = await this.web3Service.trySilentRestoreSocialWallet();
+        if (restoredAddress) {
+          wallet = this.web3Service.currentWallet;
+          console.log('✅ 成功恢復錢包:', restoredAddress);
+        } else {
+          // 如果恢復失敗，但用戶已登入，拋出更友好的錯誤
+          throw new Error('錢包會話已過期，請重新連接錢包。如果是社交登入，請重新登入。');
+        }
+      } else {
+        throw new Error('錢包未連接');
+      }
+    }
+
     if (!wallet) {
       throw new Error('錢包未連接');
     }
-    const account = wallet.getAccount();
-    if (!account) {
-      throw new Error('無法獲取賬戶');
+
+    try {
+      const account = wallet.getAccount();
+      console.log('🔍 marketplace.getAccount(): account 結果:', account);
+      
+      if (!account) {
+        // 如果 account 為 undefined，這表示 thirdweb 會話未激活
+        // 對於社交登入用戶，我們需要提示他們重新連接
+        const loginMethod = localStorage.getItem('login_method') || '';
+        const isSocialLogin = ['google', 'facebook', 'apple', 'social'].includes(loginMethod);
+        
+        if (isSocialLogin) {
+          throw new Error('錢包會話未激活。請重新連接錢包：前往登入頁面，點擊社交登入按鈕重新連接。');
+        } else {
+          throw new Error('無法獲取賬戶：錢包未連接或會話已過期');
+        }
+      }
+      return account;
+    } catch (error: any) {
+      // 如果 getAccount() 失敗，對於社交登入用戶，嘗試恢復
+      const loginMethod = localStorage.getItem('login_method') || '';
+      const isSocialLogin = ['google', 'facebook', 'apple', 'social'].includes(loginMethod);
+      const walletAddress = localStorage.getItem('wallet_address');
+      
+      if (isSocialLogin && walletAddress) {
+        console.log('⚠️ getAccount() 失敗，嘗試恢復社交登入錢包...');
+        
+        // 先嘗試靜默恢復
+        const restoredAddress = await this.web3Service.trySilentRestoreSocialWallet();
+        if (restoredAddress) {
+          wallet = this.web3Service.currentWallet;
+          if (wallet) {
+            try {
+              const account = wallet.getAccount();
+              if (account) {
+                console.log('✅ 恢復後成功獲取賬戶:', account.address);
+                return account;
+              }
+            } catch (e2) {
+              console.error('恢復後仍無法獲取賬戶:', e2);
+            }
+          }
+        }
+        
+        // 如果靜默恢復失敗，嘗試重新連接（可能會觸發彈窗）
+        console.log('⚠️ 靜默恢復失敗，嘗試重新連接...');
+        const reconnectedAddress = await this.web3Service.tryReconnectSocialWallet();
+        if (reconnectedAddress) {
+          wallet = this.web3Service.currentWallet;
+          if (wallet) {
+            try {
+              const account = wallet.getAccount();
+              if (account) {
+                console.log('✅ 重新連接後成功獲取賬戶:', account.address);
+                return account;
+              }
+            } catch (e3) {
+              console.error('重新連接後仍無法獲取賬戶:', e3);
+            }
+          }
+        }
+        
+        // 如果都失敗，拋出更友好的錯誤
+        throw new Error('無法獲取錢包賬戶。會話已失效，請前往登入頁面重新連接錢包。');
+      }
+      
+      throw new Error('無法獲取賬戶: ' + (error?.message || 'unknown error'));
     }
-    return account;
   }
 
   /**
@@ -211,11 +305,88 @@ export class MarketplaceService {
   }
 
   /**
+   * 檢查原生代幣（MNT）餘額
+   */
+  async checkNativeBalance(address: string): Promise<bigint> {
+    try {
+      // 使用 RPC 直接查詢餘額
+      const client = this.getClient();
+      const chain = this.chain;
+      
+      // thirdweb v5: 使用 getRpcClient 獲取 RPC 客戶端
+      const rpc = getRpcClient({ client, chain });
+      
+      // 調用 eth_getBalance（需要兩個參數：address 和 block tag）
+      const balance = await rpc({
+        method: 'eth_getBalance',
+        params: [address as `0x${string}`, 'latest'],
+      }) as string;
+      
+      return BigInt(balance);
+    } catch (error) {
+      console.error('檢查原生代幣餘額失敗:', error);
+      // 如果失敗，返回 0
+      return 0n;
+    }
+  }
+
+  /**
+   * 估算交易所需的 gas 費用
+   */
+  async estimateGasCost(): Promise<bigint> {
+    try {
+      // 估算一個簡單交易的 gas 費用（例如 approve）
+      // 通常 approve 交易需要約 50,000 gas
+      // 上架交易需要約 200,000 gas
+      // 使用保守估算：300,000 gas
+      const estimatedGas = 300000n;
+      
+      // 獲取當前 gas price
+      const client = this.getClient();
+      const chain = this.chain;
+      const rpc = getRpcClient({ client, chain });
+      
+      const gasPrice = await rpc({
+        method: 'eth_gasPrice',
+        params: undefined,
+      }) as string;
+      
+      const gasPriceWei = BigInt(gasPrice);
+      
+      // 計算總成本：gas * gasPrice
+      return estimatedGas * gasPriceWei;
+    } catch (error) {
+      console.error('估算 gas 費用失敗:', error);
+      // 如果失敗，返回保守估算：0.01 MNT
+      return BigInt(Math.floor(0.01 * 1e18));
+    }
+  }
+
+  /**
    * 批准 Marketplace 轉移 NFT
    */
   async approveNFTForMarketplace(tokenId: number): Promise<string> {
     try {
       const account = await this.getAccount();
+      
+      // 檢查餘額
+      const balance = await this.checkNativeBalance(account.address);
+      const estimatedGasCost = await this.estimateGasCost();
+      
+      if (balance < estimatedGasCost) {
+        const balanceMNT = Number(balance) / 1e18;
+        const requiredMNT = Number(estimatedGasCost) / 1e18;
+        throw new Error(
+          `餘額不足！\n\n` +
+          `當前餘額: ${balanceMNT.toFixed(6)} MNT\n` +
+          `所需餘額: ${requiredMNT.toFixed(6)} MNT（支付 gas 費用）\n\n` +
+          `請先充值 MNT 到你的錢包：\n` +
+          `${account.address}\n\n` +
+          `Mantle Testnet 水龍頭：\n` +
+          `https://faucet.testnet.mantle.xyz/`
+        );
+      }
+      
       const nftContract = this.getNFTContract();
       const marketplaceContract = this.getMarketplaceContract();
       
@@ -234,6 +405,21 @@ export class MarketplaceService {
       return receipt.transactionHash as string;
     } catch (error: any) {
       console.error('批准 NFT 失敗:', error);
+      // 如果錯誤訊息已經包含餘額不足的提示，直接拋出
+      if (error.message && error.message.includes('餘額不足')) {
+        throw error;
+      }
+      // 檢查是否是餘額不足的錯誤
+      if (error.message && (error.message.includes('insufficient funds') || error.message.includes('overshot'))) {
+        const account = await this.getAccount();
+        throw new Error(
+          `餘額不足！無法支付 gas 費用。\n\n` +
+          `請先充值 MNT 到你的錢包：\n` +
+          `${account.address}\n\n` +
+          `Mantle Testnet 水龍頭：\n` +
+          `https://faucet.testnet.mantle.xyz/`
+        );
+      }
       throw new Error(error.message || '批准失敗');
     }
   }
@@ -250,6 +436,25 @@ export class MarketplaceService {
   ): Promise<{txHash: string, listingId?: number}> {
     try {
       const account = await this.getAccount();
+      
+      // 檢查餘額
+      const balance = await this.checkNativeBalance(account.address);
+      const estimatedGasCost = await this.estimateGasCost();
+      
+      if (balance < estimatedGasCost) {
+        const balanceMNT = Number(balance) / 1e18;
+        const requiredMNT = Number(estimatedGasCost) / 1e18;
+        throw new Error(
+          `餘額不足！\n\n` +
+          `當前餘額: ${balanceMNT.toFixed(6)} MNT\n` +
+          `所需餘額: ${requiredMNT.toFixed(6)} MNT（支付 gas 費用）\n\n` +
+          `請先充值 MNT 到你的錢包：\n` +
+          `${account.address}\n\n` +
+          `Mantle Testnet 水龍頭：\n` +
+          `https://faucet.testnet.mantle.xyz/`
+        );
+      }
+      
       const marketplaceContract = this.getMarketplaceContract();
       const nftContract = this.getNFTContract();
       
@@ -344,6 +549,21 @@ export class MarketplaceService {
       };
     } catch (error: any) {
       console.error('上架失敗:', error);
+      // 如果錯誤訊息已經包含餘額不足的提示，直接拋出
+      if (error.message && error.message.includes('餘額不足')) {
+        throw error;
+      }
+      // 檢查是否是餘額不足的錯誤
+      if (error.message && (error.message.includes('insufficient funds') || error.message.includes('overshot'))) {
+        const account = await this.getAccount();
+        throw new Error(
+          `餘額不足！無法支付 gas 費用。\n\n` +
+          `請先充值 MNT 到你的錢包：\n` +
+          `${account.address}\n\n` +
+          `Mantle Testnet 水龍頭：\n` +
+          `https://faucet.testnet.mantle.xyz/`
+        );
+      }
       throw new Error(error.message || '上架失敗');
     }
   }
@@ -548,6 +768,21 @@ export class MarketplaceService {
       return receipt.transactionHash as string;
     } catch (error: any) {
       console.error('購買失敗:', error);
+      // 如果錯誤訊息已經包含餘額不足的提示，直接拋出
+      if (error.message && error.message.includes('餘額不足')) {
+        throw error;
+      }
+      // 檢查是否是餘額不足的錯誤
+      if (error.message && (error.message.includes('insufficient funds') || error.message.includes('overshot'))) {
+        const account = await this.getAccount();
+        throw new Error(
+          `餘額不足！無法支付交易費用。\n\n` +
+          `請先充值 MNT 到你的錢包：\n` +
+          `${account.address}\n\n` +
+          `Mantle Testnet 水龍頭：\n` +
+          `https://faucet.testnet.mantle.xyz/`
+        );
+      }
       throw new Error(error.message || '購買失敗');
     }
   }
@@ -625,6 +860,106 @@ export class MarketplaceService {
       // 提供更詳細的錯誤信息
       const errorMsg = error.message || error.toString() || '取消上架失敗';
       throw new Error(errorMsg);
+    }
+  }
+
+  /**
+   * 從後端獲取已索引的 listings（優先使用，更快）
+   */
+  async getListingsFromBackend(params?: {
+    page?: number;
+    limit?: number;
+    rarity?: string;
+    min_price?: string;
+    max_price?: string;
+    search?: string;
+    sort_by?: string;
+  }): Promise<Array<{
+    listingId: number;
+    tokenId: number;
+    price: string;
+    priceWei?: string;
+    currency: string;
+    seller: string;
+    assetContract: string;
+    status: number;
+  }>> {
+    try {
+      const queryParams: any = {};
+      if (params?.page) queryParams.page = params.page;
+      if (params?.limit) queryParams.limit = params.limit;
+      if (params?.rarity) queryParams.rarity = params.rarity;
+      if (params?.min_price) queryParams.min_price = params.min_price;
+      if (params?.max_price) queryParams.max_price = params.max_price;
+      if (params?.search) queryParams.search = params.search;
+      if (params?.sort_by) queryParams.sort_by = params.sort_by;
+
+      const response = await this.http.get<{
+        success: boolean;
+        data: {
+          listings: Array<{
+            listing_id: string;
+            chain_listing_id: number;
+            character: {
+              id: string;
+              name: string;
+              image_url: string;
+              rarity: number;
+              rarity_name: string;
+              level: number;
+              strength: number;
+              agility: number;
+              luck: number;
+              win_count: number;
+              loss_count: number;
+              token_id: number;
+              contract_address: string;
+            };
+            seller: {
+              id: string;
+              nickname: string;
+              wallet_address?: string;
+            };
+            price: string;
+            currency: string;
+            listed_at: string;
+            expires_at?: string;
+          }>;
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            total_pages: number;
+          };
+        };
+      }>(`${this.apiUrl}/marketplace/`, { params: queryParams }).toPromise();
+
+      if (!response || !response.success || !response.data) {
+        console.warn('後端 API 返回空數據，回退到鏈上獲取');
+        return await this.getAllListingsFromChain();
+      }
+
+      // 轉換後端格式為前端期望的格式
+      return response.data.listings.map(listing => {
+        // 將價格轉換為 wei（用於鏈上交易）
+        const priceNum = parseFloat(listing.price);
+        const priceWei = (BigInt(Math.floor(priceNum * 1e18))).toString();
+        
+        return {
+          listingId: listing.chain_listing_id,
+          tokenId: listing.character.token_id,
+          price: listing.price,
+          priceWei: priceWei,
+          currency: listing.currency,
+          seller: listing.seller.wallet_address || listing.seller.id, // 使用 wallet address，如果沒有則使用 Player ID
+          assetContract: listing.character.contract_address,
+          status: 1, // 後端只返回 active 的 listing
+        };
+      });
+    } catch (error: any) {
+      console.error('從後端獲取 listings 失敗，回退到鏈上獲取:', error);
+      // 如果後端失敗，回退到鏈上獲取
+      return await this.getAllListingsFromChain();
     }
   }
 
@@ -715,14 +1050,30 @@ export class MarketplaceService {
   /**
    * 通知後端索引購買（可選，用於後端索引）
    */
-  notifyPurchase(txHash: string, listingId: number): Observable<any> {
+  notifyPurchase(txHash: string, listingId: number, tokenId?: number, assetContract?: string, price?: string, currency?: string): Observable<any> {
     const headers = this.getAuthHeaders();
+    const body: any = {
+      tx_hash: txHash,
+      listing_id: listingId,
+    };
+    
+    // 如果提供了 token_id 和 asset_contract，一起傳遞（用於創建 Character）
+    if (tokenId !== undefined) {
+      body.token_id = tokenId;
+    }
+    if (assetContract) {
+      body.asset_contract = assetContract;
+    }
+    if (price) {
+      body.price = price;
+    }
+    if (currency) {
+      body.currency = currency;
+    }
+    
     return this.http.post(
       `${this.apiUrl}/marketplace/buy/`,
-      {
-        tx_hash: txHash,
-        listing_id: listingId,
-      },
+      body,
       { headers }
     );
   }

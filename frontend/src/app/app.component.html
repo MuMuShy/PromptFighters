@@ -39,7 +39,7 @@
       <div class="nav-container">
         <div class="nav-content">
           <div class="nav-logo">
-            <a routerLink="/"><img src="/assets/icon_home.png" alt="Logo"></a>
+            <a routerLink="/"><img src="/assets/game_bg_1.webp" alt="Logo"></a>
           </div>
           <!-- Desktop Menu + 資源條 + 登出 -->
           <div class="desktop-menu">
@@ -49,8 +49,7 @@
               <a routerLink="/create" class="nav-link">Create</a>
               <a routerLink="/battle" class="nav-link">Battle</a>
               <a routerLink="/arena" class="nav-link arena-link">Arena</a>
-              <a routerLink="/nft-gallery" class="nav-link">NFT Gallery</a>
-              <a routerLink="/daily-quests" class="nav-link">Daily Quest</a>
+              <a routerLink="/marketplace" class="nav-link">Marketplace</a>
               <a routerLink="/leaderboard" class="nav-link">Leaderboard</a>
             </div>
             <!-- 資源條（移除 prompt） -->
@@ -99,8 +98,7 @@
             <a routerLink="/create" (click)="closeMenu()" class="mobile-nav-link">Create</a>
             <a routerLink="/battle" (click)="closeMenu()" class="mobile-nav-link">Battle</a>
             <a routerLink="/arena" (click)="closeMenu()" class="mobile-nav-link arena-link">Arena</a>
-            <a routerLink="/nft-gallery" (click)="closeMenu()" class="mobile-nav-link">NFT Gallery</a>
-            <a routerLink="/daily-quests" (click)="closeMenu()" class="mobile-nav-link">Daily Quest</a>
+            <a routerLink="/marketplace" (click)="closeMenu()" class="mobile-nav-link">Marketplace</a>
             <a routerLink="/leaderboard" (click)="closeMenu()" class="mobile-nav-link">Leaderboard</a>
           </div>
           <div class="mobile-status-bar" *ngIf="isLoggedIn">

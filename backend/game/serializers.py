@@ -15,7 +15,7 @@ class PlayerSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Player
-        fields = ['id', 'user', 'created_at', 'last_login', 'gold', 'prompt', 'prompt_power', 'exp_potion', 'energy', 'max_energy', 'wallet_address','nickname','nickname_changed']
+        fields = ['id', 'user', 'created_at', 'last_login', 'gold', 'prompt', 'prompt_power', 'exp_potion', 'energy', 'max_energy', 'wallet_address','nickname','nickname_changed', 'login_method']
 
 class CharacterSerializer(serializers.ModelSerializer):
     win_rate = serializers.SerializerMethodField()

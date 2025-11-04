@@ -36,6 +36,13 @@ class NFTService:
             "type": "function"
         },
         {
+            "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
+            "name": "tokenURI",
+            "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
             "inputs": [],
             "name": "nextTokenIdToMint",
             "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
@@ -379,6 +386,181 @@ class NFTService:
                     results[token_id] = owner
         
         return results
+    
+    def get_token_uri(self, token_id: int) -> str:
+        """
+        獲取 NFT 的 tokenURI
+        
+        Args:
+            token_id: Token ID
+            
+        Returns:
+            str: tokenURI（IPFS 或 HTTP URL）
+        """
+        if not self.enabled:
+            logger.warning("⚠️  NFT 服務未啟用，無法獲取 tokenURI")
+            return None
+        
+        try:
+            # 調用合約的 tokenURI 函數
+            uri = self.contract.functions.tokenURI(token_id).call()
+            logger.info(f"📋 Token ID {token_id} 的 URI: {uri}")
+            return uri
+        except Exception as e:
+            logger.error(f"❌ 獲取 tokenURI 失敗 (Token ID: {token_id}): {e}")
+            return None
+    
+    def fetch_metadata_from_uri(self, uri: str) -> dict:
+        """
+        從 URI（IPFS 或 HTTP）獲取 metadata JSON
+        
+        Args:
+            uri: tokenURI（可能是 ipfs:// 或 https://）
+            
+        Returns:
+            dict: metadata JSON 對象
+        """
+        if not uri:
+            return None
+        
+        try:
+            # 處理 IPFS URI
+            if uri.startswith('ipfs://'):
+                # 轉換為 HTTP gateway URL
+                ipfs_hash = uri.replace('ipfs://', '')
+                # 嘗試多個 IPFS gateway
+                gateways = [
+                    f"https://gateway.pinata.cloud/ipfs/{ipfs_hash}",
+                    f"https://ipfs.io/ipfs/{ipfs_hash}",
+                    f"https://cloudflare-ipfs.com/ipfs/{ipfs_hash}",
+                ]
+                
+                for gateway_url in gateways:
+                    try:
+                        logger.info(f"🔍 嘗試從 IPFS gateway 獲取: {gateway_url}")
+                        response = requests.get(gateway_url, timeout=10)
+                        if response.status_code == 200:
+                            metadata = response.json()
+                            logger.info(f"✅ 成功從 IPFS 獲取 metadata")
+                            return metadata
+                    except Exception as e:
+                        logger.warning(f"⚠️  Gateway {gateway_url} 失敗: {e}")
+                        continue
+                
+                logger.error(f"❌ 所有 IPFS gateway 都失敗")
+                return None
+            
+            # 處理 HTTP/HTTPS URL
+            elif uri.startswith('http://') or uri.startswith('https://'):
+                logger.info(f"🔍 從 HTTP URL 獲取 metadata: {uri}")
+                response = requests.get(uri, timeout=10)
+                if response.status_code == 200:
+                    metadata = response.json()
+                    logger.info(f"✅ 成功從 HTTP URL 獲取 metadata")
+                    return metadata
+                else:
+                    logger.error(f"❌ HTTP 請求失敗: {response.status_code}")
+                    return None
+            
+            else:
+                logger.error(f"❌ 不支持的 URI 格式: {uri}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ 獲取 metadata 失敗: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return None
+    
+    def parse_metadata_to_character_data(self, metadata: dict, token_id: int, contract_address: str, owner_wallet: str) -> dict:
+        """
+        解析 metadata JSON 並返回創建 Character 所需的數據
+        
+        Args:
+            metadata: metadata JSON 對象
+            token_id: Token ID
+            contract_address: 合約地址
+            owner_wallet: 持有者錢包地址
+            
+        Returns:
+            dict: 包含 Character 欄位的字典
+        """
+        if not metadata:
+            return None
+        
+        try:
+            # 提取基本信息
+            name = metadata.get('name', f'Character #{token_id}')
+            description = metadata.get('description', '')
+            image_url = metadata.get('image', '')
+            
+            # 解析 attributes
+            attributes = metadata.get('attributes', [])
+            attr_dict = {}
+            for attr in attributes:
+                trait_type = attr.get('trait_type', '').lower()
+                value = attr.get('value')
+                attr_dict[trait_type] = value
+            
+            # 映射 rarity（從 "Rarity" attribute）
+            rarity_map = {
+                'N': 1,
+                'R': 2,
+                'SR': 3,
+                'SSR': 4,
+                'UR': 5,
+            }
+            rarity_str = attr_dict.get('rarity', 'N')
+            rarity = rarity_map.get(rarity_str.upper(), 1)
+            
+            # 提取屬性值
+            level = int(attr_dict.get('level', 1))
+            strength = int(attr_dict.get('strength', 50))
+            agility = int(attr_dict.get('agility', 50))
+            luck = int(attr_dict.get('luck', 50))
+            
+            # 提取戰績
+            win_count = int(attr_dict.get('wins', 0))
+            loss_count = int(attr_dict.get('losses', 0))
+            
+            # 從 description 中提取 skill_description（如果有的話）
+            # 如果 description 包含 "✨ 特殊能力:"，提取後面的內容
+            skill_description = ''
+            if '✨ 特殊能力:' in description or '特殊能力:' in description:
+                parts = description.split('特殊能力:')
+                if len(parts) > 1:
+                    skill_description = parts[1].strip()
+            else:
+                # 如果沒有特殊能力標記，使用整個 description 作為 skill_description
+                skill_description = description
+            
+            # 構建 Character 數據
+            character_data = {
+                'name': name,
+                'prompt': description,
+                'image_url': image_url,
+                'strength': strength,
+                'agility': agility,
+                'luck': luck,
+                'level': level,
+                'rarity': rarity,
+                'skill_description': skill_description,
+                'win_count': win_count,
+                'loss_count': loss_count,
+                'is_minted': True,
+                'token_id': token_id,
+                'contract_address': contract_address,
+                'owner_wallet': owner_wallet.lower() if owner_wallet else None,
+            }
+            
+            logger.info(f"✅ 解析 metadata 成功: {name} (Rarity: {rarity_str}, Level: {level})")
+            return character_data
+            
+        except Exception as e:
+            logger.error(f"❌ 解析 metadata 失敗: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return None
 
 
 # 單例模式
