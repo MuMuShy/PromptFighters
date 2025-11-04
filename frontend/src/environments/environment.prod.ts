@@ -10,9 +10,9 @@ export const environment = {
   walletConnectProjectId: 'your_walletconnect_project_id',
   
   // Mantle 鏈配置
-  mantleChainId: 5000,
-  mantleRpcUrl: 'https://rpc.mantle.xyz',
-  mantleExplorerUrl: 'https://explorer.mantle.xyz',
+  mantleChainId: 5003,
+  mantleRpcUrl: 'https://rpc.sepolia.mantle.xyz',
+  mantleExplorerUrl: 'https://explorer.sepolia.mantle.xyz',
 
   // 智能合約地址
   marketplaceContractAddress: '0xb29Bd79b4Df92BBb0A718cE45ADe1f3096a145d0', // 部署後填入 MarketplaceV3 合約地址
