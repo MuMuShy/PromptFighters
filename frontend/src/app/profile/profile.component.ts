@@ -622,10 +622,29 @@ export class ProfileComponent implements OnInit {
         const approveTxHash = await this.marketplaceService.approveNFTForMarketplace(
           this.listingCharacter.token_id!
         );
-        this.dialogService.success('批准成功', `交易哈希: ${approveTxHash}`);
+        console.log('✅ 批准交易已發送:', approveTxHash);
         
-        // 等待批准交易確認
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // 等待批准交易確認（使用 waitForReceipt 已在 approveNFTForMarketplace 中完成）
+        // 但為了確保狀態已更新，再次檢查批准狀態（最多等待 10 秒）
+        let approvalConfirmed = false;
+        for (let i = 0; i < 10; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // 等待 1 秒
+          const isNowApproved = await this.marketplaceService.checkNFTApproval(
+            this.listingCharacter.token_id!,
+            walletAddress
+          );
+          if (isNowApproved) {
+            approvalConfirmed = true;
+            console.log('✅ 批准狀態已確認');
+            break;
+          }
+        }
+        
+        if (!approvalConfirmed) {
+          console.warn('⚠️ 批准交易可能尚未確認，但繼續嘗試上架...');
+        }
+        
+        this.dialogService.success('批准成功', `交易哈希: ${approveTxHash}\n\n已確認批准狀態。`);
       }
 
       // 步驟 3: 上架

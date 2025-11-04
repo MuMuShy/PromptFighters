@@ -382,7 +382,7 @@ export class MarketplaceService {
           `所需餘額: ${requiredMNT.toFixed(6)} MNT（支付 gas 費用）\n\n` +
           `請先充值 MNT 到你的錢包：\n` +
           `${account.address}\n\n` +
-          `Mantle Testnet 水龍頭：\n` +
+          `Mantle Sepolia 測試網水龍頭：\n` +
           `https://faucet.testnet.mantle.xyz/`
         );
       }
@@ -416,7 +416,7 @@ export class MarketplaceService {
           `餘額不足！無法支付 gas 費用。\n\n` +
           `請先充值 MNT 到你的錢包：\n` +
           `${account.address}\n\n` +
-          `Mantle Testnet 水龍頭：\n` +
+          `Mantle Sepolia 測試網水龍頭：\n` +
           `https://faucet.testnet.mantle.xyz/`
         );
       }
@@ -437,7 +437,40 @@ export class MarketplaceService {
     try {
       const account = await this.getAccount();
       
-      // 檢查餘額
+      // 步驟 1: 驗證 NFT 持有者
+      console.log(`🔍 驗證 NFT 持有者 (Token ID: ${tokenId})...`);
+      const owner = await this.ownerOf(tokenId);
+      if (!owner) {
+        throw new Error(`無法獲取 NFT 持有者信息 (Token ID: ${tokenId})`);
+      }
+      
+      const currentOwner = owner.toLowerCase();
+      const accountAddress = account.address.toLowerCase();
+      
+      if (currentOwner !== accountAddress) {
+        throw new Error(
+          `你不是此 NFT 的持有者！\n\n` +
+          `Token ID: ${tokenId}\n` +
+          `實際持有者: ${currentOwner}\n` +
+          `你的錢包: ${accountAddress}\n\n` +
+          `請確保你使用正確的錢包地址來上架此 NFT。`
+        );
+      }
+      console.log(`✅ 持有者驗證通過: ${accountAddress}`);
+      
+      // 步驟 2: 檢查批准狀態
+      console.log(`🔍 檢查 NFT 批准狀態...`);
+      const isApproved = await this.checkNFTApproval(tokenId, account.address);
+      if (!isApproved) {
+        throw new Error(
+          `NFT 尚未批准給 Marketplace！\n\n` +
+          `請先批准 Marketplace 轉移此 NFT。\n\n` +
+          `這需要調用 setApprovalForAll 函數。`
+        );
+      }
+      console.log(`✅ 批准狀態驗證通過`);
+      
+      // 步驟 3: 檢查餘額
       const balance = await this.checkNativeBalance(account.address);
       const estimatedGasCost = await this.estimateGasCost();
       
@@ -450,7 +483,7 @@ export class MarketplaceService {
           `所需餘額: ${requiredMNT.toFixed(6)} MNT（支付 gas 費用）\n\n` +
           `請先充值 MNT 到你的錢包：\n` +
           `${account.address}\n\n` +
-          `Mantle Testnet 水龍頭：\n` +
+          `Mantle Sepolia 測試網水龍頭：\n` +
           `https://faucet.testnet.mantle.xyz/`
         );
       }
@@ -560,7 +593,7 @@ export class MarketplaceService {
           `餘額不足！無法支付 gas 費用。\n\n` +
           `請先充值 MNT 到你的錢包：\n` +
           `${account.address}\n\n` +
-          `Mantle Testnet 水龍頭：\n` +
+          `Mantle Sepolia 測試網水龍頭：\n` +
           `https://faucet.testnet.mantle.xyz/`
         );
       }
@@ -779,7 +812,7 @@ export class MarketplaceService {
           `餘額不足！無法支付交易費用。\n\n` +
           `請先充值 MNT 到你的錢包：\n` +
           `${account.address}\n\n` +
-          `Mantle Testnet 水龍頭：\n` +
+          `Mantle Sepolia 測試網水龍頭：\n` +
           `https://faucet.testnet.mantle.xyz/`
         );
       }
