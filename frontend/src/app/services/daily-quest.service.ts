@@ -57,6 +57,14 @@ export interface CheckInResponse {
   success: boolean;
   message: string;
   login_streak?: number;
+  mnt_reward?: {
+    success: boolean;
+    amount?: string;
+    tx_hash?: string;
+    message?: string;
+    error?: string;
+    already_claimed?: boolean;
+  };
 }
 
 @Injectable({
@@ -88,8 +96,12 @@ export class DailyQuestService {
     );
   }
 
-  checkIn(): Observable<CheckInResponse> {
-    return this.http.post<CheckInResponse>(`${this.apiUrl}/checkin/`, {}).pipe(
+  checkIn(walletAddress?: string): Observable<CheckInResponse> {
+    const body: any = {};
+    if (walletAddress) {
+      body.wallet_address = walletAddress;
+    }
+    return this.http.post<CheckInResponse>(`${this.apiUrl}/checkin/`, body).pipe(
       tap(response => {
         if (response.success) {
           // 重新載入統計資料

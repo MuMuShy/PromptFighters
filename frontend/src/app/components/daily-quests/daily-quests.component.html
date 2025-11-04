@@ -47,7 +47,41 @@
       <button class="close-btn" (click)="closeCheckInModal()">×</button>
     </div>
     <div class="reward-content">
-      <p>{{ checkInMessage }}</p>
+      <div class="checkin-message">
+        <p class="checkin-main-message">{{ checkInMessage.split('\n\n')[0] }}</p>
+        
+        <!-- MNT 獎勵顯示 -->
+        <div *ngIf="mntReward" class="mnt-reward-section">
+          <div *ngIf="mntReward.success && !mntReward.already_claimed" class="mnt-reward-success">
+            <div class="mnt-reward-header">
+              <img src="/assets/icons/mantle.jpg" alt="MNT" class="mnt-reward-icon" />
+              <span class="mnt-reward-title">測試 MNT 獎勵</span>
+            </div>
+            <div class="mnt-reward-amount">
+              <span class="mnt-amount">+{{ mntReward.amount }} MNT</span>
+            </div>
+            <div *ngIf="mntReward.tx_hash" class="mnt-tx-info">
+              <span class="mnt-tx-label">交易哈希：</span>
+              <a [href]="'https://explorer.sepolia.mantle.xyz/tx/' + mntReward.tx_hash" 
+                 target="_blank" 
+                 class="mnt-tx-link">
+                {{ mntReward.tx_hash.substring(0, 10) }}...{{ mntReward.tx_hash.substring(mntReward.tx_hash.length - 8) }}
+              </a>
+            </div>
+            <p class="mnt-reward-note">測試代幣已發送到你的錢包</p>
+          </div>
+          
+          <div *ngIf="mntReward.already_claimed" class="mnt-reward-info">
+            <span class="mnt-info-icon">ℹ️</span>
+            <span class="mnt-info-text">今日已領取 MNT 獎勵</span>
+          </div>
+          
+          <div *ngIf="!mntReward.success && mntReward.error" class="mnt-reward-error">
+            <span class="mnt-error-icon">⚠️</span>
+            <span class="mnt-error-text">MNT 獎勵發放失敗：{{ mntReward.error }}</span>
+          </div>
+        </div>
+      </div>
       <button class="confirm-btn" (click)="closeCheckInModal()">確定</button>
     </div>
   </div>
@@ -62,7 +96,7 @@
       <div class="stats-header">
         <h2 class="stats-title">
           <span class="title-icon">📋</span>
-          每日任務
+          每日任務 
         </h2>
         <div class="login-streak">
           <span class="streak-icon">🔥</span>
@@ -99,6 +133,9 @@
           <span class="checkin-icon">📅</span>
           <span class="checkin-text">立即簽到</span>
         </button>
+        <div class="checkin-note">
+          <p class="checkin-note-text">簽到可獲得 5 MNT 測試代幣</p>
+        </div>
       </div>
       
       <!-- 已簽到提示 -->

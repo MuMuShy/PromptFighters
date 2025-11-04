@@ -41,16 +41,37 @@
 .nav-logo {
   flex-shrink: 0;
   
-  a {
-    font-size: font-size('xl');
-    font-family: $font-family-pixel;
-    font-weight: map-get($font-weights, 'bold');
-    color: color('rpg-gold');
-    @include flex-center-vertical;
+  .home-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(color('rpg-gold'), 0.1);
+    border: 1px solid rgba(color('rpg-gold'), 0.3);
+    transition: all 0.3s ease;
+    text-decoration: none;
     
-    img {
-      width: 2.5rem; // w-10 equivalent
-      height: 2.5rem; // h-10 equivalent
+    &:hover {
+      background: rgba(color('rpg-gold'), 0.2);
+      border-color: rgba(color('rpg-gold'), 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(color('rpg-gold'), 0.3);
+    }
+    
+    .home-icon {
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .home-text {
+      font-size: font-size('base');
+      font-family: $font-family-pixel;
+      font-weight: map-get($font-weights, 'bold');
+      color: color('rpg-gold');
+      letter-spacing: 0.5px;
     }
   }
 }

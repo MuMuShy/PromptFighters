@@ -293,6 +293,28 @@ class PlayerLoginRecord(models.Model):
         unique_together = ['player', 'login_date']
 
 
+class DailyMNTDistribution(models.Model):
+    """每日 MNT 發放記錄（防止重複發放）"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='mnt_distributions')
+    wallet_address = models.CharField(max_length=42, verbose_name='錢包地址')
+    amount = models.DecimalField(max_digits=18, decimal_places=8, verbose_name='發放金額（MNT）')
+    tx_hash = models.CharField(max_length=66, null=True, blank=True, verbose_name='交易哈希')
+    distribution_date = models.DateField(default=timezone.now, verbose_name='發放日期')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.player.user.username} - {self.amount} MNT - {self.distribution_date}"
+    
+    class Meta:
+        verbose_name = '每日 MNT 發放記錄'
+        verbose_name_plural = '每日 MNT 發放記錄'
+        unique_together = ['player', 'distribution_date']
+        indexes = [
+            models.Index(fields=['player', 'distribution_date']),
+        ]
+
+
 class LadderSeason(models.Model):
     """天梯賽季"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

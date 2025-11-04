@@ -16,6 +16,12 @@
   
   <!-- 其他頁面的佈局 -->
   <div *ngIf="!isLandingPage" class="app-container">
+    <!-- 網絡 Badge -->
+    <div class="network-badge">
+      <span class="badge-dot"></span>
+      <span class="badge-text">Mantle Sepolia Testnet</span>
+    </div>
+    
     <!-- 珍貴的 PROMPT 代幣顯示區域 -->
     <!-- <div *ngIf="isLoggedIn" class="premium-prompt-display">
       <div class="prompt-container">
@@ -39,7 +45,10 @@
       <div class="nav-container">
         <div class="nav-content">
           <div class="nav-logo">
-            <a routerLink="/"><img src="/assets/game_bg_1.webp" alt="Logo"></a>
+            <a routerLink="/" class="home-link">
+              <span class="home-icon">🏠</span>
+              <span class="home-text">Home</span>
+            </a>
           </div>
           <!-- Desktop Menu + 資源條 + 登出 -->
           <div class="desktop-menu">

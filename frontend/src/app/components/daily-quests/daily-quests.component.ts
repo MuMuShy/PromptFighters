@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DailyQuestService, DailyStats, PlayerDailyQuest, ClaimRewardResponse } from '../../services/daily-quest.service';
 import { PlayerService } from '../../services/player.service';
+import { Web3Service } from '../../services/web3.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -18,11 +19,13 @@ export class DailyQuestsComponent implements OnInit, OnDestroy {
   lastClaimedReward: ClaimRewardResponse | null = null;
   showCheckInModal = false;
   checkInMessage = '';
+  mntReward: any = null;
   private subscriptions: Subscription[] = [];
 
   constructor(
     private dailyQuestService: DailyQuestService,
-    private playerService: PlayerService
+    private playerService: PlayerService,
+    private web3Service: Web3Service
   ) {}
 
   ngOnInit() {
@@ -54,13 +57,28 @@ export class DailyQuestsComponent implements OnInit, OnDestroy {
   }
 
   checkIn() {
-    this.dailyQuestService.checkIn().subscribe({
+    // 獲取錢包地址
+    let walletAddress: string | undefined;
+    if (this.web3Service.isWalletConnected()) {
+      walletAddress = this.web3Service.getWalletAddress();
+    }
+    
+    this.dailyQuestService.checkIn(walletAddress).subscribe({
       next: (response) => {
         if (response.success) {
           this.checkInMessage = `簽到成功！已連續登入 ${response.login_streak} 天`;
+          
+          // 處理 MNT 獎勵
+          if (response.mnt_reward) {
+            this.mntReward = response.mnt_reward;
+          } else {
+            this.mntReward = null;
+          }
+          
           this.showCheckInModal = true;
         } else {
           this.checkInMessage = response.message || '簽到失敗';
+          this.mntReward = null;
           this.showCheckInModal = true;
         }
       },

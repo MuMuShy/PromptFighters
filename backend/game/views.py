@@ -599,22 +599,91 @@ class CheckInView(APIView):
     
     def post(self, request):
         """執行每日簽到"""
+        from .mnt_faucet_service import get_faucet_service
+        from .models import DailyMNTDistribution
+        from django.utils import timezone
+        
         player = request.user.player
+        today = timezone.now().date()
         
         # 記錄登入（這會自動觸發簽到任務）
         login_record = DailyQuestService.record_player_login(player)
         
-        if login_record:
-            return Response({
-                'success': True,
-                'message': '簽到成功！',
-                'login_streak': DailyQuestService.get_login_streak(player)
-            })
-        else:
+        if not login_record:
             return Response({
                 'success': False,
                 'message': '今日已簽到'
             })
+        
+        # 檢查是否已發放過今日的 MNT
+        mnt_distributed = DailyMNTDistribution.objects.filter(
+            player=player,
+            distribution_date=today
+        ).first()
+        
+        mnt_result = None
+        if not mnt_distributed:
+            # 檢查玩家是否有錢包地址
+            wallet_address = player.wallet_address
+            if not wallet_address:
+                # 嘗試從請求中獲取錢包地址
+                wallet_address = request.data.get('wallet_address')
+            
+            if wallet_address:
+                # 發放 MNT
+                faucet_service = get_faucet_service()
+                if faucet_service.enabled:
+                    try:
+                        mnt_result = faucet_service.send_mnt(wallet_address)
+                        
+                        if mnt_result.get('success'):
+                            # 記錄發放
+                            DailyMNTDistribution.objects.create(
+                                player=player,
+                                wallet_address=wallet_address,
+                                amount=mnt_result.get('amount', '0.01'),
+                                tx_hash=mnt_result.get('tx_hash'),
+                                distribution_date=today
+                            )
+                            logger.info(f"✅ 已發放 MNT 給 {player.user.username}: {mnt_result.get('tx_hash')}")
+                        else:
+                            logger.warning(f"⚠️ 發放 MNT 失敗: {mnt_result.get('error')}")
+                    except Exception as e:
+                        logger.error(f"❌ 發放 MNT 時出錯: {e}")
+                        mnt_result = {'success': False, 'error': str(e)}
+                else:
+                    logger.warning("⚠️ MNT 水龍頭服務未啟用")
+            else:
+                logger.info(f"玩家 {player.user.username} 沒有錢包地址，跳過 MNT 發放")
+        
+        response_data = {
+            'success': True,
+            'message': '簽到成功！',
+            'login_streak': DailyQuestService.get_login_streak(player)
+        }
+        
+        # 如果有 MNT 發放結果，添加到響應中
+        if mnt_result:
+            if mnt_result.get('success'):
+                response_data['mnt_reward'] = {
+                    'success': True,
+                    'amount': mnt_result.get('amount'),
+                    'tx_hash': mnt_result.get('tx_hash'),
+                    'message': f"已收到 {mnt_result.get('amount')} MNT 測試代幣！"
+                }
+            else:
+                response_data['mnt_reward'] = {
+                    'success': False,
+                    'error': mnt_result.get('error', '發放失敗')
+                }
+        elif mnt_distributed:
+            response_data['mnt_reward'] = {
+                'success': True,
+                'message': '今日已領取 MNT 獎勵',
+                'already_claimed': True
+            }
+        
+        return Response(response_data)
 
 
 class QuestProgressView(APIView):
