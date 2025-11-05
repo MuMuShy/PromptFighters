@@ -1,0 +1,206 @@
+{
+  "hero": {
+    "subtitle": "去中心化 AI 戰鬥競技場",
+    "tagline": "AI 戰鬥，玩家運行節點",
+    "description": "全球首款由 Mantle Layer 2 驅動的去中心化 AI 戰鬥遊戲"
+  },
+  "stats": {
+    "ai-nodes": "AI 節點",
+    "battles-verified": "已驗證戰鬥",
+    "ai-fighters": "AI 戰士"
+  },
+  "button": {
+    "start-battle": "開始對戰",
+    "join-node": "加入節點"
+  },
+  "navigation": {
+    "menu": "遊戲選單",
+    "heroes": "英雄圖鑑",
+    "battles": "戰鬥系統",
+    "guide": "新手指南",
+    "about": "關於遊戲"
+  },
+  "about": {
+    "title": "關於遊戲",
+    "description": "每個角色都是由 AI 生成的獨特存在。戰鬥過程由 AI 決策，不可預測但可驗證。玩家可以參與生成、對戰或運行 AI Node 參與共識。"
+  },
+  "showcase": {
+    "title": "遇見 AI 為你創造的英雄",
+    "description": "從威嚴的騎士到神秘的法師，每個英雄都擁有由 AI 生成的獨特靈魂。"
+  },
+  "mantle": {
+    "title": "基於 Mantle 構建",
+    "description": "由 Mantle Layer 2 驅動 - 為 AI & GameFi 而生的區塊鏈",
+    "powered-by": "由 Mantle 驅動",
+    "benefit1": {
+      "title": "模組化架構",
+      "desc": "靈活的模組化設計，完美適配 AI 節點網絡"
+    },
+    "benefit2": {
+      "title": "高效能低費用",
+      "desc": "快速確認，低 Gas 費，適合高頻戰鬥遊戲"
+    },
+    "benefit3": {
+      "title": "GameFi 友善",
+      "desc": "專為 AI & GameFi 結合場景優化的 Layer 2"
+    }
+  },
+  "battle-preview": {
+    "title": "每一場戰鬥，都是一齣精彩好戲",
+    "description": "AI 導演將根據角色性格與戰況，即時生成充滿戲劇性的戰鬥描述。"
+  },
+  "battle-demo": {
+    "title": "實時戰鬥演示"
+  },
+  "node": {
+    "title": "運行你的 AI 節點",
+    "description": "人人都能成為 AI 節點 - 下載 Docker 映像，運行你的節點，成為 PromptFighters 的一部分",
+    "coming-soon": "🚀 即將開放",
+    "benefits": {
+      "title": "為什麼運行節點？"
+    },
+    "benefit1": "參與共識獲得代幣獎勵",
+    "benefit2": "影響遊戲生態發展方向",
+    "benefit3": "增強網絡去中心化與安全性",
+    "benefit4": "搶先體驗新功能與特權",
+    "stats": {
+      "active-nodes": "活躍節點",
+      "consensus-rate": "共識成功率",
+      "total-votes": "總投票數"
+    },
+    "setup": {
+      "title": "未來部署流程預覽",
+      "subtitle": "三步驟即可加入 AI 節點網絡",
+      "step1": {
+        "title": "Clone 專案"
+      },
+      "step2": {
+        "title": "配置 API Key"
+      },
+      "step3": {
+        "title": "啟動節點服務"
+      },
+      "note": "節點啟動後會自動連接到 Mantle 主網，並開始參與戰鬥結果的 AI 共識投票。完全去中心化，任何人都可以運行！",
+      "deploy-docs": "部署文檔（即將推出）",
+      "github-repo": "GitHub Repo（準備中）"
+    }
+  },
+  "hackathon": {
+    "title": "為 Mantle 全球黑客松 2025 而建",
+    "description": "賽道：GameFi & Social + AI & Oracles - 構建首個去中心化 AI 戰鬥協議",
+    "track": {
+      "label": "賽道",
+      "value": "GameFi & Social + AI & Oracles"
+    },
+    "goal": {
+      "label": "目標",
+      "value": "構建首個去中心化 AI 戰鬥協議"
+    },
+    "innovation": {
+      "label": "創新",
+      "value": "多 AI 共識 + 鏈上驗證"
+    },
+    "team": {
+      "title": "認識團隊",
+      "lead": {
+        "name": "首席開發者",
+        "role": "全端 & 區塊鏈"
+      },
+      "ai": {
+        "name": "AI 工程師",
+        "role": "LLM & 節點架構"
+      },
+      "design": {
+        "name": "遊戲設計師",
+        "role": "UX & 遊戲機制"
+      }
+    },
+    "links": {
+      "docs": "查看文檔",
+      "github": "GitHub 存儲庫",
+      "video": "演示視頻"
+    }
+  },
+  "cta": {
+    "title": "準備好加入去中心化 AI 戰場了嗎？",
+    "subtitle": "你的 AI 英雄傳奇，現在開始。",
+    "feature1": "免費遊玩",
+    "feature2": "即時對戰",
+    "feature3": "競技排名",
+    "button": "免費加入戰鬥"
+  },
+  "social-proof": "已有 <strong>{{count}}+</strong> 玩家加入戰鬥",
+  "features": {
+    "ai-node": {
+      "title": "AI Node Network",
+      "description": "玩家可運行 Docker 節點參與戰鬥共識，成為去中心化網絡的一部分。",
+      "highlight": "Decentralized"
+    },
+    "llm-consensus": {
+      "title": "LLM Consensus",
+      "description": "多 AI 模型投票產生結果，確保公平與多樣性，消除單點故障。",
+      "highlight": "Multi-AI"
+    },
+    "onchain": {
+      "title": "On-Chain Verification",
+      "description": "戰鬥結果的 Hash 上鏈 Mantle，公開可查，結果不可篡改、可驗證、透明。",
+      "highlight": "Zero Trust"
+    }
+  },
+  "heroes": {
+    "hero1": {
+      "name": "燼龍騎士 奧古斯特",
+      "description": "被龍血詛咒的騎士，揮舞著能燃燒一切的巨劍。"
+    },
+    "hero2": {
+      "name": "冰霜女巫 莉安德拉",
+      "description": "來自北境的神秘女巫，能將敏人的靈魂凍結。"
+    },
+    "hero3": {
+      "name": "森之守護者 芬恩",
+      "description": "與古老森林共生的德魯伊，能召喚自然之力作戰。"
+    }
+  },
+  "economy": {
+    "title": "遊戲經濟系統",
+    "description": "雙代幣模型，平衡遊戲性與收益性",
+    "tokens": {
+      "prompt": {
+        "description": "鏈上價值代幣，用於 NFT 鑄造和高階遊戲內消耗",
+        "use1": "NFT 鑄造",
+        "use2": "高階召喚",
+        "use3": "治理投票"
+      },
+      "gold": {
+        "description": "遊戲內通用貨幣，用於角色升級和日常消耗",
+        "use1": "角色升級",
+        "use2": "標準召喚",
+        "use3": "日常交易"
+      },
+      "power": {
+        "description": "召喚系統的初始道具，使用AI咒力創建角色",
+        "use1": "角色召喚",
+        "use2": "活動參與",
+        "use3": "特殊獎勵"
+      }
+    }
+  },
+  "battle": {
+    "preview": {
+      "entry1": "燼龍騎士 奧古斯特 咆哮著，劍上的火焰化為一條巨龍撲向敵人！",
+      "entry2": "敵人被火焰吞噬，受到 210 點重創！",
+      "entry3": "冰霜女巫 莉安德拉 輕聲吟唱，一道冰牆拔地而起，擋下了致命的反擊。",
+      "entry4": "戰鬥的節奏因這次完美的防禦而徹底改變。"
+    },
+    "texts": {
+      "start": "戰鬥開始！雙方英雄蓄勢待發...",
+      "fire-attack": "燼龍騎士發動火焰衝擊！",
+      "dodge": "敵人閃避成功，反擊一擊！",
+      "ice-spell": "冰霜女巫施展冰凍法術！",
+      "intense": "戰鬥進入白熱化階段！",
+      "fire-slash": "燼龍騎士的火焰劍氣橫掃全場！",
+      "blizzard": "冰霜女巫召喚暴風雪！",
+      "balanced": "雙方勢均力敵，戰鬥愈發激烈！"
+    }
+  }
+}

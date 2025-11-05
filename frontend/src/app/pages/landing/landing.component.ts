@@ -2,13 +2,15 @@ import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy } fr
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
-import { I18nService } from '../../services/i18n.service';
+import { LanguageService } from '../../services/language.service';
+import { LanguageSelectorComponent } from '../../components/language-selector/language-selector.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LanguageSelectorComponent, TranslateModule],
   template: `
     <div class="landing-container">
       <!-- 1. Hero Section with Animated Background -->
@@ -17,73 +19,62 @@ import { Subscription } from 'rxjs';
         <div class="hero-content">
           <div class="game-logo">
             <h1 class="hero-title">PromptFighters</h1>
-            <div class="logo-subtitle">{{ getHeroSubtitle() }}</div>
+            <div class="logo-subtitle">{{ 'hero.subtitle' | translate }}</div>
           </div>
           
-          <p class="hero-subtitle">{{ getHeroTagline() }}</p>
-          <p class="hero-description">{{ getHeroDescription() }}</p>
+          <p class="hero-subtitle">{{ 'hero.tagline' | translate }}</p>
+          <p class="hero-description">{{ 'hero.description' | translate }}</p>
           
           <div class="hero-stats">
             <div class="stat-item">
               <span class="stat-number">{{ totalPlayers }}+</span>
-              <span class="stat-label">{{ getStatLabel('nodes') }}</span>
+              <span class="stat-label">{{ 'stats.ai-nodes' | translate }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-number">{{ totalBattles }}+</span>
-              <span class="stat-label">{{ getStatLabel('battles') }}</span>
+              <span class="stat-label">{{ 'stats.battles-verified' | translate }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-number">{{ totalHeroes }}+</span>
-              <span class="stat-label">{{ getStatLabel('fighters') }}</span>
+              <span class="stat-label">{{ 'stats.ai-fighters' | translate }}</span>
             </div>
           </div>
           
           <div class="hero-buttons">
             <button (click)="startAdventure()" class="btn-primary btn-glow">
               <span class="btn-icon">⚔️</span>
-              <span class="btn-text">{{ getButtonText('start-battle') }}</span>
+              <span class="btn-text">{{ 'button.start-battle' | translate }}</span>
             </button>
             <button (click)="scrollToNodes()" class="btn-secondary">
               <span class="btn-icon">🔗</span>
-              <span class="btn-text">{{ getButtonText('join-node') }}</span>
+              <span class="btn-text">{{ 'button.join-node' | translate }}</span>
             </button>
           </div>
           
           <!-- 語言切換按鈕 -->
           <div class="language-switcher">
-            <button 
-              (click)="switchLanguage('zh-Hant')" 
-              class="lang-btn"
-              [class.active]="i18n.isChinese()">
-              中文
-            </button>
-            <button 
-              (click)="switchLanguage('en')" 
-              class="lang-btn"
-              [class.active]="i18n.isEnglish()">
-              English
-            </button>
+            <app-language-selector></app-language-selector>
           </div>
           
           <!-- 游戏导航区域 -->
           <div class="intro-navigation">
-            <p class="nav-label">Game Menu</p>
+            <p class="nav-label">{{ 'navigation.menu' | translate }}</p>
             <div class="nav-links">
               <a (click)="goToIntroPage('heroes')" class="nav-link">
                 <span class="link-icon">🎭</span>
-                <span>英雄圖鑑</span>
+                <span>{{ 'navigation.heroes' | translate }}</span>
               </a>
               <a (click)="goToIntroPage('battles')" class="nav-link">
                 <span class="link-icon">⚔️</span>
-                <span>戰鬥系統</span>
+                <span>{{ 'navigation.battles' | translate }}</span>
               </a>
               <a (click)="goToIntroPage('guide')" class="nav-link">
                 <span class="link-icon">📖</span>
-                <span>新手指南</span>
+                <span>{{ 'navigation.guide' | translate }}</span>
               </a>
               <a (click)="goToIntroPage('about')" class="nav-link">
                 <span class="link-icon">✨</span>
-                <span>關於遊戲</span>
+                <span>{{ 'navigation.about' | translate }}</span>
               </a>
             </div>
           </div>
@@ -94,8 +85,8 @@ import { Subscription } from 'rxjs';
       <section id="features" class="section features-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title" i18n="@@about.title">About the Game</h2>
-            <p class="section-description" i18n="@@about.description">每個角色都是由 AI 生成的獨特存在。戰鬥過程由 AI 決策，不可預測但可驗證。玩家可以參與生成、對戰或運行 AI Node 參與共識。</p>
+            <h2 class="section-title">{{ 'about.title' | translate }}</h2>
+            <p class="section-description">{{ 'about.description' | translate }}</p>
           </div>
           
           <div class="features-grid">
@@ -116,8 +107,8 @@ import { Subscription } from 'rxjs';
       <section class="section showcase-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title">遇見 AI 為你創造的英雄</h2>
-            <p class="section-description">從威嚴的騎士到神秘的法師，每個英雄都擁有由 AI 生成的獨特靈魂。</p>
+            <h2 class="section-title">{{ 'showcase.title' | translate }}</h2>
+            <p class="section-description">{{ 'showcase.description' | translate }}</p>
           </div>
           
           <div class="showcase-grid">
@@ -145,33 +136,33 @@ import { Subscription } from 'rxjs';
       <section class="section mantle-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title" i18n="@@mantle.title">Built on Mantle</h2>
-            <p class="section-description" i18n="@@mantle.description">Powered by Mantle Layer 2 - 為 AI & GameFi 而生的區塊鏈</p>
+            <h2 class="section-title">{{ 'mantle.title' | translate }}</h2>
+            <p class="section-description">{{ 'mantle.description' | translate }}</p>
           </div>
           
           <div class="mantle-features">
             <div class="mantle-logo-section">
               <div class="mantle-logo">
                 <img src="/assets/icons/mantle.jpg" alt="Mantle" class="logo-img">
-                <div class="powered-by" i18n="@@mantle.powered-by">Powered by Mantle</div>
+                <div class="powered-by">{{ 'mantle.powered-by' | translate }}</div>
               </div>
             </div>
             
             <div class="mantle-benefits">
               <div class="benefit-card">
                 <div class="benefit-icon">🏗️</div>
-                <h3 class="benefit-title" i18n="@@mantle.benefit1.title">模組化架構</h3>
-                <p class="benefit-desc" i18n="@@mantle.benefit1.desc">靈活的模組化設計，完美適配 AI 節點網絡</p>
+                <h3 class="benefit-title">{{ 'mantle.benefit1.title' | translate }}</h3>
+                <p class="benefit-desc">{{ 'mantle.benefit1.desc' | translate }}</p>
               </div>
               <div class="benefit-card">
                 <div class="benefit-icon">⚡</div>
-                <h3 class="benefit-title" i18n="@@mantle.benefit2.title">高效能低費用</h3>
-                <p class="benefit-desc" i18n="@@mantle.benefit2.desc">快速確認，低 Gas 費，適合高頻戰鬥遊戲</p>
+                <h3 class="benefit-title">{{ 'mantle.benefit2.title' | translate }}</h3>
+                <p class="benefit-desc">{{ 'mantle.benefit2.desc' | translate }}</p>
               </div>
               <div class="benefit-card">
                 <div class="benefit-icon">🎮</div>
-                <h3 class="benefit-title" i18n="@@mantle.benefit3.title">GameFi 友善</h3>
-                <p class="benefit-desc" i18n="@@mantle.benefit3.desc">專為 AI & GameFi 結合場景優化的 Layer 2</p>
+                <h3 class="benefit-title">{{ 'mantle.benefit3.title' | translate }}</h3>
+                <p class="benefit-desc">{{ 'mantle.benefit3.desc' | translate }}</p>
               </div>
             </div>
           </div>
@@ -182,13 +173,13 @@ import { Subscription } from 'rxjs';
       <section class="section battle-preview-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title">每一場戰鬥，都是一齣精彩好戲</h2>
-            <p class="section-description">AI 導演將根據角色性格與戰況，即時生成充滿戲劇性的戰鬥描述。</p>
+            <h2 class="section-title">{{ 'battle-preview.title' | translate }}</h2>
+            <p class="section-description">{{ 'battle-preview.description' | translate }}</p>
           </div>
           
           <div class="battle-demo">
             <div class="battle-header">
-              <div class="battle-title">實時戰鬥演示</div>
+              <div class="battle-title">{{ 'battle-demo.title' | translate }}</div>
               <div class="battle-controls">
                 <button (click)="playBattleDemo()" class="btn-play" [class.playing]="isPlaying">
                   {{ isPlaying ? '⏸️' : '▶️' }}
@@ -240,8 +231,8 @@ import { Subscription } from 'rxjs';
       <section class="section economy-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title">遊戲經濟系統</h2>
-            <p class="section-description">雙代幣模型，平衡遊戲性與收益性</p>
+            <h2 class="section-title">{{ 'economy.title' | translate }}</h2>
+            <p class="section-description">{{ 'economy.description' | translate }}</p>
           </div>
           
           <div class="economy-grid">
@@ -261,31 +252,31 @@ import { Subscription } from 'rxjs';
       <section class="section node-network-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title" i18n="@@node.title">Run Your AI Node</h2>
-            <p class="section-description" i18n="@@node.description">人人都能成為 AI 節點 - 簡單三步驟，加入去中心化 AI 網絡</p>
-            <div class="coming-soon-badge">🚀 即將開放</div>
+            <h2 class="section-title">{{ 'node.title' | translate }}</h2>
+            <p class="section-description">{{ 'node.description' | translate }}</p>
+            <div class="coming-soon-badge">{{ 'node.coming-soon' | translate }}</div>
           </div>
           
           <div class="node-features">
             <div class="node-info">
               <div class="node-benefits">
-                <h3 class="benefits-title">為什麼運行節點？</h3>
+                <h3 class="benefits-title">{{ 'node.benefits.title' | translate }}</h3>
                 <ul class="benefits-list">
                   <li class="benefit-item">
                     <span class="benefit-icon">💰</span>
-                    <span>參與共識獲得代幣獎勵</span>
+                    <span>{{ 'node.benefit1' | translate }}</span>
                   </li>
                   <li class="benefit-item">
                     <span class="benefit-icon">🎯</span>
-                    <span>影響遊戲生態發展方向</span>
+                    <span>{{ 'node.benefit2' | translate }}</span>
                   </li>
                   <li class="benefit-item">
                     <span class="benefit-icon">🔒</span>
-                    <span>增強網絡去中心化與安全性</span>
+                    <span>{{ 'node.benefit3' | translate }}</span>
                   </li>
                   <li class="benefit-item">
                     <span class="benefit-icon">🚀</span>
-                    <span>搶先體驗新功能與特權</span>
+                    <span>{{ 'node.benefit4' | translate }}</span>
                   </li>
                 </ul>
               </div>
@@ -294,44 +285,44 @@ import { Subscription } from 'rxjs';
                 <div class="stat-card">
                   <div class="stat-icon">🔗</div>
                   <div class="stat-value">--</div>
-                  <div class="stat-label">Active Nodes</div>
+                  <div class="stat-label">{{ 'node.stats.active-nodes' | translate }}</div>
                 </div>
                 <div class="stat-card">
                   <div class="stat-icon">⚡</div>
                   <div class="stat-value">--</div>
-                  <div class="stat-label">Consensus Rate</div>
+                  <div class="stat-label">{{ 'node.stats.consensus-rate' | translate }}</div>
                 </div>
                 <div class="stat-card">
                   <div class="stat-icon">🏆</div>
                   <div class="stat-value">--</div>
-                  <div class="stat-label">Total Votes</div>
+                  <div class="stat-label">{{ 'node.stats.total-votes' | translate }}</div>
                 </div>
               </div>
             </div>
             
             <div class="node-setup">
               <div class="setup-card">
-                <h3 class="setup-title">未來部署流程預覽</h3>
-                <p class="setup-subtitle">三步驟即可加入 AI 節點網絡</p>
+                <h3 class="setup-title">{{ 'node.setup.title' | translate }}</h3>
+                <p class="setup-subtitle">{{ 'node.setup.subtitle' | translate }}</p>
                 <div class="setup-steps">
                   <div class="step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                      <div class="step-title">Clone 專案</div>
+                      <div class="step-title">{{ 'node.setup.step1.title' | translate }}</div>
                       <code class="step-code">git clone https://github.com/your-repo/ai-node.git</code>
                     </div>
                   </div>
                   <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                      <div class="step-title">配置 API Key</div>
+                      <div class="step-title">{{ 'node.setup.step2.title' | translate }}</div>
                       <code class="step-code">echo "GEMINI_API_KEY=your_key" > .env</code>
                     </div>
                   </div>
                   <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                      <div class="step-title">啟動節點服務</div>
+                      <div class="step-title">{{ 'node.setup.step3.title' | translate }}</div>
                       <code class="step-code">./start.sh</code>
                     </div>
                   </div>
@@ -339,17 +330,17 @@ import { Subscription } from 'rxjs';
                 
                 <div class="node-preview-note">
                   <span class="note-icon">💡</span>
-                  <p>節點啟動後會自動連接到 Mantle 主網，並開始參與戰鬥結果的 AI 共識投票。完全去中心化，任何人都可以運行！</p>
+                  <p>{{ 'node.setup.note' | translate }}</p>
                 </div>
                 
                 <div class="setup-actions">
                   <button class="btn-primary" disabled>
                     <span class="btn-icon">📖</span>
-                    <span>部署文檔（即將推出）</span>
+                    <span>{{ 'node.setup.deploy-docs' | translate }}</span>
                   </button>
                   <button class="btn-secondary" disabled>
                     <span class="btn-icon">🐙</span>
-                    <span>GitHub Repo（準備中）</span>
+                    <span>{{ 'node.setup.github-repo' | translate }}</span>
                   </button>
                 </div>
               </div>
@@ -362,8 +353,8 @@ import { Subscription } from 'rxjs';
       <section class="section hackathon-section">
         <div class="section-content">
           <div class="section-header">
-            <h2 class="section-title" i18n="@@hackathon.title">Built for Mantle Global Hackathon 2025</h2>
-            <p class="section-description" i18n="@@hackathon.description">Track: GameFi & Social + AI & Oracles - Building the first decentralized AI battle protocol</p>
+            <h2 class="section-title">{{ 'hackathon.title' | translate }}</h2>
+            <p class="section-description">{{ 'hackathon.description' | translate }}</p>
           </div>
           
           <div class="hackathon-info">
@@ -378,42 +369,42 @@ import { Subscription } from 'rxjs';
               
               <div class="hackathon-details">
                 <div class="detail-item">
-                  <span class="detail-label">Track:</span>
-                  <span class="detail-value">GameFi & Social + AI & Oracles</span>
+                  <span class="detail-label">{{ 'hackathon.track.label' | translate }}:</span>
+                  <span class="detail-value">{{ 'hackathon.track.value' | translate }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="detail-label">Goal:</span>
-                  <span class="detail-value">Build the first decentralized AI battle protocol</span>
+                  <span class="detail-label">{{ 'hackathon.goal.label' | translate }}:</span>
+                  <span class="detail-value">{{ 'hackathon.goal.value' | translate }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="detail-label">Innovation:</span>
-                  <span class="detail-value">Multi-AI consensus + On-chain verification</span>
+                  <span class="detail-label">{{ 'hackathon.innovation.label' | translate }}:</span>
+                  <span class="detail-value">{{ 'hackathon.innovation.value' | translate }}</span>
                 </div>
               </div>
             </div>
             
             <div class="team-section">
-              <h3 class="team-title">Meet the Team</h3>
+              <h3 class="team-title">{{ 'hackathon.team.title' | translate }}</h3>
               <div class="team-grid">
                 <div class="team-member">
                   <div class="member-avatar">👨‍💻</div>
                   <div class="member-info">
-                    <div class="member-name">Lead Developer</div>
-                    <div class="member-role">Full-Stack & Blockchain</div>
+                    <div class="member-name">{{ 'hackathon.team.lead.name' | translate }}</div>
+                    <div class="member-role">{{ 'hackathon.team.lead.role' | translate }}</div>
                   </div>
                 </div>
                 <div class="team-member">
                   <div class="member-avatar">🤖</div>
                   <div class="member-info">
-                    <div class="member-name">AI Engineer</div>
-                    <div class="member-role">LLM & Node Architecture</div>
+                    <div class="member-name">{{ 'hackathon.team.ai.name' | translate }}</div>
+                    <div class="member-role">{{ 'hackathon.team.ai.role' | translate }}</div>
                   </div>
                 </div>
                 <div class="team-member">
                   <div class="member-avatar">🎨</div>
                   <div class="member-info">
-                    <div class="member-name">Game Designer</div>
-                    <div class="member-role">UX & Game Mechanics</div>
+                    <div class="member-name">{{ 'hackathon.team.design.name' | translate }}</div>
+                    <div class="member-role">{{ 'hackathon.team.design.role' | translate }}</div>
                   </div>
                 </div>
               </div>
@@ -423,15 +414,15 @@ import { Subscription } from 'rxjs';
           <div class="hackathon-links">
             <button class="btn-primary">
               <span class="btn-icon">📖</span>
-              <span>View Documentation</span>
+              <span>{{ 'hackathon.links.docs' | translate }}</span>
             </button>
             <button class="btn-secondary">
               <span class="btn-icon">💻</span>
-              <span>GitHub Repository</span>
+              <span>{{ 'hackathon.links.github' | translate }}</span>
             </button>
             <button class="btn-secondary">
               <span class="btn-icon">🎥</span>
-              <span>Demo Video</span>
+              <span>{{ 'hackathon.links.video' | translate }}</span>
             </button>
           </div>
         </div>
@@ -441,31 +432,31 @@ import { Subscription } from 'rxjs';
       <section class="section cta-section">
         <div class="parallax-bg"></div>
         <div class="section-content">
-          <h2 class="cta-title">準備好加入去中心化 AI 戰場了嗎？</h2>
-          <p class="cta-subtitle">你的 AI 英雄傳奇，現在開始。</p>
+          <h2 class="cta-title">{{ 'cta.title' | translate }}</h2>
+          <p class="cta-subtitle">{{ 'cta.subtitle' | translate }}</p>
           
           <div class="cta-features">
             <div class="cta-feature">
               <span class="feature-icon">🎮</span>
-              <span>免費遊玩</span>
+              <span>{{ 'cta.feature1' | translate }}</span>
             </div>
             <div class="cta-feature">
               <span class="feature-icon">⚡</span>
-              <span>即時對戰</span>
+              <span>{{ 'cta.feature2' | translate }}</span>
             </div>
             <div class="cta-feature">
               <span class="feature-icon">🏆</span>
-              <span>競技排名</span>
+              <span>{{ 'cta.feature3' | translate }}</span>
             </div>
           </div>
           
           <button (click)="startAdventure()" class="btn-primary btn-large btn-glow">
             <span class="btn-icon">🔥</span>
-            <span class="btn-text">免費加入戰鬥</span>
+            <span class="btn-text">{{ 'cta.button' | translate }}</span>
           </button>
           
           <div class="social-proof">
-            <p>已有 <strong>{{ totalPlayers }}+</strong> 玩家加入戰鬥</p>
+            <p [innerHTML]="('social-proof' | translate: {count: totalPlayers})"></p>
             <!-- <div class="social-links">
               <a href="#" class="social-link">Discord</a>
               <a href="#" class="social-link">Twitter</a>
@@ -489,81 +480,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   // 战斗演示状态
   isPlaying = false;
   private battleInterval: any;
-  private localeSubscription?: Subscription;
   
 
-  get features() {
-    if (this.i18n.isEnglish()) {
-      return [
-        {
-          icon: '🔗',
-          title: 'AI Node Network',
-          description: 'Players can run Docker nodes to participate in battle consensus, becoming part of the decentralized network.',
-          highlight: 'Decentralized'
-        },
-        {
-          icon: '🤖',
-          title: 'LLM Consensus',
-          description: 'Multiple AI models vote to generate results, ensuring fairness and diversity while eliminating single points of failure.',
-          highlight: 'Multi-AI'
-        },
-        {
-          icon: '⛓️',
-          title: 'On-Chain Verification',
-          description: 'Battle result hashes are stored on Mantle blockchain, publicly verifiable, immutable, and transparent.',
-          highlight: 'Zero Trust'
-        }
-      ];
-    } else {
-      return [
-        {
-          icon: '🔗',
-          title: 'AI Node Network',
-          description: '玩家可運行 Docker 節點參與戰鬥共識，成為去中心化網絡的一部分。',
-          highlight: 'Decentralized'
-        },
-        {
-          icon: '🤖',
-          title: 'LLM Consensus',
-          description: '多 AI 模型投票產生結果，確保公平與多樣性，消除單點故障。',
-          highlight: 'Multi-AI'
-        },
-        {
-          icon: '⛓️',
-          title: 'On-Chain Verification',
-          description: '戰鬥結果的 Hash 上鏈 Mantle，公開可查，結果不可篡改、可驗證、透明。',
-          highlight: 'Zero Trust'
-        }
-      ];
-    }
-  }
+  features: any[] = [];
 
-  sampleHeroes = [
-    { 
-      image: '/assets/game/landing/c_1.png',
-      name: '燼龍騎士 奧古斯特', 
-      description: '被龍血詛咒的騎士，揮舞著能燃燒一切的巨劍。',
-      stats: { strength: 95, agility: 78, luck: 65 },
-      rarity: 'legendary',
-      level: 'Lv.50'
-    },
-    { 
-      image: '/assets/game/landing/c_2.png',
-      name: '冰霜女巫 莉安德拉', 
-      description: '來自北境的神秘女巫，能將敵人的靈魂凍結。',
-      stats: { strength: 72, agility: 88, luck: 82 },
-      rarity: 'epic',
-      level: 'Lv.45'
-    },
-    { 
-      image: '/assets/game/landing/c_3.png',
-      name: '森之守護者 芬恩', 
-      description: '與古老森林共生的德魯伊，能召喚自然之力作戰。',
-      stats: { strength: 85, agility: 92, luck: 75 },
-      rarity: 'rare',
-      level: 'Lv.42'
-    }
-  ];
+  sampleHeroes: any[] = [];
+
+  economyTokens: any[] = [];
+
 
   // 战斗场景配置
   battleScene = {
@@ -579,55 +503,38 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   };
 
-  battlePreview = [
-    { text: '燼龍騎士 奧古斯特 咆哮著，劍上的火焰化為一條巨龍撲向敵人！', type: 'action', timestamp: '00:01' },
-    { text: '敵人被火焰吞噬，受到 210 點重創！', type: 'damage', timestamp: '00:02' },
-    { text: '冰霜女巫 莉安德拉 輕聲吟唱，一道冰牆拔地而起，擋下了致命的反擊。', type: 'defense', timestamp: '00:03' },
-    { text: '戰鬥的節奏因這次完美的防禦而徹底改變。', type: 'info', timestamp: '00:04' }
-  ];
+  battlePreview: any[] = [];
 
-  economyTokens = [
-    {
-      icon: '/assets/game/prompt.png',
-      name: '$PROMPT',
-      description: '鏈上價值代幣，用於 NFT 鑄造和高階遊戲內消耗',
-      uses: ['NFT 鑄造', '高階召喚', '治理投票']
-    },
-    {
-      icon: '/assets/game/gold_coin.png',
-      name: '$GOLD',
-      description: '遊戲內通用貨幣，用於角色升級和日常消耗',
-      uses: ['角色升級', '標準召喚', '日常交易']
-    },
-    {
-      icon: '/assets/game/prompt_power.png',
-      name: 'Prompt Power',
-      description: '召喚系統的初始道具，使用AI咒力創建角色',
-      uses: ['角色召喚', '活動參與', '特殊獎勵']
-    }
-  ];
 
   constructor(
     private router: Router,
     private meta: Meta,
     private title: Title,
-    public i18n: I18nService
+    private languageService: LanguageService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit() {
     this.setupSEO();
+    this.languageService.initializeLanguage();
+    
+    // 等待翻譯服務載入完成後再設置動態內容
+    this.translate.onLangChange.subscribe(() => {
+      this.setupDynamicContent();
+    });
     
     // 監聽語言變化
-    this.localeSubscription = this.i18n.locale$.subscribe(() => {
-      // 語言變化時重新觸發變更檢測
-      // Angular 會自動重新評估 getter
+    this.languageService.currentLanguage$.subscribe(() => {
+      this.setupDynamicContent();
     });
+    
+    // 初始設置（延遲執行以確保翻譯文件已載入）
+    setTimeout(() => {
+      this.setupDynamicContent();
+    }, 100);
   }
   
   ngOnDestroy() {
-    if (this.localeSubscription) {
-      this.localeSubscription.unsubscribe();
-    }
     if (this.battleInterval) {
       clearInterval(this.battleInterval);
     }
@@ -730,42 +637,45 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private addBattleEntry() {
-    const battleTexts = [
-      '戰鬥開始！雙方英雄蓄勢待發...',
-      '燼龍騎士發動火焰衝擊！',
-      '敵人閃避成功，反擊一擊！',
-      '冰霜女巫施展冰凍法術！',
-      '戰鬥進入白熱化階段！',
-      '燼龍騎士的火焰劍氣橫掃全場！',
-      '冰霜女巫召喚暴風雪！',
-      '雙方勢均力敵，戰鬥愈發激烈！'
+    const battleTextKeys = [
+      'battle.texts.start',
+      'battle.texts.fire-attack',
+      'battle.texts.dodge',
+      'battle.texts.ice-spell',
+      'battle.texts.intense',
+      'battle.texts.fire-slash',
+      'battle.texts.blizzard',
+      'battle.texts.balanced'
     ];
 
     const types = ['action', 'damage', 'defense', 'info'];
-    const randomText = battleTexts[Math.floor(Math.random() * battleTexts.length)];
+    const randomKey = battleTextKeys[Math.floor(Math.random() * battleTextKeys.length)];
     const randomType = types[Math.floor(Math.random() * types.length)];
     const timestamp = new Date().toLocaleTimeString('zh-TW', { 
       minute: '2-digit', 
       second: '2-digit' 
     });
 
-    this.battlePreview.push({
-      text: randomText,
-      type: randomType,
-      timestamp: timestamp
-    });
+    // 使用 translate.get() 獲取隨機戰鬥文本
+    this.translate.get(randomKey).subscribe(translatedText => {
+      this.battlePreview.push({
+        text: translatedText,
+        type: randomType,
+        timestamp: timestamp
+      });
 
-    // 保持最多5条记录
-    if (this.battlePreview.length > 5) {
-      this.battlePreview.shift();
-    }
-
-    // 自动滚动到底部
-    setTimeout(() => {
-      if (this.battleLog) {
-        this.battleLog.nativeElement.scrollTop = this.battleLog.nativeElement.scrollHeight;
+      // 保持最多5条记录
+      if (this.battlePreview.length > 5) {
+        this.battlePreview.shift();
       }
-    }, 100);
+
+      // 自动滚动到底部
+      setTimeout(() => {
+        if (this.battleLog) {
+          this.battleLog.nativeElement.scrollTop = this.battleLog.nativeElement.scrollHeight;
+        }
+      }, 100);
+    });
   }
 
   startAdventure() {
@@ -780,47 +690,144 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     document.querySelector('.node-network-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  switchLanguage(locale: string) {
-    this.i18n.switchLanguage(locale);
-  }
-
-  // 翻譯方法
-  getHeroSubtitle(): string {
-    return this.i18n.isEnglish() 
-      ? 'Decentralized AI Battle Arena'
-      : '去中心化 AI 戰鬥競技場';
-  }
-
-  getHeroTagline(): string {
-    return this.i18n.isEnglish()
-      ? 'Where AI Fights, and Players Run the Nodes'
-      : 'AI 戰鬥，玩家運行節點';
-  }
-
-  getHeroDescription(): string {
-    return this.i18n.isEnglish()
-      ? "The world's first decentralized AI battle game powered by Mantle Layer 2"
-      : '全球首款由 Mantle Layer 2 驅動的去中心化 AI 戰鬥遊戲';
-  }
-
-  getStatLabel(type: string): string {
-    const labels = {
-      'nodes': this.i18n.isEnglish() ? 'AI Nodes' : 'AI 節點',
-      'battles': this.i18n.isEnglish() ? 'Battles Verified' : '已驗證戰鬥',
-      'fighters': this.i18n.isEnglish() ? 'AI Fighters' : 'AI 戰士'
-    };
-    return labels[type as keyof typeof labels] || '';
-  }
-
-  getButtonText(type: string): string {
-    const buttons = {
-      'start-battle': this.i18n.isEnglish() ? 'Start Battle' : '開始對戰',
-      'join-node': this.i18n.isEnglish() ? 'Join Node' : '加入節點'
-    };
-    return buttons[type as keyof typeof buttons] || '';
-  }
-
   goToIntroPage(page: string) {
     this.router.navigate([`/intro/${page}`]);
+  }
+
+  private setupDynamicContent() {
+    // 使用 translate.get() 確保翻譯完全載入
+    this.translate.get([
+      'features.ai-node.title',
+      'features.ai-node.description', 
+      'features.ai-node.highlight',
+      'features.llm-consensus.title',
+      'features.llm-consensus.description',
+      'features.llm-consensus.highlight',
+      'features.onchain.title',
+      'features.onchain.description',
+      'features.onchain.highlight'
+    ]).subscribe(translations => {
+      this.features = [
+        {
+          icon: '🔗',
+          title: translations['features.ai-node.title'],
+          description: translations['features.ai-node.description'],
+          highlight: translations['features.ai-node.highlight']
+        },
+        {
+          icon: '🤖',
+          title: translations['features.llm-consensus.title'],
+          description: translations['features.llm-consensus.description'],
+          highlight: translations['features.llm-consensus.highlight']
+        },
+        {
+          icon: '⛓️',
+          title: translations['features.onchain.title'],
+          description: translations['features.onchain.description'],
+          highlight: translations['features.onchain.highlight']
+        }
+      ];
+    });
+
+    // 設置 sampleHeroes 數組
+    this.translate.get([
+      'heroes.hero1.name',
+      'heroes.hero1.description',
+      'heroes.hero2.name',
+      'heroes.hero2.description',
+      'heroes.hero3.name',
+      'heroes.hero3.description'
+    ]).subscribe(translations => {
+      this.sampleHeroes = [
+        {
+          image: '/assets/game/landing/c_1.png',
+          name: translations['heroes.hero1.name'],
+          description: translations['heroes.hero1.description'],
+          stats: { strength: 95, agility: 78, luck: 65 },
+          rarity: 'legendary',
+          level: 'Lv.50'
+        },
+        {
+          image: '/assets/game/landing/c_2.png',
+          name: translations['heroes.hero2.name'],
+          description: translations['heroes.hero2.description'],
+          stats: { strength: 72, agility: 88, luck: 82 },
+          rarity: 'epic',
+          level: 'Lv.45'
+        },
+        {
+          image: '/assets/game/landing/c_3.png',
+          name: translations['heroes.hero3.name'],
+          description: translations['heroes.hero3.description'],
+          stats: { strength: 85, agility: 92, luck: 75 },
+          rarity: 'rare',
+          level: 'Lv.42'
+        }
+      ];
+    });
+
+    // 設置 economyTokens 數組
+    this.translate.get([
+      'economy.tokens.prompt.description',
+      'economy.tokens.prompt.use1',
+      'economy.tokens.prompt.use2',
+      'economy.tokens.prompt.use3',
+      'economy.tokens.gold.description',
+      'economy.tokens.gold.use1',
+      'economy.tokens.gold.use2',
+      'economy.tokens.gold.use3',
+      'economy.tokens.power.description',
+      'economy.tokens.power.use1',
+      'economy.tokens.power.use2',
+      'economy.tokens.power.use3'
+    ]).subscribe(translations => {
+      this.economyTokens = [
+        {
+          icon: '/assets/game/prompt.png',
+          name: '$PROMPT',
+          description: translations['economy.tokens.prompt.description'],
+          uses: [
+            translations['economy.tokens.prompt.use1'],
+            translations['economy.tokens.prompt.use2'],
+            translations['economy.tokens.prompt.use3']
+          ]
+        },
+        {
+          icon: '/assets/game/gold_coin.png',
+          name: '$GOLD',
+          description: translations['economy.tokens.gold.description'],
+          uses: [
+            translations['economy.tokens.gold.use1'],
+            translations['economy.tokens.gold.use2'],
+            translations['economy.tokens.gold.use3']
+          ]
+        },
+        {
+          icon: '/assets/game/prompt_power.png',
+          name: 'Prompt Power',
+          description: translations['economy.tokens.power.description'],
+          uses: [
+            translations['economy.tokens.power.use1'],
+            translations['economy.tokens.power.use2'],
+            translations['economy.tokens.power.use3']
+          ]
+        }
+      ];
+    });
+
+    // 設置 battlePreview 數組
+    this.translate.get([
+      'battle.preview.entry1',
+      'battle.preview.entry2',
+      'battle.preview.entry3',
+      'battle.preview.entry4'
+    ]).subscribe(translations => {
+      this.battlePreview = [
+        { text: translations['battle.preview.entry1'], type: 'action', timestamp: '00:01' },
+        { text: translations['battle.preview.entry2'], type: 'damage', timestamp: '00:02' },
+        { text: translations['battle.preview.entry3'], type: 'defense', timestamp: '00:03' },
+        { text: translations['battle.preview.entry4'], type: 'info', timestamp: '00:04' }
+      ];
+    });
   }
 } 

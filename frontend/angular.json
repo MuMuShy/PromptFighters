@@ -30,7 +30,7 @@
               "outputHashing": "all",
               "sourceMap": false,
               "baseHref": "/"
-            }
+            },
           },
           "options": {
             "assets": ["src/assets", "src/favicon.ico"],
@@ -55,7 +55,7 @@
             },
             "production": {
               "buildTarget": "demo:build:production"
-            }
+            },
           },
           "defaultConfiguration": "development"
         }
